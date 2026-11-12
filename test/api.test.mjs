@@ -87,7 +87,11 @@ test('DATABASE_URL problems are explained', () => {
   assert.equal(describeDatabaseUrl(pool).ok, true);
   assert.match(describeDatabaseUrl('').detail, /not set/);
   assert.match(describeDatabaseUrl(pool.replace('pw', '[YOUR-PASSWORD]')).detail, /placeholder/);
-  assert.match(describeDatabaseUrl('postgresql://postgres:pw@db.abcd1234.supabase.co:5432/postgres').detail, /Direct connection/);
+  const direct = describeDatabaseUrl('postgresql://postgres:pw@db.abcd1234.supabase.co:5432/postgres');
+  assert.equal(direct.ok, true); // allowed: works with Supabase's IPv4 add-on
+  assert.match(direct.warning, /IPv4 add-on/);
+  assert.equal(direct.target, 'db.abcd1234.supabase.co:5432 as postgres');
+  assert.match(describeDatabaseUrl('postgresql://postgres:pw@db.abcd1234.supabase.co:6543/postgres').warning, /dedicated pooler/);
   assert.match(describeDatabaseUrl(pool.replace('postgres.abcd1234', 'postgres')).detail, /postgres\.<your-project-ref>/);
   assert.match(describeDatabaseUrl(pool.replace(':pw@', ':p@ss@')).detail, /%40/);
   assert.match(describeDatabaseUrl(pool + '\n').detail, /line break/);
@@ -95,14 +99,17 @@ test('DATABASE_URL problems are explained', () => {
   assert.match(explainDatabaseError({ message: 'Tenant or user not found' }), /user name/);
 });
 
-test('health and scores report a bad DATABASE_URL instead of a generic error', async () => {
-  const api = createApi({ getDb: async () => { throw new Error('should not connect'); }, env: { DATABASE_URL: 'postgresql://postgres:pw@db.x1.supabase.co:5432/postgres', INSTRUCTOR_PASSWORD: 's' }, failDelayMs: 0 });
-  const h = await api(req('GET', '/api/health'));
-  assert.equal(h.status, 503);
-  assert.match((await h.json()).detail, /Direct connection/);
+test('an unreachable Direct-connection host is explained, with the address in use', async () => {
+  const err = Object.assign(new Error('connect ENETUNREACH 2600:1f18::1:5432'), { code: 'ENETUNREACH' });
+  const api = createApi({ getDb: async () => { throw err; }, env: { DATABASE_URL: 'postgresql://postgres:pw@db.x1.supabase.co:5432/postgres', INSTRUCTOR_PASSWORD: 's' }, failDelayMs: 0 });
+  const h = await (await api(req('GET', '/api/health'))).json();
+  assert.equal(h.ok, false);
+  assert.equal(h.connectingTo, 'db.x1.supabase.co:5432 as postgres');
+  assert.match(h.detail, /SHARED pooler/);
   const r = await api(req('GET', '/api/scores', { auth: 's' }));
-  assert.equal(r.status, 503);
-  assert.match((await r.json()).detail, /Transaction pooler/);
+  assert.equal(r.status, 500);
+  assert.match((await r.json()).detail, /IPv6.*db\.x1\.supabase\.co:5432/s);
+  assert.equal((await api(req('PUT', '/api/scores/' + ID, { body: { name: 'A', doc: doc() } }))).status, 500);
 });
 
 test('a database failure returns an explanation', async () => {

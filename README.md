@@ -27,6 +27,8 @@ Students' progress is always saved in their own browser. When score sharing is s
    `postgresql://postgres.abcd1234:[YOUR-PASSWORD]@aws-0-us-east-1.pooler.supabase.com:6543/postgres`
 3. Replace `[YOUR-PASSWORD]` with your database password. If the password has symbols, URL-encode them (`@` → `%40`, `#` → `%23`).
 
+Use the **shared** pooler string (host ending in `pooler.supabase.com`, user `postgres.<project-ref>`). Addresses on `db.<project-ref>.supabase.co` (the Direct connection, and the dedicated pooler some plans show) only accept IPv6 unless your project has Supabase's IPv4 add-on, and Netlify connects over IPv4.
+
 You can use an existing Supabase project. Cardiac Lab only creates its own `ecglab` schema and never touches other tables.
 
 **Optional:** to create the table yourself instead of letting the app do it on first use, paste [`supabase/schema.sql`](supabase/schema.sql) into Supabase → **SQL Editor** and run it.
@@ -49,7 +51,9 @@ You can use an existing Supabase project. Cardiac Lab only creates its own `ecgl
 - Open `https://<your-site>.netlify.app/api/health`. It should say `"ok": true`. If not, the message explains what to fix (most often the `DATABASE_URL` password or pooler string).
 - Open the site, enter a test name on the **Overview** page, answer a strip, then click **Instructor sign-in** at the bottom of the page and enter your `INSTRUCTOR_PASSWORD`. Your test student should appear. You can remove it from the student's detail panel.
 
-After changing environment variables, redeploy (**Deploys → Trigger deploy**) so the function picks them up.
+After changing environment variables, redeploy (**Deploys → Trigger deploy → Deploy site**) so the function picks them up. When you add or edit a variable, make sure its **Scopes** include **Functions** and its value applies to the **Production** deploy context (or "Same value for all deploy contexts").
+
+`/api/health` shows `connectingTo` (or `connectedTo`): the host, port and user the function is actually using. If it still shows an old address after you changed `DATABASE_URL`, the change hasn't been deployed yet or isn't available to Functions.
 
 ## Using it with a class
 
