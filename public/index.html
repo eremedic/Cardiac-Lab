@@ -446,6 +446,8 @@ h1,h2,h3,.qhead h2,.runner-head h2,.score-hero h2,.answer-name,.stat b,.hero .me
 .login{max-width:520px}
 .login-f{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap}
 .login-f .cohort{flex:1 1 240px}
+.problem p{color:var(--ink-2);max-width:70ch}
+.problem h3{color:var(--bad)}
 .login-msg{color:var(--bad);font-weight:600;font-size:14px}
 .foot-link{font-size:13px;font-weight:600;color:var(--teal);text-decoration:none;white-space:nowrap}
 .foot-link:hover{text-decoration:underline}
@@ -948,12 +950,28 @@ function showLogin(msg){
   $("sbLogin").addEventListener("submit", function(e){ e.preventDefault(); SB.pass=$("sbPass").value; loadBoard(false); });
   setTimeout(function(){ var p=$("sbPass"); if(p) p.focus(); }, 30);
 }
+function showProblem(title, detail){
+  ["sbCsv"].forEach(function(i){ $(i).hidden=true; });
+  $("sbBody").innerHTML='<div class="card panel problem"><h3>'+esc(title)+'</h3><p>'+esc(detail)+'</p>'+
+    '<div class="qnav" style="justify-content:flex-start"><button class="btn btn-primary" id="sbRetry">Retry</button><a class="btn btn-ghost" href="/api/health" target="_blank" rel="noopener">Open setup check</a></div>'+
+    '<p class="empty">The setup check (/api/health) tests the database connection and says what to change in Netlify.</p></div>';
+  $("sbRetry").onclick=function(){ $("sbBody").innerHTML='<div class="card panel"><p class="empty">Loading results…</p></div>'; loadBoard(false); };
+}
 function loadBoard(silent){
   if(!SB.pass) return;
   fetch(API+"/scores", {headers:{authorization:"Bearer "+SB.pass}, cache:"no-store"}).then(function(r){
     if(r.status===401){ SB.pass=null; SB.admin=false; try{ sessionStorage.removeItem("cl-instructor"); }catch(e){} $("tabBoard").hidden=true; if(!silent || location.hash==="#scoreboard") showLogin("That password didn't work. Try again."); return null; }
-    if(r.status===503){ if(location.hash==="#scoreboard") showLogin("The scoreboard isn't set up yet. Add INSTRUCTOR_PASSWORD and DATABASE_URL in Netlify, then redeploy."); return null; }
-    if(!r.ok) throw new Error("http "+r.status);
+    var isJson=(r.headers.get("content-type")||"").indexOf("application/json")>=0;
+    if(r.status===404 || !isJson){
+      if(location.hash==="#scoreboard" && !(silent && SB.rows)) showProblem("The score API isn't running on this site", "The page loaded, but /api/scores wasn't found (HTTP "+r.status+"). In Netlify, open Logs → Functions and check that a function named \"api\" is listed. If it isn't, open the latest deploy log, fix any build error, and trigger a new deploy. If you opened this page from a file or a different host, open it from your Netlify address instead.");
+      return null;
+    }
+    if(!r.ok){
+      return r.json().then(function(j){
+        if(location.hash==="#scoreboard" && !(silent && SB.rows)) showProblem(r.status===503?"The scoreboard isn't set up yet":"The scoreboard can't reach the database", (j && j.detail) || ("The server returned an error (HTTP "+r.status+")."));
+        return null;
+      });
+    }
     return r.json();
   }).then(function(data){
     if(!data) return;
@@ -961,7 +979,9 @@ function loadBoard(silent){
     try{ sessionStorage.setItem("cl-instructor", SB.pass); }catch(e){}
     $("sbRefresh").hidden=false; $("sbOut").hidden=false;
     if(location.hash==="#scoreboard"){ renderBoard(); startPoll(); }
-  }).catch(function(){ if(location.hash==="#scoreboard" && !SB.rows) $("sbBody").innerHTML='<div class="card panel"><p class="empty">Couldn\'t reach the scoreboard. Check your connection and try Refresh.</p></div>'; });
+  }).catch(function(){
+    if(location.hash==="#scoreboard" && !SB.rows) showProblem("Couldn't reach the server", "Your browser couldn't connect to this site's score API. Check your internet connection and press Retry. If you opened this page from a saved file, open it from your Netlify address instead.");
+  });
 }
 function openBoard(){ if(SB.admin){ renderBoard(); loadBoard(true); startPoll(); } else if(SB.pass){ $("sbBody").innerHTML='<div class="card panel"><p class="empty">Loading results…</p></div>'; loadBoard(false); } else showLogin(""); }
 function startPoll(){ if(SB.poll) return; SB.poll=setInterval(function(){ if(location.hash==="#scoreboard" && !document.hidden) loadBoard(true); }, 30000); }

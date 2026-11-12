@@ -79,3 +79,39 @@ test('validateDoc strips unexpected keys and control characters', () => {
   assert.equal(v.extra, undefined);
   assert.deepEqual(v.p, { 5: 'Sinus rhythm' });
 });
+
+import { describeDatabaseUrl, explainDatabaseError } from '../lib/diagnose.mjs';
+
+test('DATABASE_URL problems are explained', () => {
+  const pool = 'postgresql://postgres.abcd1234:pw@aws-0-us-east-1.pooler.supabase.com:6543/postgres';
+  assert.equal(describeDatabaseUrl(pool).ok, true);
+  assert.match(describeDatabaseUrl('').detail, /not set/);
+  assert.match(describeDatabaseUrl(pool.replace('pw', '[YOUR-PASSWORD]')).detail, /placeholder/);
+  assert.match(describeDatabaseUrl('postgresql://postgres:pw@db.abcd1234.supabase.co:5432/postgres').detail, /Direct connection/);
+  assert.match(describeDatabaseUrl(pool.replace('postgres.abcd1234', 'postgres')).detail, /postgres\.<your-project-ref>/);
+  assert.match(describeDatabaseUrl(pool.replace(':pw@', ':p@ss@')).detail, /%40/);
+  assert.match(describeDatabaseUrl(pool + '\n').detail, /line break/);
+  assert.match(explainDatabaseError({ code: '28P01' }), /Wrong database password/);
+  assert.match(explainDatabaseError({ message: 'Tenant or user not found' }), /user name/);
+});
+
+test('health and scores report a bad DATABASE_URL instead of a generic error', async () => {
+  const api = createApi({ getDb: async () => { throw new Error('should not connect'); }, env: { DATABASE_URL: 'postgresql://postgres:pw@db.x1.supabase.co:5432/postgres', INSTRUCTOR_PASSWORD: 's' }, failDelayMs: 0 });
+  const h = await api(req('GET', '/api/health'));
+  assert.equal(h.status, 503);
+  assert.match((await h.json()).detail, /Direct connection/);
+  const r = await api(req('GET', '/api/scores', { auth: 's' }));
+  assert.equal(r.status, 503);
+  assert.match((await r.json()).detail, /Transaction pooler/);
+});
+
+test('a database failure returns an explanation', async () => {
+  const err = Object.assign(new Error('password authentication failed for user "postgres"'), { code: '28P01' });
+  const api = createApi({ getDb: async () => { throw err; }, env: { DATABASE_URL: 'postgresql://postgres.abc:pw@aws-0-us-east-1.pooler.supabase.com:6543/postgres', INSTRUCTOR_PASSWORD: 's' }, failDelayMs: 0 });
+  const r = await api(req('GET', '/api/scores', { auth: 's' }));
+  assert.equal(r.status, 500);
+  assert.match((await r.json()).detail, /Wrong database password/);
+  const h = await api(req('GET', '/api/health'));
+  assert.equal(h.status, 503);
+  assert.doesNotMatch(JSON.stringify(await h.json()), /:pw@/);
+});
