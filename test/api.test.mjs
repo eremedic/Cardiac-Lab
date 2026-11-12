@@ -128,6 +128,8 @@ test('the Netlify internal function address works too', async () => {
   const h = await api(new Request('http://x/.netlify/functions/api/health'));
   assert.equal(h.status, 200);
   assert.equal((await api(new Request('http://x/api/health/'))).status, 200);
+  assert.equal((await api(new Request('http://x/api/health.'))).status, 200);
+  assert.equal((await api(new Request('http://x/api/health),'))).status, 200);
   assert.equal((await api(new Request('http://x/.netlify/functions/api/scores', { headers: { authorization: 'Bearer secret' } }))).status, 200);
   assert.equal((await api(new Request('http://x/api'))).status, 200);
   const nf = await api(new Request('http://x/api/nope'));
