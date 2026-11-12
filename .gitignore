@@ -1,0 +1,7 @@
+node_modules/
+.netlify/
+.env
+.DS_Store
+tools/generator/__pycache__/
+tools/generator/strips/
+tools/generator/trainer_data.js

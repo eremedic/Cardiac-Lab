@@ -1,0 +1,1067 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>CSHealthED Cardiac Lab · ECG &amp; Megacode Training</title>
+<meta name="description" content="Paramedic ACLS training from CSHealthED: 102 ECG rhythm strips with explained feedback and 20 cardiac arrest megacode cases.">
+<meta name="theme-color" content="#02245D">
+<link rel="icon" type="image/png" href="/img/favicon.png">
+<link rel="apple-touch-icon" href="/img/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&family=Poppins:wght@500;600;700;800&display=swap">
+<style>
+/* CSHealthED brand: navy, teal and red wordmark with the four quadrant colors (green, blue, orange, red).
+   Layout: one centered column (max 1160px). Each section takes one quadrant color as its accent;
+   practice strips sit on ECG paper, megacode runs on a bedside monitor that stays dark in both themes. */
+:root{
+  --bg:#F3F6FB; --surface:#FFFFFF; --surface-2:#EDF2F9; --ink:#0E1B36; --ink-2:#33415D; --muted:#5F6E8A; --line:#DDE5F0; --line-2:#C8D3E2;
+  --navy:#02245D; --teal:#0A738B; --brand-red:#DA0D14; --green:#2C8F00; --blue:#0A6AD6; --orange:#E05F00;
+  --green-soft:#E6F5DC; --blue-soft:#E2EEFE; --orange-soft:#FFEEDF; --red-soft:#FFE7E7; --teal-soft:#DEF1F4; --navy-soft:#E5EBF6;
+  --band-green:#2E9A00; --band-blue:#0A6FDD; --band-orange:#EA6A00; --band-red:#D9121A; --band-navy:#0A2B66; --band-teal:#0A7A92;
+  --wm-cs:#02245D; --wm-h:#0A738B; --wm-ed:#E30B10;
+  --accent:var(--navy); --accent-ink:#FFFFFF; --accent-soft:var(--navy-soft);
+  --ok:#11805A; --ok-soft:#DFF3EA; --bad:#D4460C; --bad-soft:#FFEBDD;
+  --paper:#FFF7F8; --grid-minor:#D9849A; --grid-major:#BF3A57; --trace:#191B21;
+  --mon-bg:#070B0A; --mon-panel:#0D1412; --mon-grid:#244536; --mon-grid-2:#3C785B; --mon-trace:#3DF08E; --mon-text:#D6F3E2; --mon-dim:#6E8F7F;
+  --mon-hr:#3DF08E; --mon-bp:#FF6B7D; --mon-spo2:#4FD8F2; --mon-co2:#F5C842;
+  --shadow:0 1px 2px rgba(14,27,54,.06),0 10px 28px -14px rgba(14,27,54,.22);
+  --f-display:"Poppins",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-body:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-vital:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+  --r:14px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#07122A; --surface:#0E1D3A; --surface-2:#152849; --ink:#EAF0FA; --ink-2:#C3CEE2; --muted:#8E9CB8; --line:#203457; --line-2:#2C436F;
+  --navy:#9DBBFF; --teal:#45C6D9; --brand-red:#FF5A5F; --green:#6AD43F; --blue:#5EAAFF; --orange:#FF9A48;
+  --green-soft:#15331C; --blue-soft:#11294E; --orange-soft:#3A2412; --red-soft:#3D161B; --teal-soft:#0E3340; --navy-soft:#1A2E57;
+  --wm-cs:#EAF0FA; --wm-h:#45C6D9; --wm-ed:#FF5A5F;
+  --accent-ink:#06122A; --ok:#3CCB94; --ok-soft:#0F3329; --bad:#FF8A4C; --bad-soft:#3A2114;
+  --paper:#1A1416; --grid-minor:#5F3341; --grid-major:#B34A63; --trace:#F2EDEF;
+  --shadow:0 1px 2px rgba(0,0,0,.45),0 12px 30px -14px rgba(0,0,0,.75); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#07122A; --surface:#0E1D3A; --surface-2:#152849; --ink:#EAF0FA; --ink-2:#C3CEE2; --muted:#8E9CB8; --line:#203457; --line-2:#2C436F;
+  --navy:#9DBBFF; --teal:#45C6D9; --brand-red:#FF5A5F; --green:#6AD43F; --blue:#5EAAFF; --orange:#FF9A48;
+  --green-soft:#15331C; --blue-soft:#11294E; --orange-soft:#3A2412; --red-soft:#3D161B; --teal-soft:#0E3340; --navy-soft:#1A2E57;
+  --wm-cs:#EAF0FA; --wm-h:#45C6D9; --wm-ed:#FF5A5F;
+  --accent-ink:#06122A; --ok:#3CCB94; --ok-soft:#0F3329; --bad:#FF8A4C; --bad-soft:#3A2114;
+  --paper:#1A1416; --grid-minor:#5F3341; --grid-major:#B34A63; --trace:#F2EDEF;
+  --shadow:0 1px 2px rgba(0,0,0,.45),0 12px 30px -14px rgba(0,0,0,.75); color-scheme:dark}
+
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%}
+body{margin:0}
+img{max-width:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--surface)}
+h1,h2,h3{margin:0;text-wrap:balance;line-height:1.15}
+p{margin:0}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+.wrap{max-width:1120px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.num{font-variant-numeric:tabular-nums}
+.eyebrow{font-family:var(--f-mono);font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+
+/* ---------- top bar ---------- */
+.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:color-mix(in srgb,var(--surface) 92%,transparent);backdrop-filter:saturate(1.4) blur(10px);border-bottom:1px solid var(--line)}
+.bar .wrap{display:flex;align-items:center;gap:18px;min-height:60px;flex-wrap:wrap;padding-block:8px}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--ink);margin-right:auto}
+.brand svg{width:34px;height:22px}
+.brand b{font-family:var(--f-display);font-weight:700;font-size:22px;letter-spacing:.02em;text-transform:uppercase}
+.brand span{font-family:var(--f-mono);font-size:11px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase}
+.tabs{display:flex;gap:4px;background:var(--surface-2);padding:4px;border-radius:10px}
+.tabs a{text-decoration:none;color:var(--ink-2);font-weight:500;font-size:14px;padding:7px 14px;border-radius:7px;white-space:nowrap}
+.tabs a[aria-current="page"]{background:var(--surface);color:var(--ink);box-shadow:var(--shadow)}
+.tally{display:flex;gap:8px}
+.chip{font-family:var(--f-mono);font-size:12px;padding:5px 9px;border-radius:999px;background:var(--surface-2);color:var(--ink-2);white-space:nowrap}
+.chip b{color:var(--ink);font-weight:600}
+@media (max-width:720px){.tally{display:none}.brand span{display:none}.tabs{width:100%}.tabs a{flex:1;text-align:center;padding:7px 6px}}
+
+main{padding-block:28px 64px}
+.view[hidden]{display:none}
+.qcard>*,.runner>*,.decision>*,.monitor,.hero>*,.modules>*,.split>*,.case-summary>*{min-width:0}
+.mon-screen svg.hero-svg{min-width:0}
+
+/* ---------- generic ---------- */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:1px solid transparent;border-radius:10px;padding:11px 18px;font-weight:600;font-size:15px;cursor:pointer;text-decoration:none;transition:background .15s,border-color .15s,transform .05s}
+.btn:active{transform:translateY(1px)}
+.btn-primary{background:var(--accent);color:var(--accent-ink)}
+.btn-primary:hover{background:color-mix(in srgb,var(--accent) 88%,var(--ink))}
+.btn-ghost{background:transparent;border-color:var(--line-2);color:var(--ink)}
+.btn-ghost:hover{background:var(--surface-2)}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.progress{height:6px;border-radius:99px;background:var(--surface-2);overflow:hidden}
+.progress i{display:block;height:100%;background:var(--accent);border-radius:99px;transition:width .3s}
+
+/* ---------- monitor ---------- */
+.monitor{background:var(--mon-bg);border-radius:16px;padding:14px;border:1px solid #1C2723;box-shadow:inset 0 0 0 1px rgba(255,255,255,.03),0 18px 40px -20px rgba(0,0,0,.6);color:var(--mon-text)}
+.mon-top{display:flex;justify-content:space-between;align-items:center;font-family:var(--f-mono);font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--mon-dim);padding:0 4px 10px}
+.mon-top .live{display:flex;align-items:center;gap:7px;color:var(--mon-trace)}
+.mon-top .live::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--mon-trace);box-shadow:0 0 8px var(--mon-trace)}
+.mon-body{display:grid;grid-template-columns:minmax(0,1fr) 200px;gap:12px}
+.mon-screen{background:var(--mon-panel);border-radius:10px;overflow-x:auto;min-width:0}
+.mon-screen svg{display:block;min-width:720px;width:100%;height:auto}
+.vitals{display:grid;grid-template-columns:1fr;gap:8px}
+.vital{background:var(--mon-panel);border-radius:10px;padding:8px 12px;display:flex;justify-content:space-between;align-items:flex-end;gap:8px}
+.vital small{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.1em;color:var(--mon-dim);text-transform:uppercase}
+.vital b{font-family:var(--f-display);font-weight:600;font-size:34px;line-height:.9;letter-spacing:.01em}
+.vital.hr b{color:var(--mon-hr)}.vital.bp b{color:var(--mon-bp)}.vital.sp b{color:var(--mon-spo2)}.vital.co b{color:var(--mon-co2)}
+.mon-status{margin-top:10px;font-family:var(--f-mono);font-size:13px;color:var(--mon-text);padding:9px 12px;background:var(--mon-panel);border-radius:10px;display:flex;gap:10px;align-items:baseline}
+.mon-status em{font-style:normal;color:var(--mon-co2);letter-spacing:.08em;font-size:11px;text-transform:uppercase;white-space:nowrap}
+@media (max-width:760px){.mon-body{grid-template-columns:minmax(0,1fr)}.vitals{grid-template-columns:repeat(2,1fr)}}
+.trace-anim{stroke-dasharray:1;stroke-dashoffset:1;animation:sweep 5.2s linear forwards}
+.trace-loop{stroke-dasharray:1;stroke-dashoffset:1;animation:sweeploop 3.4s linear infinite}
+@keyframes sweep{to{stroke-dashoffset:0}}
+@keyframes sweeploop{0%{stroke-dashoffset:1}85%{stroke-dashoffset:0}100%{stroke-dashoffset:0;opacity:.0}}
+@media (prefers-reduced-motion:reduce){.trace-anim,.trace-loop{animation:none;stroke-dashoffset:0}}
+
+/* ---------- paper strip ---------- */
+.paper{background:var(--paper);border:1px solid var(--grid-major);border-radius:10px;overflow-x:auto;position:relative}
+.paper svg{display:block;min-width:720px;width:100%;height:auto}
+.paper-meta{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;font-family:var(--f-mono);font-size:11.5px;color:var(--muted);margin-top:8px}
+.scroll-hint{display:none}
+@media (max-width:760px){.scroll-hint{display:inline}}
+
+/* ---------- home ---------- */
+.hero{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:40px;align-items:center;margin-bottom:36px}
+.hero h1{font-family:var(--f-display);font-weight:700;font-size:clamp(40px,6vw,64px);letter-spacing:.005em;text-transform:uppercase;line-height:.95}
+.hero h1 em{font-style:normal;color:var(--accent)}
+.hero p.lede{font-size:17px;color:var(--ink-2);max-width:52ch;margin-top:16px}
+.hero .meta{display:flex;gap:22px;margin-top:22px;flex-wrap:wrap}
+.hero .meta div{display:flex;flex-direction:column}
+.hero .meta b{font-family:var(--f-display);font-size:34px;font-weight:600;line-height:1}
+.hero .meta span{font-size:12.5px;color:var(--muted)}
+@media (max-width:880px){.hero{grid-template-columns:minmax(0,1fr);gap:24px}}
+.modules{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}
+@media (max-width:760px){.modules{grid-template-columns:1fr}}
+.module{padding:24px;display:flex;flex-direction:column;gap:14px}
+.module header{display:flex;justify-content:space-between;align-items:flex-start;gap:16px}
+.module h2{font-size:22px;font-weight:600}
+.module p{color:var(--ink-2)}
+.ring{width:64px;height:64px;flex:none}
+.ring circle{fill:none;stroke-width:6}
+.ring .t{stroke:var(--surface-2)}.ring .v{stroke:var(--accent);stroke-linecap:round;transition:stroke-dasharray .4s}
+.ring text{font-family:var(--f-mono);font-size:13px;font-weight:600;fill:var(--ink)}
+.module ul{margin:0;padding-left:18px;color:var(--ink-2);font-size:14px;display:grid;gap:3px}
+.module .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:auto}
+.method{margin-top:22px;padding:20px 24px;display:grid;grid-template-columns:auto repeat(5,minmax(0,1fr));gap:18px;align-items:start}
+.method .lab{font-weight:600}
+.method div small{display:block;font-family:var(--f-mono);font-size:11px;color:var(--accent);letter-spacing:.1em}
+.method div span{font-size:13.5px;color:var(--ink-2)}
+@media (max-width:880px){.method{grid-template-columns:repeat(2,minmax(0,1fr))}.method .lab{grid-column:1/-1}}
+
+/* ---------- strips view ---------- */
+.qhead{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:14px}
+.qhead h2{font-family:var(--f-display);font-size:34px;font-weight:600;text-transform:uppercase;letter-spacing:.01em}
+.qhead h2 span{color:var(--muted)}
+.qstats{display:flex;gap:18px;font-size:13px;color:var(--muted);align-items:center}
+.qstats b{font-family:var(--f-mono);color:var(--ink)}
+.qcard{padding:22px;display:grid;gap:18px}
+.stem{display:flex;gap:12px;align-items:flex-start;font-size:16px}
+.stem .tag{flex:none;font-family:var(--f-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;background:var(--accent-soft);color:var(--accent);padding:4px 8px;border-radius:6px;margin-top:2px}
+.opts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+@media (max-width:640px){.opts{grid-template-columns:1fr}}
+.opt{display:flex;align-items:center;gap:12px;text-align:left;background:var(--surface);border:1.5px solid var(--line-2);border-radius:10px;padding:13px 14px;cursor:pointer;font-weight:500;transition:border-color .15s,background .15s;min-height:54px}
+.opt:hover:not([disabled]){border-color:var(--accent);background:var(--accent-soft)}
+.opt .k{flex:none;width:26px;height:26px;border-radius:7px;display:grid;place-items:center;font-family:var(--f-mono);font-size:12.5px;font-weight:600;background:var(--surface-2);color:var(--ink-2)}
+.opt[disabled]{cursor:default}
+.opt.is-right{border-color:var(--ok);background:var(--ok-soft)}
+.opt.is-right .k{background:var(--ok);color:var(--surface)}
+.opt.is-wrong{border-color:var(--bad);background:var(--bad-soft)}
+.opt.is-wrong .k{background:var(--bad);color:var(--surface)}
+.opt.is-dim{opacity:.55}
+.opt-list{display:grid;gap:10px}
+.opt-list .opt{min-height:0}
+
+.fb{border-radius:12px;padding:18px 20px;display:grid;gap:14px;border:1px solid var(--line)}
+.fb.ok{background:var(--ok-soft);border-color:color-mix(in srgb,var(--ok) 35%,transparent)}
+.fb.no{background:var(--bad-soft);border-color:color-mix(in srgb,var(--bad) 35%,transparent)}
+.verdict{display:flex;align-items:center;gap:10px;font-weight:700;font-size:15px;letter-spacing:.02em;text-transform:uppercase;font-family:var(--f-mono)}
+.fb.ok .verdict{color:var(--ok)}.fb.no .verdict{color:var(--bad)}
+.verdict svg{width:20px;height:20px}
+.answer-name{font-family:var(--f-display);font-size:28px;font-weight:600;line-height:1.05;text-transform:uppercase;letter-spacing:.01em}
+.why{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+@media (max-width:640px){.why{grid-template-columns:1fr}}
+.why > div{background:var(--surface);border-radius:10px;padding:12px 14px;border:1px solid var(--line)}
+.why small{display:block;font-family:var(--f-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+.why b{display:block;margin-bottom:2px}
+.clue{display:flex;gap:10px;align-items:flex-start;font-size:14.5px}
+.clue svg{flex:none;width:18px;height:18px;margin-top:2px;color:var(--accent)}
+.interp{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:14px}
+@media (max-width:760px){.interp{grid-template-columns:1fr}}
+.itable{width:100%;border-collapse:collapse;font-size:14px;background:var(--surface);border-radius:10px;overflow:hidden;border:1px solid var(--line)}
+.itable th{text-align:left;font-weight:600;color:var(--accent);background:var(--surface-2);width:34%;padding:8px 12px;font-size:13px;vertical-align:top}
+.itable td{padding:8px 12px;border-top:1px solid var(--line)}
+.itable tr:first-child td{border-top:0}
+.itable tr + tr th{border-top:1px solid var(--line)}
+.action{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.action h4{margin:0 0 6px;font-size:13px;font-family:var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.action ul{margin:0;padding-left:18px;display:grid;gap:4px;font-size:14px}
+.qnav{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center}
+.grid-nav{margin-top:22px;padding:18px 20px}
+.grid-nav summary{cursor:pointer;font-weight:600;display:flex;justify-content:space-between;align-items:center;list-style:none}
+.grid-nav summary::-webkit-details-marker{display:none}
+.grid-nav summary::after{content:"Show";font-family:var(--f-mono);font-size:12px;color:var(--muted)}
+.grid-nav[open] summary::after{content:"Hide"}
+.dots{display:grid;grid-template-columns:repeat(auto-fill,minmax(34px,1fr));gap:6px;margin-top:14px}
+.dot{height:34px;border-radius:7px;border:1px solid var(--line-2);background:var(--surface);font-family:var(--f-mono);font-size:11.5px;cursor:pointer;color:var(--ink-2)}
+.dot.r{background:var(--ok-soft);border-color:var(--ok);color:var(--ok)}
+.dot.w{background:var(--bad-soft);border-color:var(--bad);color:var(--bad)}
+.dot.cur{outline:2px solid var(--accent);outline-offset:1px}
+.legend{display:flex;gap:14px;font-size:12.5px;color:var(--muted);margin-top:10px;flex-wrap:wrap}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+
+/* ---------- megacode ---------- */
+.cases{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px}
+.case{padding:18px;display:flex;flex-direction:column;gap:8px;text-align:left;cursor:pointer;border:1px solid var(--line);background:var(--surface);border-radius:var(--r);box-shadow:var(--shadow);transition:border-color .15s,transform .15s}
+.case:hover{border-color:var(--accent);transform:translateY(-1px)}
+.case .no{font-family:var(--f-mono);font-size:11.5px;color:var(--muted);letter-spacing:.08em}
+.case h3{font-size:17px;font-weight:600}
+.case .focus{font-size:13px;color:var(--ink-2)}
+.case .st{margin-top:auto;display:flex;justify-content:space-between;align-items:center;font-size:12.5px;color:var(--muted);padding-top:8px}
+.pill{font-family:var(--f-mono);font-size:11.5px;padding:3px 8px;border-radius:99px;background:var(--surface-2);color:var(--ink-2)}
+.pill.done{background:var(--ok-soft);color:var(--ok)}
+.pill.part{background:var(--accent-soft);color:var(--accent)}
+.runner{display:grid;gap:18px}
+.runner-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap}
+.runner-head h2{font-family:var(--f-display);font-size:36px;font-weight:600;text-transform:uppercase;line-height:1}
+.steps{display:flex;gap:6px;align-items:center}
+.steps i{width:28px;height:6px;border-radius:99px;background:var(--line-2)}
+.steps i.r{background:var(--ok)}.steps i.w{background:var(--bad)}.steps i.cur{background:var(--accent)}
+.scenario{padding:16px 18px;font-size:15.5px;color:var(--ink-2);display:flex;gap:12px}
+.scenario svg{flex:none;width:20px;height:20px;color:var(--accent);margin-top:2px}
+.decision{padding:22px;display:grid;gap:16px}
+.decision h3{font-size:19px;font-weight:600}
+.reveal{font-family:var(--f-mono);font-size:12.5px;color:var(--mon-co2);margin-left:auto}
+.case-summary{padding:24px;display:grid;gap:16px}
+.case-summary ol{margin:0;padding-left:20px;display:grid;gap:10px}
+.case-summary li span{display:block;font-size:13.5px;color:var(--ink-2)}
+
+/* ---------- results ---------- */
+.score-hero{padding:28px;display:grid;grid-template-columns:auto 1fr;gap:28px;align-items:center}
+@media (max-width:640px){.score-hero{grid-template-columns:1fr}}
+.big-ring{width:150px;height:150px}
+.big-ring circle{fill:none;stroke-width:10}
+.big-ring .t{stroke:var(--surface-2)}.big-ring .v{stroke:var(--accent);stroke-linecap:round}
+.big-ring text{font-family:var(--f-display);font-weight:600;fill:var(--ink)}
+.score-hero h2{font-family:var(--f-display);font-size:40px;text-transform:uppercase;font-weight:600}
+.score-hero p{color:var(--ink-2);margin-top:6px;max-width:60ch}
+.split{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;margin-top:18px}
+@media (max-width:760px){.split{grid-template-columns:1fr}}
+.panel{padding:22px;display:grid;gap:14px;align-content:start}
+.panel h3{font-size:17px;font-weight:600;display:flex;justify-content:space-between;align-items:baseline}
+.panel h3 span{font-family:var(--f-mono);font-size:14px;color:var(--ink-2)}
+.bars{display:grid;gap:10px}
+.barrow{display:grid;grid-template-columns:150px minmax(0,1fr) 70px;gap:10px;align-items:center;font-size:13.5px}
+.barrow .track{height:10px;border-radius:99px;background:var(--surface-2);overflow:hidden}
+.barrow .track i{display:block;height:100%;background:var(--accent);border-radius:99px}
+.barrow b{font-family:var(--f-mono);font-weight:500;text-align:right;font-size:12.5px;color:var(--ink-2)}
+.missed{display:grid;gap:6px;max-height:420px;overflow:auto;padding-right:4px}
+.missed button{display:flex;gap:10px;align-items:baseline;text-align:left;background:var(--surface-2);border:0;border-radius:8px;padding:9px 12px;cursor:pointer;font-size:13.5px}
+.missed button:hover{background:var(--accent-soft)}
+.missed button b{font-family:var(--f-mono);font-size:12px;color:var(--muted);flex:none;width:34px}
+.missed button span{color:var(--muted)}
+.case-scores{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.case-scores button{background:var(--surface-2);border:0;border-radius:8px;padding:9px 12px;text-align:left;cursor:pointer;font-size:13px}
+.case-scores button b{display:block;font-family:var(--f-mono);font-size:15px}
+.confirm{display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:14px;color:var(--ink-2)}
+.empty{color:var(--muted);font-size:14px}
+.share-card{margin-top:18px;padding:18px 22px;display:flex;gap:18px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.share-l{display:grid;gap:4px;min-width:0;flex:1 1 320px}
+.share-l p{color:var(--ink-2);font-size:14.5px}
+.cohort{display:grid;gap:5px;font-size:12.5px;color:var(--muted);flex:0 1 280px}
+.cohort input,.sel select{font:inherit;font-size:14.5px;color:var(--ink);background:var(--surface);border:1.5px solid var(--line-2);border-radius:9px;padding:9px 11px;width:100%}
+.cohort input:focus,.sel select:focus{outline:none;border-color:var(--accent)}
+.chip.sync{display:inline-flex;align-items:center;gap:6px}
+@media (max-width:1400px){.tally .chip:not(.sync){display:none}}
+.sbt td:first-child{min-width:190px}
+.chip.sync::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--muted)}
+.chip.sync[data-s="synced"]::before{background:var(--ok)}
+.chip.sync[data-s="saving"]::before{background:var(--mon-co2)}
+.chip.sync[data-s="readonly"]::before,.chip.sync[data-s="error"]::before{background:var(--bad)}
+.sb-tools{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap}
+.sel{display:grid;gap:4px;font-size:11.5px;color:var(--muted);font-family:var(--f-mono);letter-spacing:.06em;text-transform:uppercase}
+.sel select{padding:8px 10px;font-family:var(--f-body);letter-spacing:0;text-transform:none;min-width:130px}
+.stats{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin-bottom:18px}
+@media (max-width:860px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.stat{padding:16px 18px;display:grid;gap:2px}
+.stat small{font-family:var(--f-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.stat b{font-family:var(--f-display);font-size:38px;font-weight:600;line-height:1}
+.stat span{font-size:12.5px;color:var(--muted)}
+.sb-grid{display:grid;grid-template-columns:minmax(0,1.9fr) minmax(0,1fr);gap:18px;align-items:start}
+@media (max-width:980px){.sb-grid{grid-template-columns:minmax(0,1fr)}}
+.tablewrap{overflow-x:auto}
+.sbt{width:100%;border-collapse:collapse;font-size:14px;min-width:640px}
+.sbt th{font-family:var(--f-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:500;text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+.sbt td{padding:11px 12px;border-bottom:1px solid var(--line);vertical-align:middle}
+.sbt tr.row{cursor:pointer}
+.sbt tr.row:hover td{background:var(--surface-2)}
+.sbt tr.open td{background:var(--surface-2)}
+.sbt .who{display:flex;align-items:center;gap:10px;min-width:0}
+.sbt .who img{width:28px;height:28px;border-radius:50%;flex:none}
+.sbt .who b{font-weight:600;display:block}
+.sbt .who small{color:var(--muted);font-size:12px}
+.sbt .mono{font-family:var(--f-mono);font-size:13px;white-space:nowrap}
+.mini{display:flex;align-items:center;gap:8px;min-width:120px}
+.mini .track{flex:1;height:8px;border-radius:99px;background:var(--surface-2);overflow:hidden}
+.mini .track i{display:block;height:100%;border-radius:99px;background:var(--accent)}
+.mini b{font-family:var(--f-mono);font-size:13px;font-weight:600;width:40px;text-align:right}
+.detail td{padding:0 12px 16px;background:var(--surface-2)}
+.detail .inner{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;padding-top:8px}
+@media (max-width:760px){.detail .inner{grid-template-columns:minmax(0,1fr)}}
+.detail h4{margin:0 0 8px;font-size:12px;font-family:var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.tags{display:flex;flex-wrap:wrap;gap:6px}
+.tags span{font-size:12.5px;background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:3px 8px}
+.hard{display:grid;gap:8px}
+.hard button{display:grid;grid-template-columns:44px minmax(0,1fr) 54px;gap:10px;align-items:center;text-align:left;background:var(--surface-2);border:0;border-radius:9px;padding:9px 12px;cursor:pointer;font-size:13.5px}
+.hard button:hover{background:var(--accent-soft)}
+.hard button b{font-family:var(--f-mono);font-size:12px;color:var(--muted)}
+.hard button em{font-style:normal;font-family:var(--f-mono);font-size:12.5px;color:var(--bad);text-align:right}
+.note{font-size:12.5px;color:var(--muted);margin-top:28px;max-width:80ch}
+
+/* ===================== CSHealthED brand layer ===================== */
+.wrap{max-width:1160px}
+body{background:
+  radial-gradient(900px 420px at 8% -120px, color-mix(in srgb,var(--blue) 10%,transparent), transparent 70%),
+  radial-gradient(800px 420px at 100% -100px, color-mix(in srgb,var(--green) 9%,transparent), transparent 70%),
+  var(--bg);background-repeat:no-repeat;background-color:var(--bg)}
+h1,h2,h3,.qhead h2,.runner-head h2,.score-hero h2,.answer-name,.stat b,.hero .meta b,.case-summary h3{font-family:var(--f-display);text-transform:none!important;letter-spacing:-.01em}
+.vital b{font-family:var(--f-vital)}
+.eyebrow{color:var(--accent);font-weight:500}
+#v-home{--accent:var(--navy);--accent-soft:var(--navy-soft)}
+#v-strips{--accent:var(--blue);--accent-soft:var(--blue-soft)}
+#v-megacode{--accent:var(--brand-red);--accent-soft:var(--red-soft)}
+#v-results{--accent:var(--green);--accent-soft:var(--green-soft)}
+#v-scoreboard{--accent:var(--teal);--accent-soft:var(--teal-soft)}
+
+/* top bar */
+.bar{background:color-mix(in srgb,var(--surface) 94%,transparent)}
+.brand img{width:40px;height:40px;flex:none}
+.brand .wm{display:flex!important;flex-direction:column;line-height:1.05;font-family:var(--f-display);font-size:inherit;letter-spacing:normal;text-transform:none;color:inherit}
+.brand .wm b span{font:inherit;letter-spacing:inherit;text-transform:none;display:inline}
+.wm b{font-family:var(--f-display);font-weight:800;font-size:21px;letter-spacing:-.02em;text-transform:none}
+.wm .cs{color:var(--wm-cs)}.wm .hl{color:var(--wm-h)}.wm .ed{color:var(--wm-ed)}
+.brand .wm small{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-top:3px}
+.tabs{background:var(--surface-2);border-radius:12px}
+.tabs a{display:inline-flex;align-items:center;gap:7px;border-radius:9px;font-weight:600}
+.tabs a::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--tc,var(--navy));flex:none}
+.tabs a[data-v="home"]{--tc:var(--navy);--ts:var(--navy-soft)}
+.tabs a[data-v="strips"]{--tc:var(--blue);--ts:var(--blue-soft)}
+.tabs a[data-v="megacode"]{--tc:var(--brand-red);--ts:var(--red-soft)}
+.tabs a[data-v="results"]{--tc:var(--green);--ts:var(--green-soft)}
+.tabs a[data-v="scoreboard"]{--tc:var(--teal);--ts:var(--teal-soft)}
+.tabs a[aria-current="page"]{background:var(--surface);color:var(--tc);box-shadow:var(--shadow)}
+.tabs a[hidden]{display:none!important}
+@media (max-width:720px){.brand .wm small{display:none}.tabs a{justify-content:center;font-size:13px}.tabs a::before{display:none}}
+
+/* hero */
+.hero{position:relative;padding:34px;border-radius:26px;border:1px solid var(--line);box-shadow:var(--shadow);margin-bottom:24px;overflow:hidden;
+  background:
+   radial-gradient(520px 300px at 0% 0%, color-mix(in srgb,var(--green) 22%,transparent), transparent 72%),
+   radial-gradient(520px 320px at 100% 0%, color-mix(in srgb,var(--blue) 24%,transparent), transparent 72%),
+   radial-gradient(520px 300px at 0% 100%, color-mix(in srgb,var(--orange) 20%,transparent), transparent 72%),
+   radial-gradient(520px 320px at 100% 100%, color-mix(in srgb,var(--brand-red) 17%,transparent), transparent 72%),
+   var(--surface)}
+.hero-copy{display:grid;gap:14px;align-content:start}
+.logo-badge{display:inline-flex;background:#FFFFFF;border-radius:16px;padding:8px 12px;box-shadow:0 1px 2px rgba(2,36,93,.08),0 6px 18px -10px rgba(2,36,93,.35);justify-self:start}
+.logo-badge img{display:block;height:auto}
+.logo-badge.sm{padding:6px 9px;border-radius:12px}
+.hero h1{font-size:clamp(34px,5.2vw,56px);font-weight:800;line-height:1.02;color:var(--ink)}
+.hero h1 em{color:var(--brand-red)}
+.hero p.lede{margin-top:0}
+.hero .meta{gap:10px;margin-top:4px}
+.hero .meta div{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:10px 16px;min-width:110px}
+.hero .meta b{font-size:30px;font-weight:700}
+.m-blue b{color:var(--blue)}.m-red b{color:var(--brand-red)}.m-green b{color:var(--green)}
+@media (max-width:640px){.hero{padding:20px;border-radius:20px}}
+
+/* module cards */
+.module{padding:0;overflow:hidden;gap:0}
+.module .band{display:flex;align-items:center;gap:14px;padding:20px 22px;color:#FFFFFF}
+.m-strips .band{background:linear-gradient(135deg,var(--band-blue),var(--band-navy))}
+.m-mega .band{background:linear-gradient(135deg,var(--band-red),#8E0A12)}
+.m-strips{--accent:var(--blue);--accent-soft:var(--blue-soft)}
+.m-mega{--accent:var(--brand-red);--accent-soft:var(--red-soft)}
+.band-ic{width:46px;height:46px;border-radius:14px;background:rgba(255,255,255,.18);display:grid;place-items:center;flex:none}
+.band-ic svg{width:26px;height:26px}
+.band-t{flex:1;min-width:0}
+.band .eyebrow{color:rgba(255,255,255,.82)}
+.band h2{color:#FFFFFF;font-size:23px;font-weight:700}
+.band .ring .t{stroke:rgba(255,255,255,.28)}.band .ring .v{stroke:#FFFFFF}.band .ring text{fill:#FFFFFF}
+.module-b{padding:20px 22px 22px;display:flex;flex-direction:column;gap:14px;flex:1}
+.module-b .small{font-size:13.5px;color:var(--muted)}
+.module .families{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:6px}
+.families li{font-size:12.5px;font-weight:600;padding:5px 10px;border-radius:99px}
+.f-sinus{background:var(--green-soft);color:var(--green)}.f-atrial{background:var(--blue-soft);color:var(--blue)}
+.f-junc{background:var(--teal-soft);color:var(--teal)}.f-vent{background:var(--red-soft);color:var(--brand-red)}
+.f-block{background:var(--orange-soft);color:var(--orange)}.f-paced{background:var(--navy-soft);color:var(--navy)}
+.module .checks{list-style:none;padding:0!important;display:grid;gap:7px;color:var(--ink-2);font-size:14px}
+.checks li{display:flex;gap:9px;align-items:flex-start}
+.checks li::before{content:"";flex:none;width:16px;height:16px;margin-top:3px;border-radius:50%;background:var(--red-soft) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4.5 8.3l2.2 2.2 4.8-5' fill='none' stroke='%23DA0D14' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/16px no-repeat}
+
+/* five steps */
+.method{padding:22px 24px;grid-template-columns:repeat(5,minmax(0,1fr));gap:14px}
+.method .lab{grid-column:1/-1;font-family:var(--f-display);font-size:17px;font-weight:700}
+.method .st{display:flex;gap:12px;align-items:flex-start}
+.method .st i{flex:none;width:34px;height:34px;border-radius:11px;display:grid;place-items:center;font-style:normal;font-family:var(--f-display);font-weight:700;color:#FFFFFF}
+.method .st b{display:block;font-size:15px}
+.method .st span{font-size:13px;color:var(--ink-2)}
+.s1 i{background:var(--band-green)}.s2 i{background:var(--band-blue)}.s3 i{background:var(--band-orange)}.s4 i{background:var(--band-red)}.s5 i{background:var(--band-teal)}
+@media (max-width:880px){.method{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:460px){.method{grid-template-columns:minmax(0,1fr)}}
+.share-card{background:linear-gradient(135deg,var(--teal-soft),var(--surface) 70%)}
+.share-card .eyebrow{color:var(--teal)}
+
+/* headings in views */
+.qhead h2{font-size:30px;font-weight:700}
+.qhead h2 span{color:var(--muted);font-weight:600}
+.runner-head h2{font-size:32px;font-weight:700}
+.answer-name{font-size:24px;font-weight:700;line-height:1.15}
+.score-hero h2{font-size:32px;font-weight:700}
+.case-summary h3{font-size:34px!important;font-weight:700!important}
+.stat b{font-size:34px;font-weight:700}
+.btn{border-radius:11px}
+.btn-primary{box-shadow:0 6px 16px -8px color-mix(in srgb,var(--accent) 70%,transparent)}
+.qcard,.decision{border-radius:18px}
+
+/* megacode case cards: cycle the four quadrant colors */
+.case{position:relative;padding-left:20px}
+.case .no{font-weight:600;display:inline-flex;align-items:center;gap:8px}
+.case .no::before{content:"";width:10px;height:10px;border-radius:3px;background:var(--cc)}
+.case:nth-child(4n+1){--cc:var(--band-green)}.case:nth-child(4n+2){--cc:var(--band-blue)}.case:nth-child(4n+3){--cc:var(--band-orange)}.case:nth-child(4n){--cc:var(--band-red)}
+.case:hover{border-color:var(--cc)}
+.case h3{font-family:var(--f-display);font-weight:600}
+
+/* score tiles */
+.stat{border-top:0}
+.stats .stat:nth-child(1) b{color:var(--navy)}.stats .stat:nth-child(2) b{color:var(--teal)}.stats .stat:nth-child(3) b{color:var(--blue)}.stats .stat:nth-child(4) b{color:var(--brand-red)}.stats .stat:nth-child(5) b{color:var(--green)}
+
+.share-f{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;flex:1 1 560px}
+.share-f .cohort{flex:none}
+@media (max-width:760px){.share-f{grid-template-columns:minmax(0,1fr)}}
+.login{max-width:520px}
+.login-f{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap}
+.login-f .cohort{flex:1 1 240px}
+.login-msg{color:var(--bad);font-weight:600;font-size:14px}
+.foot-link{font-size:13px;font-weight:600;color:var(--teal);text-decoration:none;white-space:nowrap}
+.foot-link:hover{text-decoration:underline}
+/* footer */
+.foot{border-top:1px solid var(--line);background:var(--surface);padding-block:22px}
+.foot-in{display:flex;gap:20px;align-items:center;flex-wrap:wrap}
+.foot .note{margin:0;flex:1 1 320px}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <pattern id="pMinor" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M40 0H0V40" fill="none" style="stroke:var(--grid-minor)" stroke-width="1.2" vector-effect="non-scaling-stroke"/></pattern>
+    <pattern id="pMajor" width="200" height="200" patternUnits="userSpaceOnUse"><rect width="200" height="200" fill="url(#pMinor)"/><path d="M200 0H0V200" fill="none" style="stroke:var(--grid-major)" stroke-width="2.2" vector-effect="non-scaling-stroke"/></pattern>
+    <pattern id="mMinor" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M40 0H0V40" fill="none" style="stroke:var(--mon-grid)" stroke-width="1" vector-effect="non-scaling-stroke"/></pattern>
+    <pattern id="mMajor" width="200" height="200" patternUnits="userSpaceOnUse"><rect width="200" height="200" fill="url(#mMinor)"/><path d="M200 0H0V200" fill="none" style="stroke:var(--mon-grid-2)" stroke-width="1.6" vector-effect="non-scaling-stroke"/></pattern>
+  </defs>
+</svg>
+
+<header class="bar">
+  <div class="wrap">
+    <a class="brand" href="#home" aria-label="CSHealthED ECG and Megacode Lab home">
+      <img src="/img/logo-mark.webp" width="40" height="40" alt="">
+      <span class="wm"><b><span class="cs">CS</span><span class="hl">Health</span><span class="ed">ED</span></b><small>ECG &amp; Megacode Lab</small></span>
+    </a>
+    <nav class="tabs" aria-label="Sections">
+      <a href="#home" data-v="home">Overview</a>
+      <a href="#strips" data-v="strips">Strips</a>
+      <a href="#megacode" data-v="megacode">Megacode</a>
+      <a href="#results" data-v="results">Results</a>
+      <a href="#scoreboard" data-v="scoreboard" id="tabBoard" hidden>Scoreboard</a>
+    </nav>
+    <div class="tally" aria-live="polite">
+      <span class="chip">Strips <b class="num" id="tStrips">0/0</b></span>
+      <span class="chip sync" id="tSync" data-s="local">Saved on this device</span>
+      <span class="chip">Megacode <b class="num" id="tMega">0/0</b></span>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <!-- HOME -->
+  <section class="view" id="v-home">
+    <div class="hero">
+      <div class="hero-copy">
+        <div class="logo-badge"><img src="/img/logo.webp" width="190" alt="CSHealthED, Healthcare Education Software"></div>
+        <div class="eyebrow">2025 AHA ACLS · Paramedic rhythm training</div>
+        <h1>Read the strip.<br><em>Run the code.</em></h1>
+        <p class="lede">Work through <span class="nStrips">102</span> six-second rhythm strips with instant feedback, then manage 20 cardiac arrest megacodes decision by decision. Every wrong answer explains what you missed, and your score is tallied at the end.</p>
+        <div class="meta">
+          <div class="m-blue"><b class="num nStrips">102</b><span>ECG strips</span></div>
+          <div class="m-red"><b class="num">20</b><span>Megacode cases</span></div>
+          <div class="m-green"><b class="num" id="hQ">66</b><span>Treatment decisions</span></div>
+        </div>
+      </div>
+      <div class="monitor" aria-label="Animated monitor showing normal sinus rhythm">
+        <div class="mon-top"><span class="live">Lead II · Monitor</span><span>25 mm/s · 10 mm/mV</span></div>
+        <div class="mon-body">
+          <div class="mon-screen" id="heroScreen"></div>
+          <div class="vitals">
+            <div class="vital hr"><small>HR</small><b class="num">75</b></div>
+            <div class="vital bp"><small>NIBP</small><b class="num">124/78</b></div>
+            <div class="vital sp"><small>SpO₂</small><b class="num">98</b></div>
+            <div class="vital co"><small>ETCO₂</small><b class="num">38</b></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modules">
+      <article class="card module m-strips">
+        <div class="band">
+          <div class="band-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 13h4l2-6 3 12 3-9 2 3h6"/></svg></div>
+          <div class="band-t"><div class="eyebrow">Module 1</div><h2><span class="nStrips">102</span> ECG strips</h2></div>
+          <svg class="ring" viewBox="0 0 64 64" id="ringStrips"></svg>
+        </div>
+        <div class="module-b">
+          <p>Choose the rhythm, then see the full interpretation: rate, regularity, P waves, PR, QRS and the field action.</p>
+          <ul class="families"><li class="f-sinus">Sinus</li><li class="f-atrial">Atrial</li><li class="f-junc">Junctional</li><li class="f-vent">Ventricular</li><li class="f-block">AV blocks</li><li class="f-paced">Paced</li></ul>
+          <p class="small">17 unique strips in each family. When you're wrong, a side-by-side shows how your choice differs.</p>
+          <div class="actions"><a class="btn btn-primary" href="#strips" id="goStrips">Start strips</a></div>
+        </div>
+      </article>
+      <article class="card module m-mega">
+        <div class="band">
+          <div class="band-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg></div>
+          <div class="band-t"><div class="eyebrow">Module 2</div><h2>20 ACLS megacodes</h2></div>
+          <svg class="ring" viewBox="0 0 64 64" id="ringMega"></svg>
+        </div>
+        <div class="module-b">
+          <p>Each case unfolds on a live monitor. Read the rhythm and vitals, choose the next treatment, and get the rationale for every option.</p>
+          <ul class="checks"><li>VF/pVT, asystole/PEA and refractory VF</li><li>Bradycardia, pacing and unstable VT</li><li>Special circumstances and post-ROSC care</li></ul>
+          <div class="actions"><a class="btn btn-primary" href="#megacode">Open megacodes</a></div>
+        </div>
+      </article>
+    </div>
+    <div class="card method">
+      <div class="lab">Use the same five steps on every strip</div>
+      <div class="st s1"><i>1</i><div><b>Rate</b><span>QRS in 6 s × 10</span></div></div>
+      <div class="st s2"><i>2</i><div><b>Rhythm</b><span>Regular or irregular?</span></div></div>
+      <div class="st s3"><i>3</i><div><b>P waves</b><span>Present, upright, 1:1?</span></div></div>
+      <div class="st s4"><i>4</i><div><b>PR</b><span>0.12–0.20 s, constant?</span></div></div>
+      <div class="st s5"><i>5</i><div><b>QRS</b><span>&lt; 0.12 s is narrow</span></div></div>
+    </div>
+    <div class="card share-card">
+      <div class="share-l"><div class="eyebrow">Your results</div><p id="shareMsg">Your progress is saved on this device.</p></div>
+      <div class="share-f">
+        <label class="cohort" for="stuName"><span>Your name</span><input id="stuName" type="text" maxlength="60" placeholder="First and last name" autocomplete="name"></label>
+        <label class="cohort" for="cohort"><span>Class or cohort (optional)</span><input id="cohort" type="text" maxlength="40" placeholder="e.g. PCP Spring 2026" autocomplete="off"></label>
+        <label class="cohort" for="classCode" id="codeWrap" hidden><span>Class code</span><input id="classCode" type="text" maxlength="60" placeholder="From your instructor" autocomplete="off"></label>
+      </div>
+    </div>
+  </section>
+
+  <!-- STRIPS -->
+  <section class="view" id="v-strips" hidden>
+    <div class="qhead">
+      <div><div class="eyebrow">Module 1 · Rhythm interpretation</div><h2>Strip <span id="sNum" class="num">1</span><span> / <span class="nStrips">102</span></span></h2></div>
+      <div class="qstats"><span>Answered <b id="sAns" class="num">0</b></span><span>Correct <b id="sCor" class="num">0</b></span><span>Score <b id="sPct" class="num">–</b></span></div>
+    </div>
+    <div class="progress" style="margin-bottom:16px"><i id="sBar" style="width:0"></i></div>
+    <div class="card qcard">
+      <div class="stem"><span class="tag">Scenario</span><p id="sStem"></p></div>
+      <div>
+        <div class="paper" id="sPaper"></div>
+        <div class="paper-meta"><span>Lead II · 25 mm/s · 6-second strip</span><span class="scroll-hint">Swipe to see the whole strip →</span></div>
+      </div>
+      <div>
+        <div class="eyebrow" style="margin-bottom:10px">Identify the rhythm</div>
+        <div class="opts" id="sOpts" role="group" aria-label="Answer choices"></div>
+      </div>
+      <div id="sFb" aria-live="polite"></div>
+      <div class="qnav">
+        <button class="btn btn-ghost" id="sPrev">← Previous</button>
+        <button class="btn btn-primary" id="sNext">Next strip →</button>
+      </div>
+    </div>
+    <details class="card grid-nav" id="sGrid">
+      <summary>All <span class="nStrips">102</span> strips</summary>
+      <div class="dots" id="sDots"></div>
+      <div class="legend"><span><i style="background:var(--ok)"></i>Correct</span><span><i style="background:var(--bad)"></i>Incorrect</span><span><i style="background:var(--line-2)"></i>Not answered</span></div>
+    </details>
+  </section>
+
+  <!-- MEGACODE -->
+  <section class="view" id="v-megacode" hidden>
+    <div id="mList">
+      <div class="qhead">
+        <div><div class="eyebrow">Module 2 · Cardiac arrest management</div><h2>Megacode cases</h2></div>
+        <div class="qstats"><span>Decisions correct <b id="mCor" class="num">0</b> / <b id="mTot" class="num">0</b></span></div>
+      </div>
+      <div class="cases" id="mCases"></div>
+    </div>
+    <div id="mRun" hidden></div>
+  </section>
+
+  <!-- SCOREBOARD (instructors) -->
+  <section class="view" id="v-scoreboard" hidden>
+    <div class="qhead">
+      <div><div class="eyebrow">Instructor view · refreshes every 30 s</div><h2>Class scoreboard</h2></div>
+      <div class="sb-tools">
+        <label class="sel" for="sbCohort"><span>Cohort</span><select id="sbCohort"><option value="">All</option></select></label>
+        <label class="sel" for="sbSort"><span>Sort</span><select id="sbSort"><option value="recent">Last active</option><option value="score">Overall score</option><option value="name">Name</option><option value="progress">Progress</option></select></label>
+        <button class="btn btn-ghost" id="sbRefresh" hidden>Refresh</button>
+        <button class="btn btn-ghost" id="sbCsv" hidden>Download CSV</button>
+        <button class="btn btn-ghost" id="sbOut" hidden>Sign out</button>
+      </div>
+    </div>
+    <div id="sbBody"></div>
+  </section>
+
+  <!-- RESULTS -->
+  <section class="view" id="v-results" hidden>
+    <div id="rBody"></div>
+  </section>
+</main>
+<footer class="foot">
+  <div class="wrap foot-in">
+    <div class="logo-badge sm"><img src="/img/logo.webp" width="120" alt="CSHealthED, Healthcare Education Software"></div>
+    <p class="note">Strips are synthetic lead II teaching tracings at 25 mm/s: 1 small box = 0.04 s, 1 large box = 0.20 s. Treatment content follows the adult ACLS algorithms. Always follow your local protocols and medical direction.</p>
+    <a class="foot-link" href="#scoreboard">Instructor sign-in</a>
+  </div>
+</footer>
+
+<script src="/trainer-data.js"></script>
+<script>
+(function(){
+"use strict";
+var D = window.TRAINER, P = D.practice, CASES = D.cases, CATS = D.cats;
+var N = P.length;
+document.querySelectorAll(".nStrips").forEach(function(e){e.textContent=N});
+var TOTAL_Q = CASES.reduce(function(a,c){return a+c.stages.length},0);
+var KEY = "cardiac-lab-v1";
+var S = {p:{}, m:{}, pi:1, ci:null};
+try{ var raw = localStorage.getItem(KEY); if(raw){ var o = JSON.parse(raw); if(o && o.p) S = Object.assign(S,o); if(S.pi>N) S.pi=1; } }catch(e){}
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} if(window.__push) window.__push(); }
+var $ = function(id){return document.getElementById(id)};
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+
+/* ---------- waveform decoding & drawing ---------- */
+var cache = {};
+function decode(key){
+  if(cache[key]) return cache[key];
+  var d = D.strips[key].d, v = [], cur = 0, i = 0;
+  while(i < d.length){
+    var ch = d[i];
+    if(ch === "|"){ var j = d.indexOf("|", i+1); cur = parseInt(d.slice(i+1,j),10); v.push(cur); i = j+1; }
+    else { cur += d.charCodeAt(i) - 80; v.push(cur); i++; }
+  }
+  return (cache[key] = v);
+}
+var H = 960; // viewBox height: -0.9..1.5 mV at 400 units/mV
+function Y(mv100){ return ((150 - mv100) * 4).toFixed(1); }
+function stripSVG(key, mode, anim, crop){
+  var VW = crop || 6000;
+  var v = decode(key), pts = new Array(v.length);
+  var n = Math.min(v.length, Math.floor(VW/2)+1); pts.length = n;
+  for(var i=0;i<n;i++) pts[i] = (i*2) + "," + Y(v[i]);
+  var mon = mode === "monitor";
+  var stroke = mon ? "var(--mon-trace)" : "var(--trace)";
+  var spikes = D.strips[key].s.filter(function(s){return s[0]<=VW}).map(function(s){
+    var idx = Math.min(v.length-1, Math.round(s[0]/2)), base = v[idx];
+    return '<line x1="'+s[0]+'" x2="'+s[0]+'" y1="'+Y(base)+'" y2="'+Y(base + s[1])+'" stroke="'+(mon?"#F4FFF8":stroke)+'" stroke-width="1.5" vector-effect="non-scaling-stroke"/>';
+  }).join("");
+  var cls = anim === "loop" ? "trace-loop" : (anim ? "trace-anim" : "");
+  var glow = mon ? ' style="filter:drop-shadow(0 0 3px rgba(61,240,142,.55))"' : "";
+  return '<svg'+(crop?' class="hero-svg"':'')+' viewBox="0 0 '+VW+' '+H+'" preserveAspectRatio="none" role="img" aria-label="ECG strip">'+
+    '<rect width="'+VW+'" height="'+H+'" fill="url(#'+(mon?"mMajor":"pMajor")+')"/>'+
+    '<g'+glow+'><polyline class="'+cls+'" pathLength="1" points="'+pts.join(" ")+'" fill="none" stroke="'+stroke+'" stroke-width="'+(mon?2:1.7)+'" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>'+spikes+'</g></svg>';
+}
+
+/* ---------- icons ---------- */
+var IC = {
+  ok:'<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="10" r="8.2"/><path d="M6.2 10.3l2.5 2.5 5-5.2"/></svg>',
+  no:'<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="10" cy="10" r="8.2"/><path d="M7 7l6 6M13 7l-6 6"/></svg>',
+  bulb:'<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7.5 15h5M8 17.5h4M10 2.5a5 5 0 0 0-3 9c.6.5 1 1.2 1 2V14h4v-.5c0-.8.4-1.5 1-2a5 5 0 0 0-3-9z"/></svg>',
+  pt:'<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="6" r="3.2"/><path d="M3.5 17.5c.8-3.4 3.4-5.2 6.5-5.2s5.7 1.8 6.5 5.2"/></svg>'
+};
+
+/* ---------- scoring ---------- */
+function stripScore(){ var a=0,c=0; P.forEach(function(q){ var x=S.p[q.n]; if(x!=null){a++; if(x===q.cat)c++;} }); return {a:a,c:c}; }
+function megaScore(){ var a=0,c=0; CASES.forEach(function(cs,ci){ cs.stages.forEach(function(st,si){ var x=S.m[ci+"-"+si]; if(x!=null){a++; if(st.options[x].ok)c++;} }); }); return {a:a,c:c}; }
+function caseScore(ci){ var cs=CASES[ci],a=0,c=0; cs.stages.forEach(function(st,si){var x=S.m[ci+"-"+si]; if(x!=null){a++; if(st.options[x].ok)c++;}}); return {a:a,c:c,t:cs.stages.length}; }
+function pct(c,t){ return t? Math.round(100*c/t) : 0; }
+function ring(el, frac, label){
+  var r=26, C=2*Math.PI*r;
+  el.innerHTML='<circle class="t" cx="32" cy="32" r="'+r+'"/><circle class="v" cx="32" cy="32" r="'+r+'" stroke-dasharray="'+(C*frac).toFixed(1)+' '+C.toFixed(1)+'" transform="rotate(-90 32 32)"/><text x="32" y="36.5" text-anchor="middle">'+label+'</text>';
+}
+function updateTally(){
+  var s=stripScore(), m=megaScore();
+  $("tStrips").textContent = s.c+"/"+s.a; $("tMega").textContent = m.c+"/"+m.a;
+  ring($("ringStrips"), s.a/N, pct(s.a,N)+"%");
+  ring($("ringMega"), m.a/TOTAL_Q, pct(m.a,TOTAL_Q)+"%");
+  $("goStrips").textContent = s.a===0 ? "Start strips" : (s.a===N ? "Review strips" : "Resume at strip "+S.pi);
+  $("hQ").textContent = TOTAL_Q;
+}
+
+/* ---------- seeded shuffle for megacode options ---------- */
+function perm(n, seed){ var a=[]; for(var i=0;i<n;i++)a.push(i); var s=seed*9301+49297; for(var j=n-1;j>0;j--){ s=(s*9301+49297)%233280; var k=Math.floor(s/233280*(j+1)); var t=a[j];a[j]=a[k];a[k]=t; } return a; }
+
+/* ================= STRIPS ================= */
+function renderStrip(){
+  var q = P[S.pi-1], chosen = S.p[q.n], done = chosen != null;
+  $("sNum").textContent = q.n;
+  $("sStem").textContent = q.stem;
+  $("sPaper").innerHTML = stripSVG(q.strip, "paper", false);
+  var sc = stripScore();
+  $("sAns").textContent = sc.a; $("sCor").textContent = sc.c; $("sPct").textContent = sc.a? pct(sc.c,sc.a)+"%" : "–";
+  $("sBar").style.width = pct(sc.a,N)+"%";
+  var letters="ABCD";
+  $("sOpts").innerHTML = q.options.map(function(o,i){
+    var cls = "";
+    if(done){ cls = o===q.cat ? "is-right" : (o===chosen ? "is-wrong" : "is-dim"); }
+    return '<button class="opt '+cls+'" data-o="'+esc(o)+'" '+(done?"disabled":"")+'><span class="k">'+letters[i]+'</span><span>'+esc(o)+'</span></button>';
+  }).join("");
+  $("sFb").innerHTML = done ? stripFeedback(q, chosen) : "";
+  $("sPrev").disabled = S.pi===1;
+  $("sNext").textContent = S.pi===N ? "See results →" : (done ? "Next strip →" : "Skip →");
+  renderDots();
+  updateTally();
+}
+function stripFeedback(q, chosen){
+  var ok = chosen===q.cat, C = CATS[q.cat], X = CATS[chosen];
+  var h = '<div class="fb '+(ok?"ok":"no")+'"><div class="verdict">'+(ok?IC.ok+"Correct":IC.no+"Not quite")+'</div>';
+  h += '<div class="answer-name">'+esc(q.name)+'</div>';
+  if(!ok){
+    h += '<div class="why"><div><small>You chose</small><b>'+esc(chosen)+'</b>'+esc(X.key)+'</div><div><small>This strip is</small><b>'+esc(q.cat)+'</b>'+esc(C.key)+'</div></div>';
+  }
+  h += '<div class="clue">'+IC.bulb+'<p><b>The tell: </b>'+esc(C.clue)+'</p></div>';
+  h += '<div class="interp"><table class="itable"><tbody>'+q.rows.map(function(r){return '<tr><th scope="row">'+esc(r[0])+'</th><td>'+esc(r[1])+'</td></tr>'}).join("")+'</tbody></table>';
+  h += '<div class="action"><h4>Field action</h4><ul>'+q.action.map(function(a){return '<li>'+esc(a)+'</li>'}).join("")+'</ul></div></div></div>';
+  return h;
+}
+function renderDots(){
+  $("sDots").innerHTML = P.map(function(q){
+    var x=S.p[q.n], c = x==null ? "" : (x===q.cat?"r":"w");
+    return '<button class="dot '+c+(q.n===S.pi?" cur":"")+'" data-n="'+q.n+'" aria-label="Strip '+q.n+'">'+q.n+'</button>';
+  }).join("");
+}
+$("sOpts").addEventListener("click", function(e){
+  var b = e.target.closest(".opt"); if(!b || b.disabled) return;
+  S.p[P[S.pi-1].n] = b.getAttribute("data-o"); save(); renderStrip();
+  var fb=$("sFb"); if(fb.firstChild && fb.getBoundingClientRect().top > window.innerHeight*0.8) fb.scrollIntoView({behavior:"smooth",block:"nearest"});
+});
+$("sPrev").addEventListener("click", function(){ if(S.pi>1){S.pi--; save(); renderStrip(); scrollTop();} });
+$("sNext").addEventListener("click", function(){ if(S.pi<N){S.pi++; save(); renderStrip(); scrollTop();} else location.hash="results"; });
+$("sDots").addEventListener("click", function(e){ var b=e.target.closest(".dot"); if(!b)return; S.pi=+b.getAttribute("data-n"); save(); renderStrip(); scrollTop(); });
+function scrollTop(){ window.scrollTo({top:0,behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth"}); }
+document.addEventListener("keydown", function(e){
+  if(location.hash!=="#strips" || e.target.closest("input,textarea")) return;
+  var k=e.key.toUpperCase(), idx="ABCD".indexOf(k);
+  if(idx>=0){ var btn=$("sOpts").children[idx]; if(btn && !btn.disabled) btn.click(); }
+  else if(e.key==="ArrowRight") $("sNext").click();
+  else if(e.key==="ArrowLeft") $("sPrev").click();
+});
+
+/* ================= MEGACODE ================= */
+function renderCases(){
+  var m=megaScore(); $("mCor").textContent=m.c; $("mTot").textContent=TOTAL_Q;
+  $("mCases").innerHTML = CASES.map(function(cs,ci){
+    var s=caseScore(ci), pill = s.a===0 ? '<span class="pill">Not started</span>' : (s.a===s.t ? '<span class="pill done">'+s.c+' / '+s.t+'</span>' : '<span class="pill part">'+s.a+' of '+s.t+' done</span>');
+    return '<button class="case" data-c="'+ci+'"><span class="no">CASE '+String(cs.n).padStart(2,"0")+'</span><h3>'+esc(cs.title)+'</h3><span class="focus">'+esc(cs.focus)+'</span><span class="st"><span>'+cs.stages.length+' decisions</span>'+pill+'</span></button>';
+  }).join("");
+}
+$("mCases").addEventListener("click", function(e){ var b=e.target.closest(".case"); if(!b)return; openCase(+b.getAttribute("data-c")); });
+function openCase(ci){ S.ci=ci; var s=caseScore(ci); S.si = s.a>=s.t ? s.t : s.a; save(); renderMega(); scrollTop(); }
+function vitalsFrom(str){
+  var v={hr:"--",bp:"--/--",sp:"--",co:"--"};
+  var m;
+  if((m=str.match(/HR (\d+)/))) v.hr=m[1];
+  if((m=str.match(/BP (\d+\/\d+)/))) v.bp=m[1];
+  if((m=str.match(/SpO₂ (\d+)/))) v.sp=m[1];
+  if((m=str.match(/ETCO₂[^\d]*(\d+)/))) v.co=m[1];
+  return v;
+}
+function renderMega(){
+  if(S.ci==null){ $("mList").hidden=false; $("mRun").hidden=true; renderCases(); return; }
+  $("mList").hidden=true; $("mRun").hidden=false;
+  var ci=S.ci, cs=CASES[ci], s=caseScore(ci);
+  var steps = cs.stages.map(function(st,si){ var x=S.m[ci+"-"+si]; var c = x==null ? (si===S.si?"cur":"") : (st.options[x].ok?"r":"w"); return '<i class="'+c+'"></i>'; }).join("");
+  var head = '<div class="runner-head"><div><div class="eyebrow">Case '+cs.n+' of 20 · '+esc(cs.focus)+'</div><h2>'+esc(cs.title)+'</h2></div><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><div class="steps" aria-label="Progress">'+steps+'</div><button class="btn btn-ghost" id="mBack">All cases</button></div></div>';
+  var scen = '<div class="card scenario">'+IC.pt+'<p>'+esc(cs.scenario)+'</p></div>';
+  if(S.si >= cs.stages.length){ $("mRun").innerHTML = '<div class="runner">'+head+scen+caseSummary(ci)+'</div>'; bindRun(); return; }
+  var si=S.si, st=cs.stages[si], key=ci+"-"+si, chosen=S.m[key], done=chosen!=null, vt=vitalsFrom(st.vitals);
+  var pulseless = /Pulse: none/.test(st.vitals);
+  if(vt.hr==="--" && st.hr) vt.hr = String(st.hr);
+  if(pulseless){ vt.bp="--/--"; vt.sp="--"; }
+  var mon = '<div class="monitor"><div class="mon-top"><span class="live">Lead II · Decision '+(si+1)+' of '+cs.stages.length+'</span>'+(done?'<span class="reveal">Rhythm: '+esc(st.rhythm)+'</span>':'<span>25 mm/s</span>')+'</div>'+
+    '<div class="mon-body"><div class="mon-screen">'+stripSVG(st.strip,"monitor",!done)+'</div><div class="vitals">'+
+    '<div class="vital hr"><small>HR</small><b class="num">'+vt.hr+'</b></div><div class="vital bp"><small>NIBP</small><b class="num">'+vt.bp+'</b></div>'+
+    '<div class="vital sp"><small>SpO₂</small><b class="num">'+vt.sp+'</b></div><div class="vital co"><small>ETCO₂</small><b class="num">'+vt.co+'</b></div></div></div>'+
+    '<div class="mon-status"><em>Status</em><span>'+esc(st.vitals)+'</span></div></div>';
+  var order = perm(st.options.length, (ci+1)*31+si*7+3), letters="ABCD";
+  var opts = order.map(function(oi,k){
+    var o=st.options[oi], cls = done ? (o.ok ? "is-right" : (oi===chosen ? "is-wrong" : "is-dim")) : "";
+    return '<button class="opt '+cls+'" data-i="'+oi+'" '+(done?"disabled":"")+'><span class="k">'+letters[k]+'</span><span>'+esc(o.t)+'</span></button>';
+  }).join("");
+  var fb = "";
+  if(done){
+    var c=st.options[chosen], right=st.options.filter(function(o){return o.ok})[0];
+    fb = '<div class="fb '+(c.ok?"ok":"no")+'" aria-live="polite"><div class="verdict">'+(c.ok?IC.ok+"Correct":IC.no+"Not the best choice")+'</div>';
+    if(!c.ok) fb += '<div class="why"><div><small>Your choice</small><b>'+esc(c.t)+'</b>'+esc(c.why)+'</div><div><small>Best answer</small><b>'+esc(right.t)+'</b>'+esc(right.why)+'</div></div>';
+    else fb += '<div class="clue">'+IC.bulb+'<p>'+esc(c.why)+'</p></div>';
+    fb += '<div class="clue">'+IC.bulb+'<p><b>Rhythm on the monitor: </b>'+esc(st.rhythm)+'</p></div></div>';
+  }
+  var last = si===cs.stages.length-1;
+  var nav = '<div class="qnav"><button class="btn btn-ghost" id="mPrev" '+(si===0?"disabled":"")+'>← Previous decision</button><button class="btn btn-primary" id="mNext" '+(done?"":"disabled")+'>'+(last?"Finish case →":"Next decision →")+'</button></div>';
+  $("mRun").innerHTML = '<div class="runner">'+head+scen+mon+'<div class="card decision"><h3>'+esc(st.prompt)+'</h3><div class="opt-list" id="mOpts">'+opts+'</div>'+fb+nav+'</div></div>';
+  bindRun();
+  updateTally();
+}
+function caseSummary(ci){
+  var cs=CASES[ci], s=caseScore(ci);
+  var items = cs.stages.map(function(st,si){ var x=S.m[ci+"-"+si], o=st.options[x], right=st.options.filter(function(q){return q.ok})[0];
+    return '<li><b>'+esc(st.prompt)+'</b> '+(o&&o.ok?'<span style="color:var(--ok)">✓ '+esc(right.t)+'</span>':'<span style="color:var(--bad)">✗ You chose: '+esc(o?o.t:"—")+'</span><span>Best: '+esc(right.t)+'</span>')+'</li>'; }).join("");
+  var next = ci<19 ? '<button class="btn btn-primary" id="mNextCase">Next case →</button>' : '<a class="btn btn-primary" href="#results">See results →</a>';
+  return '<div class="card case-summary"><div class="verdict" style="color:var(--accent)">Case complete</div><h3 style="font-family:var(--f-display);font-size:42px;text-transform:uppercase;font-weight:600">'+s.c+' / '+s.t+' correct</h3><ol>'+items+'</ol><div class="qnav"><button class="btn btn-ghost" id="mRetry">Retry this case</button>'+next+'</div></div>';
+}
+function bindRun(){
+  var b;
+  if((b=$("mBack"))) b.onclick=function(){ S.ci=null; save(); renderMega(); scrollTop(); };
+  if((b=$("mOpts"))) b.onclick=function(e){ var o=e.target.closest(".opt"); if(!o||o.disabled)return; S.m[S.ci+"-"+S.si]=+o.getAttribute("data-i"); save(); renderMega(); };
+  if((b=$("mPrev"))) b.onclick=function(){ if(S.si>0){S.si--; save(); renderMega();} };
+  if((b=$("mNext"))) b.onclick=function(){ S.si++; save(); renderMega(); scrollTop(); };
+  if((b=$("mNextCase"))) b.onclick=function(){ openCase(S.ci+1); };
+  if((b=$("mRetry"))) b.onclick=function(){ var cs=CASES[S.ci]; cs.stages.forEach(function(_,si){ delete S.m[S.ci+"-"+si]; }); S.si=0; save(); renderMega(); scrollTop(); };
+}
+
+/* ================= RESULTS ================= */
+var GROUPS = D.groups;
+var confirmReset = false;
+function renderResults(){
+  var s=stripScore(), m=megaScore(), totC=s.c+m.c, totT=N+TOTAL_Q, done=s.a+m.a;
+  var overall = pct(totC,totT), r=62, C=2*Math.PI*r;
+  var msg = done===0 ? "Answer strips and megacode decisions to build your score." :
+    (done<totT ? "You've answered "+done+" of "+totT+" items. Your score counts unanswered items as incorrect, so finish both modules for a final result." :
+    (overall>=90 ? "Excellent. You're reading rhythms and running codes at a high level." : overall>=84 ? "Solid pass-level performance. Review the items below to tighten up." : "Keep practicing. Review the missed strips and retry the cases below."));
+  var h = '<div class="card score-hero"><svg class="big-ring" viewBox="0 0 150 150"><circle class="t" cx="75" cy="75" r="'+r+'"/><circle class="v" cx="75" cy="75" r="'+r+'" stroke-dasharray="'+(C*overall/100).toFixed(1)+' '+C.toFixed(1)+'" transform="rotate(-90 75 75)"/><text x="75" y="86" text-anchor="middle" font-size="40">'+overall+'%</text></svg>'+
+    '<div><div class="eyebrow">Final score</div><h2><span class="num">'+totC+'</span> of <span class="num">'+totT+'</span> correct</h2><p>'+msg+'</p>'+
+    '<div class="legend" style="margin-top:12px"><span>Strips: <b class="num">'+s.c+'/'+N+'</b> ('+pct(s.c,N)+'%)</span><span>Megacode: <b class="num">'+m.c+'/'+TOTAL_Q+'</b> ('+pct(m.c,TOTAL_Q)+'%)</span></div></div></div>';
+  var bars = GROUPS.map(function(g){ var t=0,c=0,a=0; P.forEach(function(q){ if(CATS[q.cat].group===g[0]){t++; var x=S.p[q.n]; if(x!=null){a++; if(x===q.cat)c++;}} });
+    return '<div class="barrow"><span>'+g[1]+'</span><span class="track"><i style="width:'+pct(c,t)+'%"></i></span><b>'+c+'/'+t+'</b></div>'; }).join("");
+  var missed = P.filter(function(q){ var x=S.p[q.n]; return x!=null && x!==q.cat; });
+  var ml = missed.length ? missed.map(function(q){ return '<button data-n="'+q.n+'"><b>#'+q.n+'</b><span style="color:var(--ink)">'+esc(q.name)+'</span></button>'; }).join("") : '<p class="empty">'+(s.a?"No missed strips. Well done.":"No strips answered yet.")+'</p>';
+  var cs = CASES.map(function(c,ci){ var k=caseScore(ci); return '<button data-c="'+ci+'"><span style="color:var(--muted);font-size:11.5px">Case '+c.n+'</span><b>'+(k.a?k.c+'/'+k.t:'—')+'</b><span>'+esc(c.title)+'</span></button>'; }).join("");
+  h += '<div class="split"><div class="card panel"><h3>Strips by rhythm family <span class="num">'+s.c+'/'+N+'</span></h3><div class="bars">'+bars+'</div><h3 style="margin-top:6px">Missed strips <span class="num">'+missed.length+'</span></h3><div class="missed" id="rMissed">'+ml+'</div></div>'+
+       '<div class="card panel"><h3>Megacode by case <span class="num">'+m.c+'/'+TOTAL_Q+'</span></h3><div class="case-scores" id="rCases">'+cs+'</div>'+
+       '<h3 style="margin-top:6px">Start over</h3><div class="confirm" id="rReset">'+(confirmReset?'<span>Erase all answers in this browser?</span><button class="btn btn-primary" id="rYes">Erase</button><button class="btn btn-ghost" id="rNo">Cancel</button>':'<button class="btn btn-ghost" id="rAsk">Reset all progress</button>')+'</div></div></div>';
+  $("rBody").innerHTML = h;
+  $("rMissed").onclick=function(e){ var b=e.target.closest("button"); if(!b)return; S.pi=+b.getAttribute("data-n"); save(); location.hash="strips"; };
+  $("rCases").onclick=function(e){ var b=e.target.closest("button"); if(!b)return; S.ci=+b.getAttribute("data-c"); var k=caseScore(S.ci); S.si=k.a>=k.t?k.t:k.a; save(); location.hash="megacode"; };
+  var b; if((b=$("rAsk"))) b.onclick=function(){confirmReset=true; renderResults();};
+  if((b=$("rNo"))) b.onclick=function(){confirmReset=false; renderResults();};
+  if((b=$("rYes"))) b.onclick=function(){ S={p:{},m:{},pi:1,ci:null,cohort:S.cohort||"",name:S.name||"",code:S.code||"",sid:S.sid}; save(); confirmReset=false; renderResults(); updateTally(); };
+}
+
+/* ================= ROUTER ================= */
+var VIEWS=["home","strips","megacode","results","scoreboard"];
+function route(){
+  var v=(location.hash||"#home").slice(1); if(VIEWS.indexOf(v)<0) v="home";
+  VIEWS.forEach(function(x){ $("v-"+x).hidden = x!==v; });
+  document.querySelectorAll(".tabs a").forEach(function(a){ if(a.getAttribute("data-v")===v) a.setAttribute("aria-current","page"); else a.removeAttribute("aria-current"); });
+  if(v==="strips") renderStrip();
+  if(v==="megacode") renderMega();
+  if(v==="results") renderResults();
+  if(v==="home") updateTally();
+  if(v==="scoreboard") openBoard(); else stopPoll();
+}
+window.addEventListener("hashchange", function(){ route(); window.scrollTo(0,0); });
+$("heroScreen").innerHTML = stripSVG(D.strips.p1 ? heroKey() : Object.keys(D.strips)[0], "monitor", "loop", 3000);
+function heroKey(){ for(var i=0;i<P.length;i++) if(P[i].cat==="Normal sinus rhythm") return P[i].strip; return P[0].strip; }
+/* ================= SCORE SHARING (Cardiac Lab API on Netlify + Supabase) ================= */
+var API = "/api";
+var SB = {online:false, requireCode:false, state:"local", admin:false, pass:null, rows:null, open:null, last:"", timer:null, writing:false, again:false, poll:null, confirmDel:null};
+var SYNC_TXT = {local:"Saved on this device", offline:"Saved on this device", needname:"Not shared yet", needcode:"Not shared yet", synced:"Shared with instructor", saving:"Saving…", badcode:"Check class code", error:"Sync paused"};
+var SHARE_TXT = {
+  local:"Your progress is saved on this device.",
+  offline:"Your progress is saved on this device. Score sharing isn't switched on for this site yet.",
+  needname:"Enter your name to share your results with your instructor. Your progress is saved on this device either way.",
+  needcode:"Enter the class code from your instructor to share your results.",
+  synced:"Your results are shared with your instructor automatically after every answer.",
+  saving:"Saving your latest answer for your instructor…",
+  badcode:"That class code doesn't match. Check it with your instructor. Your progress is still saved on this device.",
+  error:"Your last answer couldn't reach the scoreboard. It's saved on this device and will sync on your next answer."};
+function setSync(st){ SB.state=st; var c=$("tSync"); c.setAttribute("data-s", st==="synced"?"synced":(st==="saving"?"saving":(st==="badcode"||st==="error"?"error":"local"))); c.textContent=SYNC_TXT[st]; $("shareMsg").textContent=SHARE_TXT[st]; }
+function uuid(){
+  if(window.crypto && crypto.randomUUID) return crypto.randomUUID();
+  var b=new Uint8Array(16); crypto.getRandomValues(b); b[6]=(b[6]&15)|64; b[8]=(b[8]&63)|128;
+  var h=Array.prototype.map.call(b,function(x){return (x+256).toString(16).slice(1)}).join("");
+  return h.slice(0,8)+"-"+h.slice(8,12)+"-"+h.slice(12,16)+"-"+h.slice(16,20)+"-"+h.slice(20);
+}
+if(!S.sid){ S.sid=uuid(); try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} }
+function summaryDoc(){
+  var s=stripScore(), m=megaScore(), groups={};
+  GROUPS.forEach(function(g){ var t=0,c=0,a=0; P.forEach(function(q){ if(CATS[q.cat].group===g[0]){ t++; var x=S.p[q.n]; if(x!=null){a++; if(x===q.cat)c++;} } }); groups[g[0]]=[c,a,t]; });
+  var cases=CASES.map(function(_,ci){ var k=caseScore(ci); return [k.c,k.a,k.t]; });
+  return {strips:{c:s.c,a:s.a,n:N}, mega:{c:m.c,a:m.a,n:TOTAL_Q}, overall:pct(s.c+m.c, N+TOTAL_Q), groups:groups, cases:cases, p:S.p, m:S.m};
+}
+function pushNow(){
+  if(!SB.online) return;
+  if(!S.name){ setSync("needname"); return; }
+  if(SB.requireCode && !S.code){ setSync("needcode"); return; }
+  var body={name:S.name, cohort:S.cohort||"", code:S.code||"", doc:summaryDoc()}, sig=JSON.stringify(body);
+  if(sig===SB.last){ if(SB.state!=="badcode") setSync("synced"); return; }
+  if(SB.writing){ SB.again=true; return; }
+  SB.writing=true; setSync("saving");
+  fetch(API+"/scores/"+S.sid, {method:"PUT", headers:{"content-type":"application/json"}, body:sig, keepalive:true})
+    .then(function(r){ if(r.ok){ SB.last=sig; setSync("synced"); } else if(r.status===403){ setSync("badcode"); } else setSync("error"); })
+    .catch(function(){ setSync("error"); })
+    .then(function(){ SB.writing=false; if(SB.again){ SB.again=false; pushNow(); } });
+}
+window.__push=function(){ if(!SB.online) return; clearTimeout(SB.timer); SB.timer=setTimeout(function(){ SB.timer=null; pushNow(); }, 700); };
+// Send a pending save right away if the student leaves or switches tabs.
+function flush(){ if(SB.timer){ clearTimeout(SB.timer); SB.timer=null; pushNow(); } }
+window.addEventListener("pagehide", flush);
+document.addEventListener("visibilitychange", function(){ if(document.visibilityState==="hidden") flush(); });
+$("stuName").value = S.name || ""; $("cohort").value = S.cohort || ""; $("classCode").value = S.code || "";
+$("stuName").addEventListener("change", function(){ S.name=this.value.trim().slice(0,60); save(); if(SB.online) pushNow(); });
+$("cohort").addEventListener("change", function(){ S.cohort=this.value.trim().slice(0,40); save(); if(SB.online) pushNow(); });
+$("classCode").addEventListener("change", function(){ S.code=this.value.trim().slice(0,60); SB.last=""; save(); if(SB.online) pushNow(); });
+
+function initShared(){
+  fetch(API+"/config", {cache:"no-store"}).then(function(r){ return r.ok ? r.json() : null; }).then(function(cfg){
+    if(!cfg || !cfg.scoring){ setSync("offline"); return; }
+    SB.online=true; SB.requireCode=!!cfg.requireCode; $("codeWrap").hidden=!SB.requireCode;
+    pushNow();
+  }).catch(function(){ setSync("offline"); });
+  try{ SB.pass = sessionStorage.getItem("cl-instructor") || null; }catch(e){}
+  if(SB.pass) loadBoard(true);
+}
+
+/* ----- instructor scoreboard ----- */
+function loginHTML(msg){
+  return '<div class="card panel login"><h3>Instructor sign-in</h3><p class="empty">Enter the instructor password set in Netlify (INSTRUCTOR_PASSWORD) to see every student\'s results.</p>'+
+    '<form id="sbLogin" class="login-f"><label class="cohort" for="sbPass"><span>Instructor password</span><input id="sbPass" type="password" autocomplete="current-password" required></label><button class="btn btn-primary" type="submit">Sign in</button></form>'+
+    (msg?'<p class="login-msg" role="alert">'+esc(msg)+'</p>':'')+'</div>';
+}
+function showLogin(msg){
+  ["sbCsv","sbRefresh","sbOut"].forEach(function(i){ $(i).hidden=true; });
+  $("sbBody").innerHTML=loginHTML(msg);
+  $("sbLogin").addEventListener("submit", function(e){ e.preventDefault(); SB.pass=$("sbPass").value; loadBoard(false); });
+  setTimeout(function(){ var p=$("sbPass"); if(p) p.focus(); }, 30);
+}
+function loadBoard(silent){
+  if(!SB.pass) return;
+  fetch(API+"/scores", {headers:{authorization:"Bearer "+SB.pass}, cache:"no-store"}).then(function(r){
+    if(r.status===401){ SB.pass=null; SB.admin=false; try{ sessionStorage.removeItem("cl-instructor"); }catch(e){} $("tabBoard").hidden=true; if(!silent || location.hash==="#scoreboard") showLogin("That password didn't work. Try again."); return null; }
+    if(r.status===503){ if(location.hash==="#scoreboard") showLogin("The scoreboard isn't set up yet. Add INSTRUCTOR_PASSWORD and DATABASE_URL in Netlify, then redeploy."); return null; }
+    if(!r.ok) throw new Error("http "+r.status);
+    return r.json();
+  }).then(function(data){
+    if(!data) return;
+    SB.admin=true; SB.rows=data.rows||[]; $("tabBoard").hidden=false;
+    try{ sessionStorage.setItem("cl-instructor", SB.pass); }catch(e){}
+    $("sbRefresh").hidden=false; $("sbOut").hidden=false;
+    if(location.hash==="#scoreboard"){ renderBoard(); startPoll(); }
+  }).catch(function(){ if(location.hash==="#scoreboard" && !SB.rows) $("sbBody").innerHTML='<div class="card panel"><p class="empty">Couldn\'t reach the scoreboard. Check your connection and try Refresh.</p></div>'; });
+}
+function openBoard(){ if(SB.admin){ renderBoard(); loadBoard(true); startPoll(); } else if(SB.pass){ $("sbBody").innerHTML='<div class="card panel"><p class="empty">Loading results…</p></div>'; loadBoard(false); } else showLogin(""); }
+function startPoll(){ if(SB.poll) return; SB.poll=setInterval(function(){ if(location.hash==="#scoreboard" && !document.hidden) loadBoard(true); }, 30000); }
+function stopPoll(){ if(SB.poll){ clearInterval(SB.poll); SB.poll=null; } }
+function num(x){ return typeof x==="number" && isFinite(x) ? x : 0; }
+function boardRows(){
+  var rows=(SB.rows||[]).slice(), co=$("sbCohort").value, sort=$("sbSort").value;
+  if(co) rows=rows.filter(function(r){return (r.cohort||"")===co});
+  rows.forEach(function(r){ r._name=r.name||"Unnamed student"; r._prog=num(r.strips&&r.strips.a)+num(r.mega&&r.mega.a); });
+  rows.sort(function(a,b){
+    if(sort==="score") return num(b.overall)-num(a.overall);
+    if(sort==="name") return a._name.localeCompare(b._name);
+    if(sort==="progress") return b._prog-a._prog;
+    return num(b.updatedAt)-num(a.updatedAt);
+  });
+  return rows;
+}
+function ago(ts){ if(!ts) return "—"; var m=Math.round((Date.now()-ts)/60000); if(m<1) return "just now"; if(m<60) return m+" min ago"; var h=Math.round(m/60); if(h<24) return h+" h ago"; return Math.round(h/24)+" d ago"; }
+function mini(c,t){ var p=pct(c,t); return '<div class="mini"><span class="track"><i style="width:'+p+'%"></i></span><b>'+p+'%</b></div>'; }
+function renderBoard(){
+  if(location.hash!=="#scoreboard" || !SB.admin) return;
+  var all=SB.rows||[];
+  var cohorts={}; all.forEach(function(r){ if(r.cohort) cohorts[r.cohort]=1; });
+  var sel=$("sbCohort"), cur=sel.value;
+  sel.innerHTML='<option value="">All</option>'+Object.keys(cohorts).sort().map(function(c){return '<option'+(c===cur?' selected':'')+'>'+esc(c)+'</option>'}).join("");
+  var rows=boardRows();
+  $("sbCsv").hidden = !rows.length;
+  if(!rows.length){
+    $("sbBody").innerHTML='<div class="card panel"><h3>No results yet</h3><p class="empty">Send your students this site\'s link'+'. When they enter their name on the Overview page'+', their scores appear here as they answer. The page refreshes every 30 seconds.</p></div>';
+    return;
+  }
+  var n=rows.length, avg=Math.round(rows.reduce(function(a,r){return a+num(r.overall)},0)/n);
+  var sAvg=Math.round(rows.reduce(function(a,r){return a+pct(num(r.strips&&r.strips.c), N)},0)/n);
+  var mAvg=Math.round(rows.reduce(function(a,r){return a+pct(num(r.mega&&r.mega.c), TOTAL_Q)},0)/n);
+  var done=rows.filter(function(r){ return num(r.strips&&r.strips.a)>=N && num(r.mega&&r.mega.a)>=TOTAL_Q; }).length;
+  var h='<div class="stats">'+
+    '<div class="card stat"><small>Students</small><b class="num">'+n+'</b><span>with saved results</span></div>'+
+    '<div class="card stat"><small>Average score</small><b class="num">'+avg+'%</b><span>of '+(N+TOTAL_Q)+' items</span></div>'+
+    '<div class="card stat"><small>Strips</small><b class="num">'+sAvg+'%</b><span>class average</span></div>'+
+    '<div class="card stat"><small>Megacode</small><b class="num">'+mAvg+'%</b><span>class average</span></div>'+
+    '<div class="card stat"><small>Finished</small><b class="num">'+done+'</b><span>completed both modules</span></div></div>';
+  var body=rows.map(function(r){
+    var s=r.strips||{}, m=r.mega||{}, open=SB.open===r.id;
+    var weak="—", wv=101; GROUPS.forEach(function(g){ var x=(r.groups||{})[g[0]]; if(x && x[1]>=3){ var p=pct(x[0],x[1]); if(p<wv){wv=p; weak=g[1]+" ("+p+"%)";} } });
+    var tr='<tr class="row'+(open?' open':'')+'" data-id="'+esc(r.id)+'" tabindex="0" aria-expanded="'+open+'"><td><div class="who"><div><b>'+esc(r._name)+'</b>'+(r.cohort?'<small>'+esc(r.cohort)+'</small>':'')+'</div></div></td>'+
+      '<td class="mono">'+num(s.c)+' / '+num(s.a)+'<br><small style="color:var(--muted)">of '+N+' answered</small></td>'+
+      '<td class="mono">'+num(m.c)+' / '+num(m.a)+'<br><small style="color:var(--muted)">of '+TOTAL_Q+' answered</small></td>'+
+      '<td>'+mini(num(s.c)+num(m.c), N+TOTAL_Q)+'</td><td>'+esc(weak)+'</td><td class="mono">'+ago(r.updatedAt)+'</td></tr>';
+    if(open) tr+='<tr class="detail"><td colspan="6">'+detailHTML(r)+'</td></tr>';
+    return tr;
+  }).join("");
+  h+='<div class="sb-grid"><div class="card panel"><h3>Students <span class="num">'+n+'</span></h3><div class="tablewrap"><table class="sbt"><thead><tr><th>Student</th><th>Strips</th><th>Megacode</th><th>Overall</th><th>Weakest family</th><th>Last active</th></tr></thead><tbody id="sbRows">'+body+'</tbody></table></div><p class="empty">Overall counts unanswered items as incorrect. Select a student for detail.</p></div>'+
+     '<div class="card panel"><h3>Most-missed strips</h3><div class="hard" id="sbHard">'+hardHTML(rows)+'</div></div></div>';
+  $("sbBody").innerHTML=h;
+}
+function detailHTML(r){
+  var g=GROUPS.map(function(x){ var v=(r.groups||{})[x[0]]||[0,0,0]; return '<div class="barrow"><span>'+esc(x[1])+'</span><span class="track"><i style="width:'+pct(v[0],v[2])+'%"></i></span><b>'+v[0]+'/'+v[2]+'</b></div>'; }).join("");
+  var missed=P.filter(function(q){ var x=(r.p||{})[q.n]; return x!=null && x!==q.cat; });
+  var ml=missed.length? missed.slice(0,40).map(function(q){ return '<span>#'+q.n+' '+esc(q.name)+'</span>'; }).join("")+(missed.length>40?'<span>+'+(missed.length-40)+' more</span>':'') : '<span>None missed</span>';
+  var cs=(r.cases||[]).map(function(k,ci){ return k&&k[1]? '<span>Case '+(ci+1)+': '+k[0]+'/'+k[2]+'</span>' : ''; }).join("") || '<span>No cases started</span>';
+  var del = SB.confirmDel===r.id
+    ? '<div class="confirm"><span>Remove '+esc(r._name)+'\'s results permanently?</span><button class="btn btn-primary" data-del-yes="'+esc(r.id)+'">Remove</button><button class="btn btn-ghost" data-del-no="1">Cancel</button></div>'
+    : '<button class="btn btn-ghost" data-del="'+esc(r.id)+'">Remove this student</button>';
+  return '<div class="inner"><div><h4>Strips by rhythm family</h4><div class="bars">'+g+'</div><div style="margin-top:14px">'+del+'</div></div><div><h4>Missed strips ('+missed.length+')</h4><div class="tags">'+ml+'</div><h4 style="margin-top:14px">Megacode cases</h4><div class="tags">'+cs+'</div></div></div>';
+}
+function hardHTML(rows){
+  var stat={}; rows.forEach(function(r){ var p=r.p||{}; Object.keys(p).forEach(function(n){ var q=P[n-1]; if(!q) return; stat[n]=stat[n]||[0,0]; stat[n][1]++; if(p[n]!==q.cat) stat[n][0]++; }); });
+  var list=Object.keys(stat).filter(function(n){return stat[n][0]>0}).sort(function(a,b){ return (stat[b][0]/stat[b][1])-(stat[a][0]/stat[a][1]) || stat[b][0]-stat[a][0]; }).slice(0,12);
+  if(!list.length) return '<p class="empty">No missed strips yet.</p>';
+  return list.map(function(n){ var q=P[n-1], s=stat[n]; return '<button data-n="'+n+'"><b>#'+n+'</b><span>'+esc(q.name)+'</span><em>'+s[0]+'/'+s[1]+'</em></button>'; }).join("");
+}
+$("sbBody").addEventListener("click", function(e){
+  var t=e.target;
+  var hb=t.closest(".hard button"); if(hb){ S.pi=+hb.getAttribute("data-n"); save(); location.hash="strips"; return; }
+  var d=t.closest("[data-del]"); if(d){ SB.confirmDel=d.getAttribute("data-del"); renderBoard(); return; }
+  if(t.closest("[data-del-no]")){ SB.confirmDel=null; renderBoard(); return; }
+  var y=t.closest("[data-del-yes]"); if(y){ var id=y.getAttribute("data-del-yes");
+    fetch(API+"/scores/"+id, {method:"DELETE", headers:{authorization:"Bearer "+SB.pass}}).then(function(r){ if(r.ok){ SB.rows=SB.rows.filter(function(x){return x.id!==id}); SB.open=null; } SB.confirmDel=null; renderBoard(); });
+    return; }
+  if(t.closest(".detail")) return;
+  var tr=t.closest("tr.row"); if(tr){ var id2=tr.getAttribute("data-id"); SB.open = SB.open===id2 ? null : id2; SB.confirmDel=null; renderBoard(); }
+});
+$("sbBody").addEventListener("keydown", function(e){ if((e.key==="Enter"||e.key===" ") && e.target.matches("tr.row")){ e.preventDefault(); e.target.click(); } });
+$("sbCohort").addEventListener("change", renderBoard);
+$("sbSort").addEventListener("change", renderBoard);
+$("sbRefresh").addEventListener("click", function(){ loadBoard(true); });
+$("sbOut").addEventListener("click", function(){ SB.pass=null; SB.admin=false; SB.rows=null; stopPoll(); try{ sessionStorage.removeItem("cl-instructor"); }catch(e){} $("tabBoard").hidden=true; showLogin(""); });
+$("sbCsv").addEventListener("click", function(){
+  var rows=boardRows();
+  var head=["Student","Cohort","Strips correct","Strips answered","Strips total","Megacode correct","Megacode answered","Megacode total","Overall %"].concat(GROUPS.map(function(g){return g[1]+" %"})).concat(["Last active"]);
+  var lines=[head].concat(rows.map(function(r){ var s=r.strips||{}, m=r.mega||{};
+    return [r._name, r.cohort||"", num(s.c), num(s.a), N, num(m.c), num(m.a), TOTAL_Q, num(r.overall)].concat(GROUPS.map(function(g){ var v=(r.groups||{})[g[0]]||[0,0,1]; return pct(v[0],v[2]); })).concat([r.updatedAt? new Date(r.updatedAt).toISOString():""]); }));
+  var csv=lines.map(function(l){ return l.map(function(c){ c=String(c); if(/^[=+\-@]/.test(c)) c="'"+c; return /[",\n]/.test(c)?'"'+c.replace(/"/g,'""')+'"':c; }).join(","); }).join("\n");
+  var url=URL.createObjectURL(new Blob(["﻿"+csv], {type:"text/csv;charset=utf-8"}));
+  var a=document.createElement("a"); a.href=url; a.download="cardiac-lab-scores-"+new Date().toISOString().slice(0,10)+".csv"; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(function(){ URL.revokeObjectURL(url); }, 2000);
+});
+
+updateTally(); route(); initShared();
+})();
+</script>
+</body>
+</html>

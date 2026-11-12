@@ -1,0 +1,20 @@
+{
+  "name": "cardiac-lab",
+  "version": "1.0.0",
+  "description": "CSHealthED Cardiac Lab: ECG rhythm interpretation and ACLS megacode training with an instructor scoreboard (Netlify + Supabase)",
+  "private": true,
+  "type": "module",
+  "license": "UNLICENSED",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "dev": "node tools/dev-server.mjs",
+    "test": "node --test test/*.test.mjs",
+    "db:schema": "node tools/write-schema-sql.mjs"
+  },
+  "dependencies": {
+    "pg": "^8.23.1"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.5.8"
+  }
+}

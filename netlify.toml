@@ -1,0 +1,47 @@
+# Cardiac Lab on Netlify
+#   - public/ is served as static pages
+#   - /api/* runs in the Netlify Function netlify/functions/api.mjs
+#   - scores are stored in Supabase Postgres (DATABASE_URL), in the ecglab schema
+# Environment variables are listed in README.md → "Deploy to Netlify".
+
+[build]
+  publish = "public"
+  command = "echo 'No build step: public/ is ready to serve'"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
+  # pg-native is an optional add-on of the Postgres driver that isn't used.
+  external_node_modules = ["pg-native"]
+  # The in-memory database is only for local runs and tests.
+  included_files = ["!node_modules/@electric-sql/**"]
+
+# Pages and data are always revalidated so a new deploy shows on the next load.
+[[headers]]
+  for = "/"
+  [headers.values]
+    Cache-Control = "no-cache"
+[[headers]]
+  for = "/*.html"
+  [headers.values]
+    Cache-Control = "no-cache"
+[[headers]]
+  for = "/trainer-data.js"
+  [headers.values]
+    Cache-Control = "no-cache"
+[[headers]]
+  for = "/img/*"
+  [headers.values]
+    Cache-Control = "public, max-age=604800"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "same-origin"
+    Strict-Transport-Security = "max-age=31536000"
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
