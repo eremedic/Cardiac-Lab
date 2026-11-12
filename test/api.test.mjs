@@ -122,3 +122,15 @@ test('a database failure returns an explanation', async () => {
   assert.equal(h.status, 503);
   assert.doesNotMatch(JSON.stringify(await h.json()), /:pw@/);
 });
+
+test('the Netlify internal function address works too', async () => {
+  const api = make({ INSTRUCTOR_PASSWORD: 'secret' });
+  const h = await api(new Request('http://x/.netlify/functions/api/health'));
+  assert.equal(h.status, 200);
+  assert.equal((await api(new Request('http://x/api/health/'))).status, 200);
+  assert.equal((await api(new Request('http://x/.netlify/functions/api/scores', { headers: { authorization: 'Bearer secret' } }))).status, 200);
+  assert.equal((await api(new Request('http://x/api'))).status, 200);
+  const nf = await api(new Request('http://x/api/nope'));
+  assert.equal(nf.status, 404);
+  assert.equal((await nf.json()).path, '/api/nope');
+});
