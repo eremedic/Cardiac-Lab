@@ -70,6 +70,12 @@ Progress is kept in the student's browser. Using a different device or browser s
 - **Download CSV** exports the current view.
 - To change the password, update `INSTRUCTOR_PASSWORD` in Netlify and redeploy.
 
+**Course survey**
+- When a student has answered every strip and every megacode decision, a short end-of-course survey unlocks (Overview, Results and the **Survey** tab). The server only accepts it once the student's saved results show both modules finished.
+- Students can choose **Hide my name next to my answers**: the scoreboard then shows that they completed the survey, but lists their answers and comments as "Anonymous".
+- The scoreboard's **Course survey** panel shows the response count, overall rating, Net Promoter Score, confidence before and after, agreement with each statement, answer breakdowns and every comment. **Download survey CSV** exports the responses (anonymous ones without names).
+- The questions are in [`lib/survey.mjs`](lib/survey.mjs). Edit them there; keep each question's `id` the same once students have answered.
+
 **Good to know:** scoring happens in the student's browser, so treat these scores as practice tracking, not a proctored exam. The class code keeps strangers from adding rows, and names are whatever students type.
 
 ## Run it locally

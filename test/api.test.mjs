@@ -136,3 +136,61 @@ test('the Netlify internal function address works too', async () => {
   assert.equal(nf.status, 404);
   assert.equal((await nf.json()).path, '/api/nope');
 });
+
+import { QUESTIONS } from '../lib/survey.mjs';
+
+const fullAnswers = () => {
+  const a = {};
+  for (const q of QUESTIONS) {
+    if (q.type === 'choice') a[q.id] = q.options[0];
+    else if (q.type === 'likert' || q.type === 'stars') a[q.id] = 4;
+    else if (q.type === 'nps') a[q.id] = 9;
+    else if (q.type === 'confidence') a[q.id] = { before: 2, now: 4 };
+    else if (q.type === 'text') a[q.id] = 'Great  course\u0007';
+  }
+  return a;
+};
+
+test('survey questions are served', async () => {
+  const r = await make({})(req('GET', '/api/survey'));
+  const j = await r.json();
+  assert.equal(r.status, 200);
+  assert.ok(j.sections.length >= 4);
+  assert.equal(j.likert.length, 5);
+});
+
+test('survey opens only after both modules are finished, then the instructor sees it', async () => {
+  const SID = '7c1e2d3f-4a5b-4c6d-8e7f-0a1b2c3d4e5f';
+  const api = make({ INSTRUCTOR_PASSWORD: 'secret' });
+  const send = (body) => api(req('PUT', `/api/scores/${SID}/survey`, { body }));
+  // no saved results yet
+  assert.equal((await send({ answers: fullAnswers() })).status, 409);
+  // partly finished
+  await api(req('PUT', '/api/scores/' + SID, { body: { name: 'Sam', doc: doc() } }));
+  assert.equal((await send({ answers: fullAnswers() })).status, 409);
+  // finished
+  const finished = { ...doc(), strips: { c: 90, a: 102, n: 102 }, mega: { c: 60, a: 66, n: 66 }, overall: 89 };
+  await api(req('PUT', '/api/scores/' + SID, { body: { name: 'Sam', doc: finished } }));
+  const bad = fullAnswers(); delete bad.overall;
+  const miss = await send({ answers: bad });
+  assert.equal(miss.status, 400);
+  assert.equal((await miss.json()).question, 'overall');
+  assert.equal((await send({ answers: { ...fullAnswers(), recommend: 11 } })).status, 400);
+  assert.equal((await send({ answers: { ...fullAnswers(), role: 'Pilot' } })).status, 400);
+  const ok = await send({ answers: { ...fullAnswers(), role: undefined, sneaky: 'x' }, anonymous: true });
+  assert.equal(ok.status, 200);
+  const { rows } = await (await api(req('GET', '/api/scores', { auth: 'secret' }))).json();
+  const sam = rows.find((r) => r.id === SID);
+  assert.equal(sam.surveyAnonymous, true);
+  assert.ok(sam.surveyAt > 0);
+  assert.equal(sam.survey.answers.helpful, 'Great course');
+  assert.equal(sam.survey.answers.sneaky, undefined);
+  assert.equal(sam.survey.answers.role, undefined);
+  assert.deepEqual(sam.survey.answers.conf_blocks, { before: 2, now: 4 });
+});
+
+test('survey respects the class code', async () => {
+  const api = make({ CLASS_CODE: 'abc' });
+  const r = await api(req('PUT', `/api/scores/${ID}/survey`, { body: { code: 'nope', answers: fullAnswers() } }));
+  assert.equal(r.status, 403);
+});
