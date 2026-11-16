@@ -657,7 +657,15 @@ h1,h2,h3,.qhead h2,.runner-head h2,.score-hero h2,.answer-name,.stat b,.hero .me
 .df-case .st{display:flex;justify-content:space-between;gap:8px;align-items:center}
 .df-run .runner-head{display:flex;justify-content:space-between;align-items:flex-end;gap:14px;flex-wrap:wrap;margin-bottom:16px}
 .df-grid{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:18px;align-items:start}
-@media (max-width:1100px){.df-grid{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:1100px){.df-grid{grid-template-columns:minmax(0,1fr) 260px;gap:14px}.df-side{padding:14px;gap:12px}.df-acts .btn{font-size:12.5px;padding:8px 6px}}
+@media (max-width:860px){.df-grid{grid-template-columns:minmax(0,1fr)}}
+/* while a scenario runs: the site header scrolls away and the monitor is sized to the window */
+body.df-focus .bar{position:relative}
+.df-run .runner-head{margin-bottom:10px;align-items:center}
+.df-run .runner-head h2{font-size:clamp(20px,2.3vw,30px);line-height:1.1}
+.df-run .runner-head .btn{padding:9px 14px}
+.df-devwrap{display:flex;justify-content:center}
+.df-devwrap .dv{width:100%}
 .df-side{padding:18px;display:grid;gap:16px}
 .df-side h4{font-family:var(--f-mono);font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
 .df-acts{display:grid;grid-template-columns:1fr 1fr;gap:8px}.df-acts .btn{justify-content:center;padding:9px 8px;font-size:13.5px}
@@ -1490,7 +1498,7 @@ function renderDefib(){
   }); if(!defibOpen()) root.insertAdjacentHTML("afterbegin", '<p class="df-preview">Instructor preview: students can\'t see the Defib lab until you open it on the scoreboard.</p>'); };
   if(window.DefibLab){ go(); return; }
   root.innerHTML='<div class="card panel"><p class="empty">Loading the Defib lab…</p></div>';
-  if(!DEFIB_LOADING) DEFIB_LOADING=new Promise(function(res, rej){ var sc=document.createElement("script"); sc.src="/defib.js?v=2"; sc.onload=res; sc.onerror=function(){ DEFIB_LOADING=null; rej(); }; document.head.appendChild(sc); });
+  if(!DEFIB_LOADING) DEFIB_LOADING=new Promise(function(res, rej){ var sc=document.createElement("script"); sc.src="/defib.js?v=3"; sc.onload=res; sc.onerror=function(){ DEFIB_LOADING=null; rej(); }; document.head.appendChild(sc); });
   DEFIB_LOADING.then(go, function(){ root.innerHTML='<div class="card panel problem"><h3>The Defib lab didn\'t load</h3><p>Check your connection and reload the page.</p></div>'; });
 }
 function areaTotals(r){ var c=0,a=0; Object.keys(r.areas||{}).forEach(function(k){ var v=r.areas[k]; if(v){ c+=v[0]; a+=v[1]; } }); return [c,a]; }

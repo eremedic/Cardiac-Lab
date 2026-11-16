@@ -293,7 +293,7 @@
     eng.listeners.push(onEvent);
     if (sc.cpr) setCpr(true, true);
     bindKeys(); el("scPt").textContent = sc.peds ? "PEDI" : "ADULT"; el("scPt").classList.toggle("pedi", !!sc.peds);
-    if (sc.syncOn) logEv("The monitor is still in SYNC mode from the earlier cardioversion."); setupCanvases(); updateScreen(); logEv("Scenario started. " + sc.text);
+    if (sc.syncOn) logEv("The monitor is still in SYNC mode from the earlier cardioversion."); document.body.classList.add("df-focus"); fit(true); updateScreen(); logEv("Scenario started. " + sc.text);
     lastTs = performance.now(); tPrev = 0; x = { ecg: 0, pl: 0, co: 0 };
     cancelAnimationFrame(raf); raf = requestAnimationFrame(frame);
     root.querySelector("#dfBack").onclick = function () { DefibLab.stop(); HOST.list(); };
@@ -465,6 +465,17 @@
     el("nCo").textContent = co; el("nRr").textContent = "RR " + (st.cpr || !st.perfusing ? 10 : 16);
   }
 
+  // Scale the whole device so it fits the window height, then line the scenario up at the top of the screen.
+  function fit(scroll) {
+    var dv = root.querySelector("#dv"), run = root.querySelector(".df-run"); if (!dv || !run) return;
+    dv.style.zoom = 1;
+    var nat = dv.getBoundingClientRect().height, head = root.querySelector(".runner-head").getBoundingClientRect().height;
+    var avail = window.innerHeight - head - 26;
+    var z = Math.max(0.45, Math.min(1, avail / nat));
+    dv.style.zoom = z < 0.995 ? z.toFixed(3) : 1;
+    setupCanvases();
+    if (scroll) { var y = run.getBoundingClientRect().top + window.scrollY - 8; window.scrollTo(0, Math.max(0, y)); }
+  }
   function setupCanvases() {
     ["cvEcg", "cvPl", "cvCo"].forEach(function (id) {
       var c = el(id), r = c.getBoundingClientRect(), d = window.devicePixelRatio || 1;
@@ -647,12 +658,12 @@
       window.DefibLab.list();
     },
     list: function () {
-      cancelAnimationFrame(raf); eng = null;
+      cancelAnimationFrame(raf); eng = null; document.body.classList.remove("df-focus");
       root.innerHTML = scenarioListHTML();
-      root.querySelectorAll(".df-case").forEach(function (b) { b.onclick = function () { startScenario(+b.getAttribute("data-i")); window.scrollTo(0, 0); }; });
+      root.querySelectorAll(".df-case").forEach(function (b) { b.onclick = function () { startScenario(+b.getAttribute("data-i")); }; });
     },
-    stop: function () { cancelAnimationFrame(raf); eng = null; stopChargeTone(); },
-    resize: function () { if (eng) setupCanvases(); }
+    stop: function () { cancelAnimationFrame(raf); eng = null; stopChargeTone(); document.body.classList.remove("df-focus"); },
+    resize: function () { if (eng) fit(false); }
   };
-  window.addEventListener("resize", function () { if (eng) { setupCanvases(); } });
+  var rT; window.addEventListener("resize", function () { if (!eng) return; clearTimeout(rT); rT = setTimeout(function () { if (eng) fit(false); }, 120); });
 })();
