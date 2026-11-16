@@ -72,7 +72,7 @@ Progress is kept in the student's browser. Using a different device or browser s
 - To change the password, update `INSTRUCTOR_PASSWORD` in Netlify and redeploy.
 
 **How scores are calculated**
-- Every score is **correct ÷ answered**: strips, megacode, practice areas, 12-lead, the Results page, the home-page rings and the scoreboard. Unanswered items don't lower a score; progress (how much has been answered) is shown separately.
+- Every score is **correct ÷ answered**: strips, megacode, practice areas, 12-lead, the Results page and the scoreboard. Unanswered items don't lower a score. Progress (how much has been answered) is shown separately, including the rings on the home page.
 - The scoreboard works this out from each student's saved counts, so older rows follow the same rule.
 
 **Calipers**

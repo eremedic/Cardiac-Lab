@@ -1056,8 +1056,8 @@ function updateTally(){
   if(typeof renderSurveyPrompts==="function") renderSurveyPrompts();
   var s=stripScore(), m=megaScore();
   $("tStrips").textContent = s.c+"/"+s.a; $("tMega").textContent = m.c+"/"+m.a;
-  ring($("ringStrips"), s.a?s.c/s.a:0, s.a?pct(s.c,s.a)+"%":"–");
-  ring($("ringMega"), m.a?m.c/m.a:0, m.a?pct(m.c,m.a)+"%":"–");
+  ring($("ringStrips"), s.a/N, pct(s.a,N)+"%");   // home rings show progress (answered), not score
+  ring($("ringMega"), m.a/TOTAL_Q, pct(m.a,TOTAL_Q)+"%");
   $("goStrips").textContent = s.a===0 ? "Start strips" : (s.a===N ? "Review strips" : "Resume at strip "+S.pi);
   $("hQ").textContent = TOTAL_Q;
 }
