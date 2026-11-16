@@ -493,6 +493,28 @@ h1,h2,h3,.qhead h2,.runner-head h2,.score-hero h2,.answer-name,.stat b,.hero .me
 .ar-cell small{font-size:12px;color:var(--ink-2)}
 .tabs a[data-v="practice"]{--tc:var(--teal);--ts:var(--teal-soft)}
 .area-tile.wide{grid-column:1/-1}
+.cardio{display:grid;gap:12px}
+.cardio-bar{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.cardio-btn{background:var(--surface);border:1.5px solid var(--band-red);color:var(--brand-red);padding:10px 16px;gap:10px}
+.cardio-btn:hover{background:var(--red-soft)}
+.cardio-btn svg{width:18px;height:18px}
+.cardio-btn small{font-family:var(--f-mono);font-size:11.5px;font-weight:500;color:var(--muted)}
+.cardio-btn.reveal{border-style:dashed}
+.cardio-note{font-size:13px;color:var(--muted);flex:1 1 260px}
+.cardio-box{border-radius:16px;border:1px solid color-mix(in srgb,var(--band-red) 35%,var(--line));background:linear-gradient(135deg,var(--red-soft),var(--surface) 70%);padding:14px 16px;box-shadow:var(--shadow);animation:cardioIn .25s ease-out}
+.cardio-head{display:flex;gap:10px;align-items:center;margin-bottom:8px}
+.cardio-head b{display:block;font-size:15px}
+.cardio-head small{font-family:var(--f-mono);font-size:11.5px;color:var(--muted)}
+.cardio-av{flex:none;width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:var(--band-red);color:#FFFFFF}
+.cardio-av svg{width:18px;height:18px}
+.cardio-hints{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.cardio-hints li{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:9px 12px}
+.cardio-hints li b{font-family:var(--f-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--brand-red)}
+.cardio-hints li p{font-size:14.5px;margin-top:2px}
+.cardio-hints li.new{animation:cardioIn .3s ease-out;border-color:var(--band-red)}
+.fb-note{font-size:14px;color:var(--ink-2)}
+@keyframes cardioIn{from{opacity:.0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.cardio-box,.cardio-hints li.new{animation:none}}
 .area-tile.wide .area-band{background:var(--ac)}
 .area-tile.wide .area-ecg svg{width:150px}
 .area-locked{justify-items:start;max-width:620px}
@@ -911,11 +933,14 @@ function renderStrip(){
   renderDots();
   updateTally();
 }
+var REVEALED = "Revealed by the cardiologist";
 function stripFeedback(q, chosen){
-  var ok = chosen===q.cat, C = CATS[q.cat], X = CATS[chosen];
-  var h = '<div class="fb '+(ok?"ok":"no")+'"><div class="verdict">'+(ok?IC.ok+"Correct":IC.no+"Not quite")+'</div>';
+  var ok = chosen===q.cat, C = CATS[q.cat], X = CATS[chosen], revealed = chosen===REVEALED;
+  var h = '<div class="fb '+(ok?"ok":"no")+'"><div class="verdict">'+(ok?IC.ok+"Correct":IC.no+(revealed?"Answer revealed · counted as wrong":"Not quite"))+'</div>';
   h += '<div class="answer-name">'+esc(q.name)+'</div>';
-  if(!ok){
+  if(revealed){
+    h += '<p class="fb-note">The cardiologist talked you through this one, so it counts as wrong. Here\'s the full explanation.</p>';
+  } else if(!ok){
     h += '<div class="why"><div><small>You chose</small><b>'+esc(chosen)+'</b>'+esc(X.key)+'</div><div><small>This strip is</small><b>'+esc(q.cat)+'</b>'+esc(C.key)+'</div></div>';
   }
   h += '<div class="clue">'+IC.bulb+'<p><b>The tell: </b>'+esc(C.clue)+'</p></div>';
@@ -1263,7 +1288,7 @@ function detailHTML(r){
   var del = SB.confirmDel===r.id
     ? '<div class="confirm"><span>Remove '+esc(r._name)+'\'s results permanently?</span><button class="btn btn-primary" data-del-yes="'+esc(r.id)+'">Remove</button><button class="btn btn-ghost" data-del-no="1">Cancel</button></div>'
     : '<button class="btn btn-ghost" data-del="'+esc(r.id)+'">Remove this student</button>';
-  var ap=AREA_META.map(function(x){ var v=(r.areas||{})[x.key]||[0,0,AREA_SIZE]; return '<div class="barrow"><span>'+esc(x.short)+'</span><span class="track"><i style="width:'+pct(v[1],v[2])+'%;background:'+x.color+'"></i></span><b>'+(v[1]?v[0]+'/'+v[1]:'—')+'</b></div>'; }).join("");
+  var ap=AREA_META.map(function(x){ var v=(r.areas||{})[x.key]||[0,0,x.size||AREA_SIZE]; return '<div class="barrow"><span>'+esc(x.short)+'</span><span class="track"><i style="width:'+pct(v[1],v[2])+'%;background:'+x.color+'"></i></span><b>'+(v[1]?v[0]+'/'+v[1]:'—')+'</b></div>'; }).join("");
   return '<div class="inner"><div><h4>Strips by rhythm family</h4><div class="bars">'+g+'</div><h4 style="margin-top:14px">Practice areas · correct / answered</h4><div class="bars">'+ap+'</div><div style="margin-top:14px">'+del+'</div></div><div><h4>Missed strips ('+missed.length+')</h4><div class="tags">'+ml+'</div><h4 style="margin-top:14px">Megacode cases</h4><div class="tags">'+cs+'</div>'+surveyDetailHTML(r)+'</div></div>';
 }
 function hardHTML(rows){
@@ -1312,18 +1337,19 @@ var AREA_META = [
   {key:"ventricular", title:"Ventricular rhythms", short:"Ventricular", color:"var(--band-red)", soft:"var(--red-soft)", ink:"var(--brand-red)", blurb:"PVC patterns, runs of VT, idioventricular and AIVR, VT, torsades, VF, asystole and agonal rhythm."},
   {key:"block", title:"AV blocks", short:"AV blocks", color:"var(--band-orange)", soft:"var(--orange-soft)", ink:"var(--orange)", blurb:"1st degree, Wenckebach, Mobitz II, 2:1, high-grade and complete heart block."},
   {key:"paced", title:"Paced rhythms", short:"Paced", color:"var(--band-navy)", soft:"var(--navy-soft)", ink:"var(--navy)", blurb:"Atrial, ventricular and dual-chamber pacing, demand pacing, pacer malfunction and transcutaneous pacing."},
-  {key:"twelve", title:"12-lead ECGs", short:"12-lead", gated:"twelveLead", color:"linear-gradient(120deg,var(--band-navy),var(--band-teal) 55%,var(--band-red))", soft:"var(--navy-soft)", ink:"var(--navy)", blurb:"Normal, inferior, anterior and lateral STEMI, posterior MI, RBBB, LBBB, hyperkalemia and pericarditis, on full 12-lead printouts."}
+  {key:"twelve", title:"12-lead ECGs", short:"12-lead", gated:"twelveLead", size:100, color:"linear-gradient(120deg,var(--band-navy),var(--band-teal) 55%,var(--band-red))", soft:"var(--navy-soft)", ink:"var(--navy)", blurb:"STEMI territories and equivalents (Wellens, de Winter, aVR), bundle branch blocks, WPW, LVH, Brugada, long QT, potassium problems, pericarditis and early repolarization, on full 12-lead printouts. Stuck? Call the cardiologist."}
 ];
 function areaOpen(m){ return !m.gated || (SB.features||{})[m.gated]===true; }
 var AREA_SIZE = 50;
+function areaSize(key){ var m=areaMeta(key); return (AREAS[key] && AREAS[key].items.length) || (m && m.size) || AREA_SIZE; }
 var AREAS = {}, AREA_LOADING = {};
 function areaMeta(key){ for(var i=0;i<AREA_META.length;i++) if(AREA_META[i].key===key) return AREA_META[i]; return null; }
 function areaState(key){ S.ar = S.ar || {}; if(!S.ar[key]) S.ar[key] = {pi:1, p:{}}; return S.ar[key]; }
 function areaScore(key){
   var st=(S.ar||{})[key], a=0, c=0, data=AREAS[key];
-  if(!st) return {a:0, c:0, t:AREA_SIZE};
+  if(!st) return {a:0, c:0, t:areaSize(key)};
   Object.keys(st.p).forEach(function(n){ a++; if(data){ var q=data.items[n-1]; if(q && st.p[n]===q.cat) c++; } else if(st.ok && st.ok[n]) c++; });
-  return {a:a, c:c, t:AREA_SIZE};
+  return {a:a, c:c, t:areaSize(key)};
 }
 function loadArea(key){
   if(AREAS[key]) return Promise.resolve(AREAS[key]);
@@ -1337,7 +1363,7 @@ var MINI_ECG = '<svg viewBox="0 0 120 30" aria-hidden="true"><path d="M0 18h22l4
 function areaTilesHTML(){
   return AREA_META.filter(function(m){ return areaOpen(m) || SB.admin; }).map(function(m){
     var sc=areaScore(m.key), done=sc.a>=sc.t, started=sc.a>0;
-    var lockNote = m.gated ? (areaOpen(m) ? '<span class="area-count">New</span>' : '<span class="area-count">Closed to students · preview</span>') : '<span class="area-count num">'+AREA_SIZE+' strips</span>';
+    var lockNote = m.gated ? (areaOpen(m) ? '<span class="area-count num">'+areaSize(m.key)+' ECGs · New</span>' : '<span class="area-count num">'+areaSize(m.key)+' ECGs · closed to students · preview</span>') : '<span class="area-count num">'+areaSize(m.key)+' strips</span>';
     return '<a class="area-tile'+(m.gated?' wide':'')+'" href="#area-'+m.key+'" style="--ac:'+m.color+';--as:'+m.soft+';--ai:'+m.ink+'">'+
       '<span class="area-band"><span class="area-ecg">'+MINI_ECG+'</span>'+lockNote+'</span>'+
       '<span class="area-body"><b>'+esc(m.title)+'</b><span class="area-blurb">'+esc(m.blurb)+'</span>'+
@@ -1365,10 +1391,10 @@ function renderArea(key){
     });
     return;
   }
-  var data=AREAS[key], st=areaState(key), total=data.items.length;
+  var data=AREAS[key], st=areaState(key), total=data.items.length, unit=(data.items[0] && data.items[0].leads) ? "ECG" : "Strip";
   if(st.pi>total+1) st.pi=1;
   var sc=areaScore(key);
-  var head='<div class="qhead"><div><div class="eyebrow">Practice area · '+esc(m.title)+'</div><h2>'+(st.pi>total?'Results':'Strip <span class="num">'+st.pi+'</span><span> / '+total+'</span>')+'</h2></div>'+
+  var head='<div class="qhead"><div><div class="eyebrow">Practice area · '+esc(m.title)+'</div><h2>'+(st.pi>total?'Results':unit+' <span class="num">'+st.pi+'</span><span> / '+total+'</span>')+'</h2></div>'+
     '<div class="qstats"><span>Answered <b class="num">'+sc.a+'</b></span><span>Correct <b class="num">'+sc.c+'</b></span><span>Score <b class="num">'+(sc.a?pct(sc.c,sc.a)+'%':'–')+'</b></span><a class="btn btn-ghost" href="#practice">All areas</a></div></div>'+
     '<div class="progress" style="margin-bottom:16px"><i style="width:'+pct(sc.a,total)+'%"></i></div>';
   if(st.pi>total){ body.innerHTML=head+areaSummaryHTML(key); bindAreaSummary(key); return; }
@@ -1381,9 +1407,11 @@ function renderArea(key){
   body.innerHTML=head+'<div class="card qcard"><div class="stem"><span class="tag">'+esc(m.short)+'</span><p>'+(q.leads?'Interpret this 12-lead ECG.':'Identify this rhythm.')+'</p></div>'+
     '<div><div class="paper">'+(q.leads?ecg12SVG(q):stripSVG(q.strip,"paper",false))+'</div><div class="paper-meta"><span>'+(q.leads?'12-lead · 25 mm/s · 10 mm/mV · bottom row: lead II rhythm strip':'Lead II · 25 mm/s · 6-second strip')+'</span><span class="scroll-hint">Swipe to see the whole '+(q.leads?'ECG':'strip')+' →</span></div></div>'+
     '<div><div class="eyebrow" style="margin-bottom:10px">'+(q.leads?'What does it show?':'Identify the rhythm')+'</div><div class="opts" id="arOpts" role="group" aria-label="Answer choices">'+opts+'</div></div>'+
+    (q.hints ? cardioHTML(q, st, done) : '')+
     '<div aria-live="polite">'+(done?stripFeedback(q, chosen):'')+'</div>'+
-    '<div class="qnav"><button class="btn btn-ghost" id="arPrev" '+(st.pi===1?'disabled':'')+'>← Previous</button><button class="btn btn-primary" id="arNext">'+(st.pi===total?'See area results →':(done?'Next strip →':'Skip →'))+'</button></div></div>'+
-    '<details class="card grid-nav"><summary>All '+total+' strips in this area</summary><div class="dots" id="arDots">'+dots+'</div><div class="legend"><span><i style="background:var(--ok)"></i>Correct</span><span><i style="background:var(--bad)"></i>Incorrect</span><span><i style="background:var(--line-2)"></i>Not answered</span></div></details>';
+    '<div class="qnav"><button class="btn btn-ghost" id="arPrev" '+(st.pi===1?'disabled':'')+'>← Previous</button><button class="btn btn-primary" id="arNext">'+(st.pi===total?'See area results →':(done?'Next '+unit.toLowerCase()+' →':'Skip →'))+'</button></div></div>'+
+    '<details class="card grid-nav"><summary>All '+total+' '+unit.toLowerCase()+'s in this area</summary><div class="dots" id="arDots">'+dots+'</div><div class="legend"><span><i style="background:var(--ok)"></i>Correct</span><span><i style="background:var(--bad)"></i>Incorrect</span><span><i style="background:var(--line-2)"></i>Not answered</span></div></details>';
+  if($("arCardioBtn")) $("arCardioBtn").onclick=function(){ callCardiologist(key, q, st); };
   $("arOpts").onclick=function(e){ var b=e.target.closest(".opt"); if(!b||b.disabled) return; st.p[q.n]=b.getAttribute("data-o"); st.ok=st.ok||{}; st.ok[q.n]=st.p[q.n]===q.cat; save(); renderArea(key); };
   $("arPrev").onclick=function(){ if(st.pi>1){ st.pi--; save(); renderArea(key); scrollTop(); } };
   $("arNext").onclick=function(){ st.pi++; save(); renderArea(key); scrollTop(); };
@@ -1413,6 +1441,7 @@ function bindAreaSummary(key){
 document.addEventListener("keydown", function(e){
   if(location.hash.indexOf("#area-")!==0 || e.target.closest("input,textarea") || !$("arOpts")) return;
   var idx="ABCD".indexOf(e.key.toUpperCase());
+  if(e.key.toUpperCase()==="H" && $("arCardioBtn")){ $("arCardioBtn").click(); return; }
   if(idx>=0){ var btn=$("arOpts").children[idx]; if(btn && !btn.disabled) btn.click(); }
   else if(e.key==="ArrowRight") $("arNext").click();
   else if(e.key==="ArrowLeft" && !$("arPrev").disabled) $("arPrev").click();
@@ -1434,6 +1463,33 @@ function ecg12SVG(q){
   return '<svg class="ecg12" viewBox="0 0 10000 4800" role="img" aria-label="12-lead ECG"><rect width="10000" height="4800" fill="url(#pMajor)"/>'+
     '<g fill="none" stroke="var(--trace)" stroke-width="1.9" stroke-linejoin="round" vector-effect="non-scaling-stroke">'+lines+'</g>'+
     '<g class="ldl" fill="var(--trace)">'+labels+'</g></svg>';
+}
+/* ----- "Call the cardiologist" (12-lead): three hints, then the answer ----- */
+var IC_PHONE='<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5.2 2.8h2.4l1.2 3.4-1.7 1.1a9.6 9.6 0 0 0 5.6 5.6l1.1-1.7 3.4 1.2v2.4a1.6 1.6 0 0 1-1.7 1.6A14.2 14.2 0 0 1 3.6 4.5a1.6 1.6 0 0 1 1.6-1.7z"/></svg>';
+function cardioHTML(q, st, done){
+  st.h = st.h || {};
+  var used = Math.min(st.h[q.n]||0, 3), revealed = st.p[q.n]===REVEALED;
+  var list = q.hints.slice(0, used).map(function(h, i){ return '<li class="'+(i===used-1 && !done ? 'new' : '')+'"><b>Hint '+(i+1)+'</b><p>'+esc(h)+'</p></li>'; }).join("");
+  var btn = '';
+  if(!done){
+    btn = used < 3
+      ? '<button class="btn cardio-btn" id="arCardioBtn">'+IC_PHONE+'<span>Call the cardiologist</span><small>hint '+(used+1)+' of 3</small></button>'
+      : '<button class="btn cardio-btn reveal" id="arCardioBtn">'+IC_PHONE+'<span>Call again for the answer</span><small>counts as wrong</small></button>';
+  }
+  var box = used ? '<div class="cardio-box" role="status" aria-live="polite"><div class="cardio-head"><span class="cardio-av">'+IC_PHONE+'</span><div><b>Cardiologist on the line</b><small>'+
+      (revealed ? 'Answer revealed after 3 hints' : (done ? used+' hint'+(used===1?'':'s')+' used' : used+' of 3 hints'))+'</small></div></div><ol class="cardio-hints">'+list+'</ol></div>' : '';
+  if(!btn && !box) return '';
+  return '<div class="cardio">'+(btn?'<div class="cardio-bar">'+btn+'<span class="cardio-note">Stuck? Each call gives you a hint. The 4th call reveals the answer and counts it as wrong.</span></div>':'')+box+'</div>';
+}
+function callCardiologist(key, q, st){
+  st.h = st.h || {};
+  var used = st.h[q.n]||0;
+  if(st.p[q.n]!=null) return;
+  if(used < 3){ st.h[q.n] = used+1; }
+  else { st.h[q.n] = 4; st.p[q.n] = REVEALED; st.ok = st.ok || {}; st.ok[q.n] = false; }
+  save(); renderArea(key);
+  var el = document.querySelector(used < 3 ? ".cardio-box" : "#v-area .fb");
+  if(el) el.scrollIntoView({behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "center"});
 }
 function areasDoc(){ var out={}; AREA_META.forEach(function(m){ var sc=areaScore(m.key); out[m.key]=[sc.c, sc.a, sc.t]; }); return out; }
 function areasPanelHTML(rows){
