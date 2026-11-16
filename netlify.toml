@@ -33,6 +33,10 @@
   [headers.values]
     Cache-Control = "no-cache"
 [[headers]]
+  for = "/areas/*"
+  [headers.values]
+    Cache-Control = "no-cache"
+[[headers]]
   for = "/img/*"
   [headers.values]
     Cache-Control = "public, max-age=604800"

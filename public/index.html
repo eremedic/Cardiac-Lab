@@ -453,6 +453,46 @@ h1,h2,h3,.qhead h2,.runner-head h2,.score-hero h2,.answer-name,.stat b,.hero .me
 .login-msg{color:var(--bad);font-weight:600;font-size:14px}
 .foot-link{font-size:13px;font-weight:600;color:var(--teal);text-decoration:none;white-space:nowrap}
 .foot-link:hover{text-decoration:underline}
+/* ---------- practice areas ---------- */
+.area-sec{margin-top:26px}
+.area-head{display:flex;justify-content:space-between;align-items:flex-end;gap:12px 24px;flex-wrap:wrap;margin-bottom:14px}
+.area-head h2{font-size:24px;font-weight:700}
+.area-head p{color:var(--ink-2);max-width:52ch;font-size:14.5px}
+.area-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+@media (max-width:960px){.area-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:600px){.area-grid{grid-template-columns:minmax(0,1fr)}}
+.area-tile{display:flex;flex-direction:column;text-decoration:none;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden;box-shadow:var(--shadow);transition:transform .15s,border-color .15s;min-width:0}
+.area-tile:hover{transform:translateY(-2px);border-color:var(--ac)}
+.area-tile:focus-visible{outline:2px solid var(--ac);outline-offset:3px}
+.area-band{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 18px;background:var(--ac);color:#FFFFFF}
+.area-ecg svg{display:block;width:96px;height:24px}
+.area-count{font-family:var(--f-mono);font-size:12px;font-weight:600;background:rgba(255,255,255,.2);padding:3px 9px;border-radius:99px}
+.area-body{display:flex;flex-direction:column;gap:8px;padding:16px 18px 18px;flex:1}
+.area-body b{font-family:var(--f-display);font-size:19px;font-weight:700}
+.area-blurb{font-size:13.5px;color:var(--ink-2);flex:1}
+.area-body .progress i{background:var(--ac)}
+.area-foot{display:flex;justify-content:space-between;gap:10px;font-size:12.5px;color:var(--muted)}
+.area-go{font-weight:700;color:var(--ai);white-space:nowrap}
+#v-practice .area-grid{margin-top:4px}
+.area-sum{gap:16px}
+.area-sum-top{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
+.area-sum-top h3{font-size:26px;font-weight:700}
+.area-big{font-family:var(--f-display);font-size:56px;font-weight:800;color:var(--accent);line-height:1}
+.area-sum h4{margin:6px 0 0;font-size:12px;font-family:var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.area-sum .barrow{grid-template-columns:minmax(0,260px) minmax(0,1fr) 60px}
+@media (max-width:600px){.area-sum .barrow{grid-template-columns:minmax(0,1fr) 70px 50px}}
+#v-area .barrow .track i{background:var(--accent)}
+.ar-board{margin-top:18px;gap:16px}
+.ar-board-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+@media (max-width:860px){.ar-board-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.ar-cell{display:grid;gap:4px;padding:14px 16px;border-radius:12px;background:var(--surface-2);border-top:0}
+.ar-cell b{font-size:14px}
+.ar-cell .ar-big{font-family:var(--f-display);font-size:30px;font-weight:700;color:var(--ai);line-height:1.1}
+.ar-cell span{font-size:12.5px;color:var(--muted)}
+.ar-cell .progress{margin-top:6px}.ar-cell .progress i{background:var(--ac)}
+.ar-cell small{font-size:12px;color:var(--ink-2)}
+.tabs a[data-v="practice"]{--tc:var(--teal);--ts:var(--teal-soft)}
+@media (max-width:720px){.tabs{overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;min-width:0;max-width:100%}.tabs::-webkit-scrollbar{display:none}.tabs a{flex:1 0 auto;padding:7px 10px}}
 /* ---------- course survey ---------- */
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .sv-home{margin-top:18px;padding:0;overflow:hidden;--accent:var(--orange);--accent-soft:var(--orange-soft)}
@@ -580,6 +620,7 @@ h1,h2,h3,.qhead h2,.runner-head h2,.score-hero h2,.answer-name,.stat b,.hero .me
     <nav class="tabs" aria-label="Sections">
       <a href="#home" data-v="home">Overview</a>
       <a href="#strips" data-v="strips">Strips</a>
+      <a href="#practice" data-v="practice">Practice</a>
       <a href="#megacode" data-v="megacode">Megacode</a>
       <a href="#results" data-v="results">Results</a>
       <a href="#survey" data-v="survey">Survey</a>
@@ -648,6 +689,10 @@ h1,h2,h3,.qhead h2,.runner-head h2,.score-hero h2,.answer-name,.stat b,.hero .me
         </div>
       </article>
     </div>
+    <section class="area-sec" aria-labelledby="areasTitle">
+      <div class="area-head"><div><div class="eyebrow">Practice by rhythm family</div><h2 id="areasTitle">Six practice areas, 50 strips each</h2></div><p>Drill one family at a time. Every strip is different and follows the rules of the rhythm it shows.</p></div>
+      <div class="area-grid" id="homeAreas"></div>
+    </section>
     <div class="card sv-home" id="homeSurvey"></div>
     <div class="card method">
       <div class="lab">Use the same five steps on every strip</div>
@@ -722,6 +767,16 @@ h1,h2,h3,.qhead h2,.runner-head h2,.score-hero h2,.answer-name,.stat b,.hero .me
       </div>
     </div>
     <div id="sbBody"></div>
+  </section>
+
+  <!-- PRACTICE AREAS -->
+  <section class="view" id="v-practice" hidden>
+    <div class="qhead"><div><div class="eyebrow">Practice by rhythm family</div><h2>Practice areas</h2></div></div>
+    <p class="sv-lede">Pick a rhythm family and work through its 50 strips. Your progress in each area is saved and shared with your instructor along with your other results.</p>
+    <div class="area-grid" id="practiceAreas"></div>
+  </section>
+  <section class="view" id="v-area" hidden>
+    <div id="arBody"></div>
   </section>
 
   <!-- SURVEY -->
@@ -973,15 +1028,20 @@ function renderResults(){
   $("rCases").onclick=function(e){ var b=e.target.closest("button"); if(!b)return; S.ci=+b.getAttribute("data-c"); var k=caseScore(S.ci); S.si=k.a>=k.t?k.t:k.a; save(); location.hash="megacode"; };
   var b; if((b=$("rAsk"))) b.onclick=function(){confirmReset=true; renderResults();};
   if((b=$("rNo"))) b.onclick=function(){confirmReset=false; renderResults();};
-  if((b=$("rYes"))) b.onclick=function(){ S={p:{},m:{},pi:1,ci:null,cohort:S.cohort||"",name:S.name||"",code:S.code||"",sid:S.sid,svDone:S.svDone,svAnswers:S.svAnswers,svAnon:S.svAnon}; save(); confirmReset=false; renderResults(); updateTally(); };
+  if((b=$("rYes"))) b.onclick=function(){ S={p:{},m:{},pi:1,ci:null,cohort:S.cohort||"",name:S.name||"",code:S.code||"",sid:S.sid,svDone:S.svDone,svAnswers:S.svAnswers,svAnon:S.svAnon,ar:S.ar}; save(); confirmReset=false; renderResults(); updateTally(); };
 }
 
 /* ================= ROUTER ================= */
-var VIEWS=["home","strips","megacode","results","survey","scoreboard"];
+var VIEWS=["home","strips","practice","area","megacode","results","survey","scoreboard"];
 function route(){
-  var v=(location.hash||"#home").slice(1); if(VIEWS.indexOf(v)<0) v="home";
+  var v=(location.hash||"#home").slice(1), areaKey=null;
+  if(v.indexOf("area-")===0 && areaMeta(v.slice(5))){ areaKey=v.slice(5); v="area"; }
+  if(VIEWS.indexOf(v)<0 || v==="area" && !areaKey) v="home";
   VIEWS.forEach(function(x){ $("v-"+x).hidden = x!==v; });
-  document.querySelectorAll(".tabs a").forEach(function(a){ if(a.getAttribute("data-v")===v) a.setAttribute("aria-current","page"); else a.removeAttribute("aria-current"); });
+  var tabV = v==="area" ? "practice" : v;
+  document.querySelectorAll(".tabs a").forEach(function(a){ if(a.getAttribute("data-v")===tabV) a.setAttribute("aria-current","page"); else a.removeAttribute("aria-current"); });
+  if(v==="area") renderArea(areaKey); else CUR_AREA=null;
+  if(v==="practice" || v==="home") renderAreaTiles();
   if(v==="strips") renderStrip();
   if(v==="megacode") renderMega();
   if(v==="results") renderResults();
@@ -1018,7 +1078,7 @@ function summaryDoc(){
   var s=stripScore(), m=megaScore(), groups={};
   GROUPS.forEach(function(g){ var t=0,c=0,a=0; P.forEach(function(q){ if(CATS[q.cat].group===g[0]){ t++; var x=S.p[q.n]; if(x!=null){a++; if(x===q.cat)c++;} } }); groups[g[0]]=[c,a,t]; });
   var cases=CASES.map(function(_,ci){ var k=caseScore(ci); return [k.c,k.a,k.t]; });
-  return {strips:{c:s.c,a:s.a,n:N}, mega:{c:m.c,a:m.a,n:TOTAL_Q}, overall:pct(s.c+m.c, N+TOTAL_Q), groups:groups, cases:cases, p:S.p, m:S.m};
+  return {strips:{c:s.c,a:s.a,n:N}, mega:{c:m.c,a:m.a,n:TOTAL_Q}, overall:pct(s.c+m.c, N+TOTAL_Q), groups:groups, cases:cases, areas:areasDoc(), p:S.p, m:S.m};
 }
 function pushNow(){
   if(!SB.online) return;
@@ -1152,7 +1212,7 @@ function renderBoard(){
     return tr;
   }).join("");
   h+='<div class="sb-grid"><div class="card panel"><h3>Students <span class="num">'+n+'</span></h3><div class="tablewrap"><table class="sbt"><thead><tr><th>Student</th><th>Strips</th><th>Megacode</th><th>Overall</th><th>Weakest family</th><th>Survey</th><th>Last active</th></tr></thead><tbody id="sbRows">'+body+'</tbody></table></div><p class="empty">Overall counts unanswered items as incorrect. Select a student for detail.</p></div>'+
-     '<div class="card panel"><h3>Most-missed strips</h3><div class="hard" id="sbHard">'+hardHTML(rows)+'</div></div></div>'+surveyPanelHTML(rows);
+     '<div class="card panel"><h3>Most-missed strips</h3><div class="hard" id="sbHard">'+hardHTML(rows)+'</div></div></div>'+areasPanelHTML(rows)+surveyPanelHTML(rows);
   $("sbBody").innerHTML=h;
 }
 function detailHTML(r){
@@ -1163,7 +1223,8 @@ function detailHTML(r){
   var del = SB.confirmDel===r.id
     ? '<div class="confirm"><span>Remove '+esc(r._name)+'\'s results permanently?</span><button class="btn btn-primary" data-del-yes="'+esc(r.id)+'">Remove</button><button class="btn btn-ghost" data-del-no="1">Cancel</button></div>'
     : '<button class="btn btn-ghost" data-del="'+esc(r.id)+'">Remove this student</button>';
-  return '<div class="inner"><div><h4>Strips by rhythm family</h4><div class="bars">'+g+'</div><div style="margin-top:14px">'+del+'</div></div><div><h4>Missed strips ('+missed.length+')</h4><div class="tags">'+ml+'</div><h4 style="margin-top:14px">Megacode cases</h4><div class="tags">'+cs+'</div>'+surveyDetailHTML(r)+'</div></div>';
+  var ap=AREA_META.map(function(x){ var v=(r.areas||{})[x.key]||[0,0,AREA_SIZE]; return '<div class="barrow"><span>'+esc(x.short)+'</span><span class="track"><i style="width:'+pct(v[1],v[2])+'%;background:'+x.color+'"></i></span><b>'+(v[1]?v[0]+'/'+v[1]:'—')+'</b></div>'; }).join("");
+  return '<div class="inner"><div><h4>Strips by rhythm family</h4><div class="bars">'+g+'</div><h4 style="margin-top:14px">Practice areas · correct / answered</h4><div class="bars">'+ap+'</div><div style="margin-top:14px">'+del+'</div></div><div><h4>Missed strips ('+missed.length+')</h4><div class="tags">'+ml+'</div><h4 style="margin-top:14px">Megacode cases</h4><div class="tags">'+cs+'</div>'+surveyDetailHTML(r)+'</div></div>';
 }
 function hardHTML(rows){
   var stat={}; rows.forEach(function(r){ var p=r.p||{}; Object.keys(p).forEach(function(n){ var q=P[n-1]; if(!q) return; stat[n]=stat[n]||[0,0]; stat[n][1]++; if(p[n]!==q.cat) stat[n][0]++; }); });
@@ -1191,9 +1252,9 @@ $("sbRefresh").addEventListener("click", function(){ loadBoard(true); });
 $("sbOut").addEventListener("click", function(){ SB.pass=null; SB.admin=false; SB.rows=null; stopPoll(); try{ sessionStorage.removeItem("cl-instructor"); }catch(e){} $("tabBoard").hidden=true; showLogin(""); });
 $("sbCsv").addEventListener("click", function(){
   var rows=boardRows();
-  var head=["Student","Cohort","Strips correct","Strips answered","Strips total","Megacode correct","Megacode answered","Megacode total","Overall %"].concat(GROUPS.map(function(g){return g[1]+" %"})).concat(["Survey submitted","Last active"]);
+  var head=["Student","Cohort","Strips correct","Strips answered","Strips total","Megacode correct","Megacode answered","Megacode total","Overall %"].concat(GROUPS.map(function(g){return g[1]+" %"})).concat(AREA_META.map(function(x){ return x.short+" practice answered"; })).concat(AREA_META.map(function(x){ return x.short+" practice %"; })).concat(["Survey submitted","Last active"]);
   var lines=[head].concat(rows.map(function(r){ var s=r.strips||{}, m=r.mega||{};
-    return [r._name, r.cohort||"", num(s.c), num(s.a), N, num(m.c), num(m.a), TOTAL_Q, num(r.overall)].concat(GROUPS.map(function(g){ var v=(r.groups||{})[g[0]]||[0,0,1]; return pct(v[0],v[2]); })).concat([r.surveyAt? new Date(r.surveyAt).toISOString():"", r.updatedAt? new Date(r.updatedAt).toISOString():""]); }));
+    return [r._name, r.cohort||"", num(s.c), num(s.a), N, num(m.c), num(m.a), TOTAL_Q, num(r.overall)].concat(GROUPS.map(function(g){ var v=(r.groups||{})[g[0]]||[0,0,1]; return pct(v[0],v[2]); })).concat(AREA_META.map(function(x){ var v=(r.areas||{})[x.key]; return v?v[1]:0; })).concat(AREA_META.map(function(x){ var v=(r.areas||{})[x.key]; return v&&v[1]?pct(v[0],v[1]):""; })).concat([r.surveyAt? new Date(r.surveyAt).toISOString():"", r.updatedAt? new Date(r.updatedAt).toISOString():""]); }));
   downloadCsv(lines, "cardiac-lab-scores-"+new Date().toISOString().slice(0,10)+".csv");
 });
 function downloadCsv(lines, filename){
@@ -1201,6 +1262,124 @@ function downloadCsv(lines, filename){
   var url=URL.createObjectURL(new Blob(["\ufeff"+csv], {type:"text/csv;charset=utf-8"}));
   var a=document.createElement("a"); a.href=url; a.download=filename; document.body.appendChild(a); a.click(); a.remove();
   setTimeout(function(){ URL.revokeObjectURL(url); }, 2000);
+}
+
+/* ================= PRACTICE AREAS (50 strips per rhythm family) ================= */
+var AREA_META = [
+  {key:"sinus", title:"Sinus rhythms", short:"Sinus", color:"var(--band-green)", soft:"var(--green-soft)", ink:"var(--green)", blurb:"Normal sinus, bradycardia, tachycardia, sinus arrhythmia, sinus arrest and SA exit block."},
+  {key:"atrial", title:"Atrial rhythms", short:"Atrial", color:"var(--band-blue)", soft:"var(--blue-soft)", ink:"var(--blue)", blurb:"PACs, wandering atrial pacemaker, MAT, SVT, atrial flutter and atrial fibrillation."},
+  {key:"junctional", title:"Junctional rhythms", short:"Junctional", color:"var(--band-teal)", soft:"var(--teal-soft)", ink:"var(--teal)", blurb:"Junctional, junctional bradycardia, accelerated junctional, junctional tachycardia, PJCs and escape beats."},
+  {key:"ventricular", title:"Ventricular rhythms", short:"Ventricular", color:"var(--band-red)", soft:"var(--red-soft)", ink:"var(--brand-red)", blurb:"PVC patterns, runs of VT, idioventricular and AIVR, VT, torsades, VF, asystole and agonal rhythm."},
+  {key:"block", title:"AV blocks", short:"AV blocks", color:"var(--band-orange)", soft:"var(--orange-soft)", ink:"var(--orange)", blurb:"1st degree, Wenckebach, Mobitz II, 2:1, high-grade and complete heart block."},
+  {key:"paced", title:"Paced rhythms", short:"Paced", color:"var(--band-navy)", soft:"var(--navy-soft)", ink:"var(--navy)", blurb:"Atrial, ventricular and dual-chamber pacing, demand pacing, pacer malfunction and transcutaneous pacing."}
+];
+var AREA_SIZE = 50;
+var AREAS = {}, AREA_LOADING = {};
+function areaMeta(key){ for(var i=0;i<AREA_META.length;i++) if(AREA_META[i].key===key) return AREA_META[i]; return null; }
+function areaState(key){ S.ar = S.ar || {}; if(!S.ar[key]) S.ar[key] = {pi:1, p:{}}; return S.ar[key]; }
+function areaScore(key){
+  var st=(S.ar||{})[key], a=0, c=0, data=AREAS[key];
+  if(!st) return {a:0, c:0, t:AREA_SIZE};
+  Object.keys(st.p).forEach(function(n){ a++; if(data){ var q=data.items[n-1]; if(q && st.p[n]===q.cat) c++; } else if(st.ok && st.ok[n]) c++; });
+  return {a:a, c:c, t:AREA_SIZE};
+}
+function loadArea(key){
+  if(AREAS[key]) return Promise.resolve(AREAS[key]);
+  if(!AREA_LOADING[key]) AREA_LOADING[key] = fetch("/areas/"+key+".json", {cache:"no-cache"}).then(function(r){ if(!r.ok) throw new Error("http "+r.status); return r.json(); })
+    .then(function(d){ Object.keys(d.strips).forEach(function(k){ D.strips[k]=d.strips[k]; }); AREAS[key]=d; return d; }, function(e){ AREA_LOADING[key]=null; throw e; });
+  return AREA_LOADING[key];
+}
+var MINI_ECG = '<svg viewBox="0 0 120 30" aria-hidden="true"><path d="M0 18h22l4-6 4 6h8l4-15 5 26 4-11h14l5-6 5 6h45" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+function areaTilesHTML(){
+  return AREA_META.map(function(m){
+    var sc=areaScore(m.key), done=sc.a>=sc.t, started=sc.a>0;
+    return '<a class="area-tile" href="#area-'+m.key+'" style="--ac:'+m.color+';--as:'+m.soft+';--ai:'+m.ink+'">'+
+      '<span class="area-band"><span class="area-ecg">'+MINI_ECG+'</span><span class="area-count num">'+AREA_SIZE+' strips</span></span>'+
+      '<span class="area-body"><b>'+esc(m.title)+'</b><span class="area-blurb">'+esc(m.blurb)+'</span>'+
+      '<span class="progress"><i style="width:'+pct(sc.a,sc.t)+'%"></i></span>'+
+      '<span class="area-foot"><span class="num">'+(started? sc.a+' of '+sc.t+' answered · '+pct(sc.c,sc.a)+'% correct' : 'Not started')+'</span><span class="area-go">'+(done?'Review':(started?'Resume':'Start'))+' →</span></span></span></a>';
+  }).join("");
+}
+function renderAreaTiles(){
+  var h=$("homeAreas"); if(h) h.innerHTML=areaTilesHTML();
+  var p=$("practiceAreas"); if(p) p.innerHTML=areaTilesHTML();
+}
+var CUR_AREA=null;
+function renderArea(key){
+  CUR_AREA=key;
+  var m=areaMeta(key), body=$("arBody");
+  $("v-area").style.setProperty("--accent", m.ink); $("v-area").style.setProperty("--accent-soft", m.soft);
+  if(!AREAS[key]){
+    body.innerHTML='<div class="card panel"><p class="empty">Loading '+esc(m.title.toLowerCase())+'…</p></div>';
+    loadArea(key).then(function(){ if(CUR_AREA===key && location.hash==="#area-"+key) renderArea(key); }, function(){
+      body.innerHTML='<div class="card panel"><h3>This practice area couldn\'t load</h3><p class="empty">Check your connection and try again.</p><button class="btn btn-primary" id="arRetry">Try again</button></div>';
+      $("arRetry").onclick=function(){ renderArea(key); };
+    });
+    return;
+  }
+  var data=AREAS[key], st=areaState(key), total=data.items.length;
+  if(st.pi>total+1) st.pi=1;
+  var sc=areaScore(key);
+  var head='<div class="qhead"><div><div class="eyebrow">Practice area · '+esc(m.title)+'</div><h2>'+(st.pi>total?'Results':'Strip <span class="num">'+st.pi+'</span><span> / '+total+'</span>')+'</h2></div>'+
+    '<div class="qstats"><span>Answered <b class="num">'+sc.a+'</b></span><span>Correct <b class="num">'+sc.c+'</b></span><span>Score <b class="num">'+(sc.a?pct(sc.c,sc.a)+'%':'–')+'</b></span><a class="btn btn-ghost" href="#practice">All areas</a></div></div>'+
+    '<div class="progress" style="margin-bottom:16px"><i style="width:'+pct(sc.a,total)+'%"></i></div>';
+  if(st.pi>total){ body.innerHTML=head+areaSummaryHTML(key); bindAreaSummary(key); return; }
+  var q=data.items[st.pi-1], chosen=st.p[q.n], done=chosen!=null, letters="ABCD";
+  var opts=q.options.map(function(o,i){
+    var cls = done ? (o===q.cat ? "is-right" : (o===chosen ? "is-wrong" : "is-dim")) : "";
+    return '<button class="opt '+cls+'" data-o="'+esc(o)+'" '+(done?"disabled":"")+'><span class="k">'+letters[i]+'</span><span>'+esc(o)+'</span></button>';
+  }).join("");
+  var dots=data.items.map(function(it){ var x=st.p[it.n], c = x==null ? "" : (x===it.cat?"r":"w"); return '<button class="dot '+c+(it.n===st.pi?" cur":"")+'" data-n="'+it.n+'" aria-label="Strip '+it.n+'">'+it.n+'</button>'; }).join("");
+  body.innerHTML=head+'<div class="card qcard"><div class="stem"><span class="tag">'+esc(m.short)+'</span><p>Identify this rhythm.</p></div>'+
+    '<div><div class="paper">'+stripSVG(q.strip,"paper",false)+'</div><div class="paper-meta"><span>Lead II · 25 mm/s · 6-second strip</span><span class="scroll-hint">Swipe to see the whole strip →</span></div></div>'+
+    '<div><div class="eyebrow" style="margin-bottom:10px">Identify the rhythm</div><div class="opts" id="arOpts" role="group" aria-label="Answer choices">'+opts+'</div></div>'+
+    '<div aria-live="polite">'+(done?stripFeedback(q, chosen):'')+'</div>'+
+    '<div class="qnav"><button class="btn btn-ghost" id="arPrev" '+(st.pi===1?'disabled':'')+'>← Previous</button><button class="btn btn-primary" id="arNext">'+(st.pi===total?'See area results →':(done?'Next strip →':'Skip →'))+'</button></div></div>'+
+    '<details class="card grid-nav"><summary>All '+total+' strips in this area</summary><div class="dots" id="arDots">'+dots+'</div><div class="legend"><span><i style="background:var(--ok)"></i>Correct</span><span><i style="background:var(--bad)"></i>Incorrect</span><span><i style="background:var(--line-2)"></i>Not answered</span></div></details>';
+  $("arOpts").onclick=function(e){ var b=e.target.closest(".opt"); if(!b||b.disabled) return; st.p[q.n]=b.getAttribute("data-o"); st.ok=st.ok||{}; st.ok[q.n]=st.p[q.n]===q.cat; save(); renderArea(key); };
+  $("arPrev").onclick=function(){ if(st.pi>1){ st.pi--; save(); renderArea(key); scrollTop(); } };
+  $("arNext").onclick=function(){ st.pi++; save(); renderArea(key); scrollTop(); };
+  $("arDots").onclick=function(e){ var b=e.target.closest(".dot"); if(!b) return; st.pi=+b.getAttribute("data-n"); save(); renderArea(key); scrollTop(); };
+  updateTally();
+}
+function areaSummaryHTML(key){
+  var data=AREAS[key], st=areaState(key), sc=areaScore(key), byCat={};
+  data.categories.forEach(function(c){ byCat[c]=[0,0,0]; });
+  data.items.forEach(function(q){ var b=byCat[q.cat]; b[2]++; var x=st.p[q.n]; if(x!=null){ b[1]++; if(x===q.cat) b[0]++; } });
+  var rows=data.categories.map(function(c){ var b=byCat[c]; return '<div class="barrow"><span>'+esc(c)+'</span><span class="track"><i style="width:'+pct(b[0],b[2])+'%"></i></span><b>'+b[0]+'/'+b[2]+'</b></div>'; }).join("");
+  var missed=data.items.filter(function(q){ var x=st.p[q.n]; return x!=null && x!==q.cat; });
+  var skipped=data.items.filter(function(q){ return st.p[q.n]==null; }).length;
+  return '<div class="card panel area-sum"><div class="area-sum-top"><div><div class="eyebrow">Area score</div><h3 class="num">'+sc.c+' of '+data.items.length+' correct</h3><p class="empty">'+(skipped?skipped+' strip'+(skipped===1?' was':'s were')+' skipped and count as incorrect.':'Every strip answered.')+'</p></div>'+
+    '<div class="area-big num">'+pct(sc.c,data.items.length)+'%</div></div><h4>By rhythm type</h4><div class="bars">'+rows+'</div>'+
+    (missed.length?'<h4>Missed strips</h4><div class="missed" id="arMissed">'+missed.map(function(q){ return '<button data-n="'+q.n+'"><b>#'+q.n+'</b><span style="color:var(--ink)">'+esc(q.name)+'</span></button>'; }).join("")+'</div>':'')+
+    '<div class="qnav" style="justify-content:flex-start"><a class="btn btn-primary" href="#practice">Choose another area</a><button class="btn btn-ghost" id="arReview">Review from strip 1</button><span id="arReset"><button class="btn btn-ghost" id="arAsk">Start this area over</button></span></div></div>';
+}
+function bindAreaSummary(key){
+  var st=areaState(key);
+  if($("arMissed")) $("arMissed").onclick=function(e){ var b=e.target.closest("button"); if(!b) return; st.pi=+b.getAttribute("data-n"); save(); renderArea(key); scrollTop(); };
+  $("arReview").onclick=function(){ st.pi=1; save(); renderArea(key); scrollTop(); };
+  $("arAsk").onclick=function(){ $("arReset").innerHTML='<span class="confirm"><span>Clear your answers in this area?</span><button class="btn btn-primary" id="arYes">Clear</button><button class="btn btn-ghost" id="arNo">Cancel</button></span>';
+    $("arYes").onclick=function(){ S.ar[key]={pi:1, p:{}}; save(); renderArea(key); renderAreaTiles(); scrollTop(); };
+    $("arNo").onclick=function(){ renderArea(key); }; };
+}
+document.addEventListener("keydown", function(e){
+  if(location.hash.indexOf("#area-")!==0 || e.target.closest("input,textarea") || !$("arOpts")) return;
+  var idx="ABCD".indexOf(e.key.toUpperCase());
+  if(idx>=0){ var btn=$("arOpts").children[idx]; if(btn && !btn.disabled) btn.click(); }
+  else if(e.key==="ArrowRight") $("arNext").click();
+  else if(e.key==="ArrowLeft" && !$("arPrev").disabled) $("arPrev").click();
+});
+function areasDoc(){ var out={}; AREA_META.forEach(function(m){ var sc=areaScore(m.key); out[m.key]=[sc.c, sc.a, sc.t]; }); return out; }
+function areasPanelHTML(rows){
+  var h='<div class="card panel ar-board"><div class="sv-board-head"><div><div class="eyebrow">Practice by rhythm family</div><h3>Practice areas</h3></div></div><div class="ar-board-grid">';
+  h+=AREA_META.map(function(m){
+    var started=rows.filter(function(r){ var v=(r.areas||{})[m.key]; return v && v[1]>0; });
+    var finished=started.filter(function(r){ return r.areas[m.key][1]>=r.areas[m.key][2]; }).length;
+    var c=0,a=0; started.forEach(function(r){ c+=r.areas[m.key][0]; a+=r.areas[m.key][1]; });
+    return '<div class="ar-cell" style="--ac:'+m.color+';--ai:'+m.ink+'"><b>'+esc(m.title)+'</b><span class="ar-big num">'+(a?pct(c,a)+'%':'—')+'</span><span>accuracy on answered strips</span>'+
+      '<span class="progress"><i style="width:'+pct(finished,rows.length||1)+'%"></i></span><small class="num">'+started.length+' started · '+finished+' finished</small></div>';
+  }).join("");
+  return h+'</div></div>';
 }
 
 /* ================= COURSE SURVEY ================= */

@@ -74,6 +74,16 @@ test('instructor can remove a student', async () => {
   assert.ok(!rows.some((r) => r.id === ID2));
 });
 
+test('practice-area progress is stored and returned', async () => {
+  const api = make({ INSTRUCTOR_PASSWORD: 'secret' });
+  const AID = '1b2c3d4e-5f60-4a7b-8c9d-0e1f2a3b4c5d';
+  const areas = { sinus: [40, 50, 50], block: [3, 7, 50], bad: [9, 2, 50] };
+  assert.equal((await api(req('PUT', '/api/scores/' + AID, { body: { name: 'Area Tester', doc: { ...doc(), areas } } }))).status, 200);
+  const { rows } = await (await api(req('GET', '/api/scores', { auth: 'secret' }))).json();
+  const row = rows.find((r) => r.id === AID);
+  assert.deepEqual(row.areas, { sinus: [40, 50, 50], block: [3, 7, 50] });
+});
+
 test('validateDoc strips unexpected keys and control characters', () => {
   const v = validateDoc({ ...doc(), extra: 'x', p: { 5: 'Sinus\u0000 rhythm', bad: 'y' } });
   assert.equal(v.extra, undefined);

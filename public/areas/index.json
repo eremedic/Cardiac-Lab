@@ -1,0 +1,93 @@
+[
+ {
+  "key": "sinus",
+  "title": "Sinus rhythms",
+  "count": 50,
+  "categories": [
+   "Normal sinus rhythm",
+   "Sinus bradycardia",
+   "Sinus tachycardia",
+   "Sinus arrhythmia",
+   "Sinus arrest (pause)",
+   "Sinoatrial (SA) exit block"
+  ]
+ },
+ {
+  "key": "atrial",
+  "title": "Atrial rhythms",
+  "count": 50,
+  "categories": [
+   "Premature atrial contractions (PACs)",
+   "Wandering atrial pacemaker",
+   "Multifocal atrial tachycardia (MAT)",
+   "Supraventricular tachycardia (SVT)",
+   "Atrial flutter",
+   "Atrial fibrillation"
+  ]
+ },
+ {
+  "key": "junctional",
+  "title": "Junctional rhythms",
+  "count": 50,
+  "categories": [
+   "Junctional rhythm",
+   "Junctional bradycardia",
+   "Accelerated junctional rhythm",
+   "Junctional tachycardia",
+   "Premature junctional contractions (PJCs)",
+   "Junctional escape beat"
+  ]
+ },
+ {
+  "key": "ventricular",
+  "title": "Ventricular rhythms",
+  "count": 50,
+  "categories": [
+   "Sinus rhythm with unifocal PVCs",
+   "Ventricular bigeminy",
+   "Ventricular trigeminy",
+   "PVC couplet",
+   "Multifocal PVCs",
+   "Non-sustained VT (run of VT)",
+   "Idioventricular rhythm",
+   "Accelerated idioventricular rhythm (AIVR)",
+   "Monomorphic ventricular tachycardia",
+   "Polymorphic VT (torsades de pointes)",
+   "Ventricular fibrillation (coarse)",
+   "Ventricular fibrillation (fine)",
+   "Asystole",
+   "Agonal rhythm"
+  ]
+ },
+ {
+  "key": "block",
+  "title": "AV blocks",
+  "count": 50,
+  "categories": [
+   "1st-degree AV block",
+   "2nd-degree AV block type I (Wenckebach)",
+   "2nd-degree AV block type II (Mobitz II)",
+   "2nd-degree AV block, 2:1",
+   "Advanced (high-grade) AV block",
+   "3rd-degree (complete) AV block"
+  ]
+ },
+ {
+  "key": "paced",
+  "title": "Paced rhythms",
+  "count": 50,
+  "categories": [
+   "Atrial paced rhythm",
+   "Ventricular paced rhythm",
+   "AV sequential (dual-chamber) paced rhythm",
+   "Atrial-sensed, ventricular paced rhythm",
+   "Demand (VVI) pacing with native beats",
+   "Pacemaker failure to capture",
+   "Pacemaker failure to sense (undersensing)",
+   "Pacemaker failure to pace (oversensing)",
+   "Transcutaneous pacing with capture",
+   "Transcutaneous pacing without capture",
+   "Pacer spikes without capture (asystole)"
+  ]
+ }
+]
