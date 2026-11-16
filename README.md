@@ -71,6 +71,15 @@ Progress is kept in the student's browser. Using a different device or browser s
 - **Download CSV** exports the current view.
 - To change the password, update `INSTRUCTOR_PASSWORD` in Netlify and redeploy.
 
+**How scores are calculated**
+- Every score is **correct ÷ answered**: strips, megacode, practice areas, 12-lead, the Results page, the home-page rings and the scoreboard. Unanswered items don't lower a score; progress (how much has been answered) is shown separately.
+- The scoreboard works this out from each student's saved counts, so older rows follow the same rule.
+
+**Calipers**
+- Every ECG has a **Calipers** button: the Strips module, every practice area, the 12-lead printouts, the megacode monitor and the live Defib lab screen. It shows two legs joined by a bar with a readout of the interval in seconds, small boxes and the matching rate per minute. **March** repeats the interval across the strip (useful for P–P and R–R regularity and hidden P waves).
+- Drag a leg or the bar with a mouse or finger. With a keyboard: Tab to a leg or the bar, then arrow keys move one small box (0.04 s); Shift + arrow moves 0.01 s, Page Up/Down moves one large box, Home/End jumps to either end, and Escape closes the calipers. The legs are labeled sliders that announce their position and the interval to screen readers.
+- The calipers stay open and in place as you move from strip to strip, and the browser remembers the setting.
+
 **Practice areas**
 - Six extra practice areas, each with 50 strips: **Sinus**, **Atrial**, **Junctional**, **Ventricular**, **AV blocks** and **Paced**. Students open them from the tiles on the Overview page or the **Practice** tab.
 - Every strip is generated separately (its own rate, intervals, wave shapes, noise and baseline), so no strip repeats, here or in the main 102-strip set.

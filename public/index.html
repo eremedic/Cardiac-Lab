@@ -753,6 +753,33 @@ body.df-focus .bar{position:relative}
 .kpair{display:grid;grid-template-columns:1fr 44px 44px;gap:6px;align-items:center;font:600 10.5px var(--f-mono);letter-spacing:.06em;color:#C9D0D6}
 .dv-grill{height:8px;margin:12px 30% 0;border-radius:4px;background:repeating-linear-gradient(90deg,#15181B 0 6px,transparent 6px 10px)}
 @media (prefers-reduced-motion:reduce){.dv-screen.flash,.key.shock.armed,.sc-energy.ready{animation:none}}
+/* ---------- calipers ---------- */
+.cal-wrap{position:relative;min-width:720px}
+.cal-wrap.wide{min-width:960px}
+.cal-wrap>svg{min-width:0 !important}
+.cal-host{position:relative;--cal:#0A5BD6;--cal-ink:#FFFFFF}
+.mon-screen .cal-host,.sc-wave.cal-host{--cal:#FFD400;--cal-ink:#111111}
+.cal-toggle{position:absolute;z-index:3;top:auto;bottom:6px;left:6px;right:auto;width:auto;max-width:max-content;min-height:0;margin:0;display:inline-flex;align-items:center;gap:5px;padding:4px 9px 4px 6px;border-radius:999px;border:1px solid color-mix(in srgb,var(--cal) 55%,transparent);
+  background:color-mix(in srgb,var(--surface) 88%,transparent);color:var(--cal);font:600 11.5px var(--f-mono);letter-spacing:.03em;cursor:pointer;opacity:.85}
+.mon-screen .cal-toggle,.sc-wave .cal-toggle{background:rgba(0,0,0,.55)}
+.sc-wave .cal-toggle{bottom:4px;left:auto;right:6px}
+.cal-toggle svg{width:15px !important;height:15px !important;min-width:0 !important;display:inline-block !important}
+.cal-toggle:hover,.cal-toggle:focus-visible,.cal-toggle.on{opacity:1}
+.cal-toggle.on{background:var(--cal);color:var(--cal-ink)}
+.cal-toggle:focus-visible,.cal-leg:focus-visible,.cal-bar:focus-visible,.cal-read button:focus-visible{outline:3px solid var(--cal);outline-offset:2px}
+.cal-ov{position:absolute;inset:0;z-index:4;pointer-events:none}
+.cal-leg{position:absolute;top:30px;bottom:0;width:24px;margin-left:-12px;cursor:ew-resize;pointer-events:auto;touch-action:none}
+.cal-leg::before{content:"";position:absolute;left:11px;top:0;bottom:0;width:2px;background:var(--cal);box-shadow:0 0 0 1px color-mix(in srgb,var(--cal-ink) 35%,transparent)}
+.cal-leg i{position:absolute;left:5px;top:-7px;width:14px;height:14px;border-radius:50%;background:var(--cal);border:2px solid var(--cal-ink)}
+.cal-bar{position:absolute;top:25px;height:10px;cursor:grab;pointer-events:auto;touch-action:none}
+.cal-bar::before{content:"";position:absolute;left:0;right:0;top:4px;height:2px;background:var(--cal)}
+.cal-read{position:absolute;top:0;transform:translateX(-50%);display:flex;align-items:center;gap:4px;pointer-events:auto;white-space:nowrap;
+  background:var(--cal);color:var(--cal-ink);border-radius:8px;padding:2px 3px 2px 8px;font:600 12px var(--f-mono);box-shadow:0 4px 12px -4px rgba(0,0,0,.4)}
+.cal-read button{border:0;background:rgba(255,255,255,.18);color:inherit;font:inherit;border-radius:6px;padding:1px 6px;cursor:pointer}
+.mon-screen .cal-read button,.sc-wave .cal-read button{background:rgba(0,0,0,.14)}
+.cal-read .cal-march.on{background:var(--cal-ink);color:var(--cal)}
+.cal-ticks i{position:absolute;top:30px;bottom:0;border-left:2px dashed color-mix(in srgb,var(--cal) 70%,transparent)}
+@media (max-width:560px){.cal-read{font-size:11px}.cal-toggle span{display:none}.cal-toggle{padding:4px}}
 </style>
 </head>
 <body>
@@ -1029,8 +1056,8 @@ function updateTally(){
   if(typeof renderSurveyPrompts==="function") renderSurveyPrompts();
   var s=stripScore(), m=megaScore();
   $("tStrips").textContent = s.c+"/"+s.a; $("tMega").textContent = m.c+"/"+m.a;
-  ring($("ringStrips"), s.a/N, pct(s.a,N)+"%");
-  ring($("ringMega"), m.a/TOTAL_Q, pct(m.a,TOTAL_Q)+"%");
+  ring($("ringStrips"), s.a?s.c/s.a:0, s.a?pct(s.c,s.a)+"%":"–");
+  ring($("ringMega"), m.a?m.c/m.a:0, m.a?pct(m.c,m.a)+"%":"–");
   $("goStrips").textContent = s.a===0 ? "Start strips" : (s.a===N ? "Review strips" : "Resume at strip "+S.pi);
   $("hQ").textContent = TOTAL_Q;
 }
@@ -1090,7 +1117,7 @@ $("sNext").addEventListener("click", function(){ if(S.pi<N){S.pi++; save(); rend
 $("sDots").addEventListener("click", function(e){ var b=e.target.closest(".dot"); if(!b)return; S.pi=+b.getAttribute("data-n"); save(); renderStrip(); scrollTop(); });
 function scrollTop(){ window.scrollTo({top:0,behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth"}); }
 document.addEventListener("keydown", function(e){
-  if(location.hash!=="#strips" || e.target.closest("input,textarea")) return;
+  if(location.hash!=="#strips" || e.target.closest("input,textarea,.cal-ov")) return;
   var k=e.key.toUpperCase(), idx="ABCD".indexOf(k);
   if(idx>=0){ var btn=$("sOpts").children[idx]; if(btn && !btn.disabled) btn.click(); }
   else if(e.key==="ArrowRight") $("sNext").click();
@@ -1192,20 +1219,20 @@ var GROUPS = D.groups;
 var confirmReset = false;
 function renderResults(){
   var s=stripScore(), m=megaScore(), totC=s.c+m.c, totT=N+TOTAL_Q, done=s.a+m.a;
-  var overall = pct(totC,totT), r=62, C=2*Math.PI*r;
+  var overall = pct(totC,done), r=62, C=2*Math.PI*r;
   var msg = done===0 ? "Answer strips and megacode decisions to build your score." :
-    (done<totT ? "You've answered "+done+" of "+totT+" items. Your score counts unanswered items as incorrect, so finish both modules for a final result." :
+    (done<totT ? "Your score is the share of the "+done+" items you've answered that were correct ("+(totT-done)+" still to go). "+(overall>=84 ? "On track: keep going." : "Review the missed items below as you go.") :
     (overall>=90 ? "Excellent. You're reading rhythms and running codes at a high level." : overall>=84 ? "Solid pass-level performance. Review the items below to tighten up." : "Keep practicing. Review the missed strips and retry the cases below."));
-  var h = '<div class="card score-hero"><svg class="big-ring" viewBox="0 0 150 150"><circle class="t" cx="75" cy="75" r="'+r+'"/><circle class="v" cx="75" cy="75" r="'+r+'" stroke-dasharray="'+(C*overall/100).toFixed(1)+' '+C.toFixed(1)+'" transform="rotate(-90 75 75)"/><text x="75" y="86" text-anchor="middle" font-size="40">'+overall+'%</text></svg>'+
-    '<div><div class="eyebrow">Final score</div><h2><span class="num">'+totC+'</span> of <span class="num">'+totT+'</span> correct</h2><p>'+msg+'</p>'+
-    '<div class="legend" style="margin-top:12px"><span>Strips: <b class="num">'+s.c+'/'+N+'</b> ('+pct(s.c,N)+'%)</span><span>Megacode: <b class="num">'+m.c+'/'+TOTAL_Q+'</b> ('+pct(m.c,TOTAL_Q)+'%)</span></div></div></div>';
+  var h = '<div class="card score-hero"><svg class="big-ring" viewBox="0 0 150 150"><circle class="t" cx="75" cy="75" r="'+r+'"/><circle class="v" cx="75" cy="75" r="'+r+'" stroke-dasharray="'+(C*overall/100).toFixed(1)+' '+C.toFixed(1)+'" transform="rotate(-90 75 75)"/><text x="75" y="86" text-anchor="middle" font-size="40">'+(done?overall+'%':'–')+'</text></svg>'+
+    '<div><div class="eyebrow">'+(done<totT?'Score so far':'Final score')+'</div><h2><span class="num">'+totC+'</span> of <span class="num">'+done+'</span> answered correct</h2><p>'+msg+'</p>'+
+    '<div class="legend" style="margin-top:12px"><span>Strips: <b class="num">'+s.c+'/'+s.a+'</b> ('+(s.a?pct(s.c,s.a)+'%':'–')+') · '+s.a+' of '+N+' answered</span><span>Megacode: <b class="num">'+m.c+'/'+m.a+'</b> ('+(m.a?pct(m.c,m.a)+'%':'–')+') · '+m.a+' of '+TOTAL_Q+' answered</span></div></div></div>';
   var bars = GROUPS.map(function(g){ var t=0,c=0,a=0; P.forEach(function(q){ if(CATS[q.cat].group===g[0]){t++; var x=S.p[q.n]; if(x!=null){a++; if(x===q.cat)c++;}} });
-    return '<div class="barrow"><span>'+g[1]+'</span><span class="track"><i style="width:'+pct(c,t)+'%"></i></span><b>'+c+'/'+t+'</b></div>'; }).join("");
+    return '<div class="barrow"><span>'+g[1]+'</span><span class="track"><i style="width:'+pct(c,a)+'%"></i></span><b>'+(a?c+'/'+a:'—')+'</b></div>'; }).join("");
   var missed = P.filter(function(q){ var x=S.p[q.n]; return x!=null && x!==q.cat; });
   var ml = missed.length ? missed.map(function(q){ return '<button data-n="'+q.n+'"><b>#'+q.n+'</b><span style="color:var(--ink)">'+esc(q.name)+'</span></button>'; }).join("") : '<p class="empty">'+(s.a?"No missed strips. Well done.":"No strips answered yet.")+'</p>';
-  var cs = CASES.map(function(c,ci){ var k=caseScore(ci); return '<button data-c="'+ci+'"><span style="color:var(--muted);font-size:11.5px">Case '+c.n+'</span><b>'+(k.a?k.c+'/'+k.t:'—')+'</b><span>'+esc(c.title)+'</span></button>'; }).join("");
-  h += '<div class="split"><div class="card panel"><h3>Strips by rhythm family <span class="num">'+s.c+'/'+N+'</span></h3><div class="bars">'+bars+'</div><h3 style="margin-top:6px">Missed strips <span class="num">'+missed.length+'</span></h3><div class="missed" id="rMissed">'+ml+'</div></div>'+
-       '<div class="card panel"><h3>Megacode by case <span class="num">'+m.c+'/'+TOTAL_Q+'</span></h3><div class="case-scores" id="rCases">'+cs+'</div>'+
+  var cs = CASES.map(function(c,ci){ var k=caseScore(ci); return '<button data-c="'+ci+'"><span style="color:var(--muted);font-size:11.5px">Case '+c.n+'</span><b>'+(k.a?k.c+'/'+k.a:'—')+'</b><span>'+esc(c.title)+'</span></button>'; }).join("");
+  h += '<div class="split"><div class="card panel"><h3>Strips by rhythm family <span class="num">'+s.c+'/'+s.a+'</span></h3><div class="bars">'+bars+'</div><h3 style="margin-top:6px">Missed strips <span class="num">'+missed.length+'</span></h3><div class="missed" id="rMissed">'+ml+'</div></div>'+
+       '<div class="card panel"><h3>Megacode by case <span class="num">'+m.c+'/'+m.a+'</span></h3><div class="case-scores" id="rCases">'+cs+'</div>'+
        '<h3 style="margin-top:6px">Start over</h3><div class="confirm" id="rReset">'+(confirmReset?'<span>Erase all answers in this browser?</span><button class="btn btn-primary" id="rYes">Erase</button><button class="btn btn-ghost" id="rNo">Cancel</button>':'<button class="btn btn-ghost" id="rAsk">Reset all progress</button>')+'</div></div></div>';
   $("rBody").innerHTML = h;
   $("rMissed").onclick=function(e){ var b=e.target.closest("button"); if(!b)return; S.pi=+b.getAttribute("data-n"); save(); location.hash="strips"; };
@@ -1264,7 +1291,7 @@ function summaryDoc(){
   var s=stripScore(), m=megaScore(), groups={};
   GROUPS.forEach(function(g){ var t=0,c=0,a=0; P.forEach(function(q){ if(CATS[q.cat].group===g[0]){ t++; var x=S.p[q.n]; if(x!=null){a++; if(x===q.cat)c++;} } }); groups[g[0]]=[c,a,t]; });
   var cases=CASES.map(function(_,ci){ var k=caseScore(ci); return [k.c,k.a,k.t]; });
-  return {strips:{c:s.c,a:s.a,n:N}, mega:{c:m.c,a:m.a,n:TOTAL_Q}, overall:pct(s.c+m.c, N+TOTAL_Q), groups:groups, cases:cases, areas:areasDoc(), defib:defibDoc(), p:S.p, m:S.m};
+  return {strips:{c:s.c,a:s.a,n:N}, mega:{c:m.c,a:m.a,n:TOTAL_Q}, overall:pct(s.c+m.c, s.a+m.a), groups:groups, cases:cases, areas:areasDoc(), defib:defibDoc(), p:S.p, m:S.m};
 }
 function pushNow(){
   if(!SB.online) return;
@@ -1391,7 +1418,7 @@ function boardRows(){
   if(co) rows=rows.filter(function(r){return (r.cohort||"")===co});
   rows.forEach(function(r){ r._name=r.name||"Unnamed student"; r._prog=num(r.strips&&r.strips.a)+num(r.mega&&r.mega.a); });
   rows.sort(function(a,b){
-    if(sort==="score") return num(b.overall)-num(a.overall);
+    if(sort==="score") return rowOverall(b)-rowOverall(a);
     if(sort==="name") return a._name.localeCompare(b._name);
     if(sort==="progress") return b._prog-a._prog;
     return num(b.updatedAt)-num(a.updatedAt);
@@ -1399,6 +1426,8 @@ function boardRows(){
   return rows;
 }
 function ago(ts){ if(!ts) return "—"; var m=Math.round((Date.now()-ts)/60000); if(m<1) return "just now"; if(m<60) return m+" min ago"; var h=Math.round(m/60); if(h<24) return h+" h ago"; return Math.round(h/24)+" d ago"; }
+function rowOverall(r){ var s=r.strips||{}, m=r.mega||{}; return pct(num(s.c)+num(m.c), num(s.a)+num(m.a)); }
+function rowAnswered(r){ return num(r.strips&&r.strips.a)+num(r.mega&&r.mega.a); }
 function mini(c,t){ var p=pct(c,t); return '<div class="mini"><span class="track"><i style="width:'+p+'%"></i></span><b>'+p+'%</b></div>'; }
 function renderBoard(){
   if(location.hash!=="#scoreboard" || !SB.admin) return;
@@ -1412,15 +1441,15 @@ function renderBoard(){
     $("sbBody").innerHTML='<div class="card panel"><h3>No results yet</h3><p class="empty">Send your students this site\'s link'+'. When they enter their name on the Overview page'+', their scores appear here as they answer. The page refreshes every 30 seconds.</p></div>';
     return;
   }
-  var n=rows.length, avg=Math.round(rows.reduce(function(a,r){return a+num(r.overall)},0)/n);
-  var sAvg=Math.round(rows.reduce(function(a,r){return a+pct(num(r.strips&&r.strips.c), N)},0)/n);
-  var mAvg=Math.round(rows.reduce(function(a,r){return a+pct(num(r.mega&&r.mega.c), TOTAL_Q)},0)/n);
+  var n=rows.length, avgOf=function(list, f){ return list.length ? Math.round(list.reduce(function(a,r){ return a+f(r); },0)/list.length) : null; };
+  var withAny=rows.filter(function(r){ return rowAnswered(r)>0; }), withS=rows.filter(function(r){ return num(r.strips&&r.strips.a)>0; }), withM=rows.filter(function(r){ return num(r.mega&&r.mega.a)>0; });
+  var avg=avgOf(withAny, rowOverall), sAvg=avgOf(withS, function(r){ return pct(num(r.strips.c), num(r.strips.a)); }), mAvg=avgOf(withM, function(r){ return pct(num(r.mega.c), num(r.mega.a)); });
   var done=rows.filter(function(r){ return num(r.strips&&r.strips.a)>=N && num(r.mega&&r.mega.a)>=TOTAL_Q; }).length;
   var h='<div class="stats">'+
     '<div class="card stat"><small>Students</small><b class="num">'+n+'</b><span>with saved results</span></div>'+
-    '<div class="card stat"><small>Average score</small><b class="num">'+avg+'%</b><span>of '+(N+TOTAL_Q)+' items</span></div>'+
-    '<div class="card stat"><small>Strips</small><b class="num">'+sAvg+'%</b><span>class average</span></div>'+
-    '<div class="card stat"><small>Megacode</small><b class="num">'+mAvg+'%</b><span>class average</span></div>'+
+    '<div class="card stat"><small>Average score</small><b class="num">'+(avg==null?'—':avg+'%')+'</b><span>correct of answered</span></div>'+
+    '<div class="card stat"><small>Strips</small><b class="num">'+(sAvg==null?'—':sAvg+'%')+'</b><span>class average, of answered</span></div>'+
+    '<div class="card stat"><small>Megacode</small><b class="num">'+(mAvg==null?'—':mAvg+'%')+'</b><span>class average, of answered</span></div>'+
     '<div class="card stat"><small>Finished</small><b class="num">'+done+'</b><span>completed both modules</span></div></div>';
   h+=newModulesStatsHTML(rows);
   var body=rows.map(function(r){
@@ -1429,24 +1458,24 @@ function renderBoard(){
     var tr='<tr class="row'+(open?' open':'')+'" data-id="'+esc(r.id)+'" tabindex="0" aria-expanded="'+open+'"><td><div class="who"><div><b>'+esc(r._name)+'</b>'+(r.cohort?'<small>'+esc(r.cohort)+'</small>':'')+'</div></div></td>'+
       '<td class="mono">'+num(s.c)+' / '+num(s.a)+'<br><small style="color:var(--muted)">of '+N+' answered</small></td>'+
       '<td class="mono">'+num(m.c)+' / '+num(m.a)+'<br><small style="color:var(--muted)">of '+TOTAL_Q+' answered</small></td>'+
-      '<td>'+mini(num(s.c)+num(m.c), N+TOTAL_Q)+'</td><td>'+esc(weak)+'</td>'+(r.survey?'<td class="sv-cell"><span class="sv-done">✓ Done</span></td>':'<td class="sv-cell">—</td>')+'<td class="mono">'+practiceCell(r)+'</td><td class="mono">'+defibCell(r)+'</td><td class="mono">'+ago(r.updatedAt)+'</td></tr>';
+      '<td>'+(rowAnswered(r)?mini(num(s.c)+num(m.c), rowAnswered(r)):'—')+'</td><td>'+esc(weak)+'</td>'+(r.survey?'<td class="sv-cell"><span class="sv-done">✓ Done</span></td>':'<td class="sv-cell">—</td>')+'<td class="mono">'+practiceCell(r)+'</td><td class="mono">'+defibCell(r)+'</td><td class="mono">'+ago(r.updatedAt)+'</td></tr>';
     if(open) tr+='<tr class="detail"><td colspan="9">'+detailHTML(r)+'</td></tr>';
     return tr;
   }).join("");
-  h+='<div class="sb-grid"><div class="card panel"><h3>Students <span class="num">'+n+'</span></h3><div class="tablewrap"><table class="sbt"><thead><tr><th>Student</th><th>Strips</th><th>Megacode</th><th>Overall</th><th>Weakest family</th><th>Survey</th><th>Practice areas</th><th>Defib lab</th><th>Last active</th></tr></thead><tbody id="sbRows">'+body+'</tbody></table></div><p class="empty">Overall counts unanswered items as incorrect. Select a student for detail.</p></div>'+
+  h+='<div class="sb-grid"><div class="card panel"><h3>Students <span class="num">'+n+'</span></h3><div class="tablewrap"><table class="sbt"><thead><tr><th>Student</th><th>Strips</th><th>Megacode</th><th>Overall</th><th>Weakest family</th><th>Survey</th><th>Practice areas</th><th>Defib lab</th><th>Last active</th></tr></thead><tbody id="sbRows">'+body+'</tbody></table></div><p class="empty">Scores are correct out of answered, so unanswered items don\'t lower them. Select a student for detail.</p></div>'+
      '<div class="card panel"><h3>Most-missed strips</h3><div class="hard" id="sbHard">'+hardHTML(rows)+'</div></div></div>'+areasPanelHTML(rows)+defibPanelHTML(rows)+surveyPanelHTML(rows);
   $("sbBody").innerHTML=h;
 }
 function detailHTML(r){
-  var g=GROUPS.map(function(x){ var v=(r.groups||{})[x[0]]||[0,0,0]; return '<div class="barrow"><span>'+esc(x[1])+'</span><span class="track"><i style="width:'+pct(v[0],v[2])+'%"></i></span><b>'+v[0]+'/'+v[2]+'</b></div>'; }).join("");
+  var g=GROUPS.map(function(x){ var v=(r.groups||{})[x[0]]||[0,0,0]; return '<div class="barrow"><span>'+esc(x[1])+'</span><span class="track"><i style="width:'+pct(v[0],v[1])+'%"></i></span><b>'+(v[1]?v[0]+'/'+v[1]:'—')+'</b></div>'; }).join("");
   var missed=P.filter(function(q){ var x=(r.p||{})[q.n]; return x!=null && x!==q.cat; });
   var ml=missed.length? missed.slice(0,40).map(function(q){ return '<span>#'+q.n+' '+esc(q.name)+'</span>'; }).join("")+(missed.length>40?'<span>+'+(missed.length-40)+' more</span>':'') : '<span>None missed</span>';
-  var cs=(r.cases||[]).map(function(k,ci){ return k&&k[1]? '<span>Case '+(ci+1)+': '+k[0]+'/'+k[2]+'</span>' : ''; }).join("") || '<span>No cases started</span>';
+  var cs=(r.cases||[]).map(function(k,ci){ return k&&k[1]? '<span>Case '+(ci+1)+': '+k[0]+'/'+k[1]+'</span>' : ''; }).join("") || '<span>No cases started</span>';
   var del = SB.confirmDel===r.id
     ? '<div class="confirm"><span>Remove '+esc(r._name)+'\'s results permanently?</span><button class="btn btn-primary" data-del-yes="'+esc(r.id)+'">Remove</button><button class="btn btn-ghost" data-del-no="1">Cancel</button></div>'
     : '<button class="btn btn-ghost" data-del="'+esc(r.id)+'">Remove this student</button>';
-  var ap=AREA_META.map(function(x){ var v=(r.areas||{})[x.key]||[0,0,x.size||AREA_SIZE]; return '<div class="barrow"><span>'+esc(x.short)+'</span><span class="track"><i style="width:'+pct(v[1],v[2])+'%;background:'+x.color+'"></i></span><b>'+(v[1]?v[0]+'/'+v[1]:'—')+'</b></div>'; }).join("");
-  return '<div class="inner"><div><h4>Strips by rhythm family</h4><div class="bars">'+g+'</div><h4 style="margin-top:14px">Practice areas · correct / answered</h4><div class="bars">'+ap+'</div><div style="margin-top:14px">'+del+'</div></div><div><h4>Missed strips ('+missed.length+')</h4><div class="tags">'+ml+'</div><h4 style="margin-top:14px">Megacode cases</h4><div class="tags">'+cs+'</div>'+defibDetailHTML(r)+surveyDetailHTML(r)+'</div></div>';
+  var ap=AREA_META.map(function(x){ var v=(r.areas||{})[x.key]||[0,0,x.size||AREA_SIZE]; return '<div class="barrow"><span>'+esc(x.short)+'</span><span class="track"><i style="width:'+pct(v[0],v[1])+'%;background:'+x.color+'"></i></span><b>'+(v[1]?v[0]+'/'+v[1]:'—')+'</b></div>'; }).join("");
+  return '<div class="inner"><div><h4>Strips by rhythm family · correct / answered</h4><div class="bars">'+g+'</div><h4 style="margin-top:14px">Practice areas · correct / answered</h4><div class="bars">'+ap+'</div><div style="margin-top:14px">'+del+'</div></div><div><h4>Missed strips ('+missed.length+')</h4><div class="tags">'+ml+'</div><h4 style="margin-top:14px">Megacode cases</h4><div class="tags">'+cs+'</div>'+defibDetailHTML(r)+surveyDetailHTML(r)+'</div></div>';
 }
 function hardHTML(rows){
   var stat={}; rows.forEach(function(r){ var p=r.p||{}; Object.keys(p).forEach(function(n){ var q=P[n-1]; if(!q) return; stat[n]=stat[n]||[0,0]; stat[n][1]++; if(p[n]!==q.cat) stat[n][0]++; }); });
@@ -1474,9 +1503,9 @@ $("sbRefresh").addEventListener("click", function(){ loadBoard(true); });
 $("sbOut").addEventListener("click", function(){ SB.pass=null; SB.admin=false; SB.rows=null; SB.settings=null; delete AREAS.twelve; AREA_LOADING.twelve=null; renderAreaTiles(); defibNav(); stopPoll(); try{ sessionStorage.removeItem("cl-instructor"); }catch(e){} $("tabBoard").hidden=true; showLogin(""); });
 $("sbCsv").addEventListener("click", function(){
   var rows=boardRows();
-  var head=["Student","Cohort","Strips correct","Strips answered","Strips total","Megacode correct","Megacode answered","Megacode total","Overall %"].concat(GROUPS.map(function(g){return g[1]+" %"})).concat(AREA_META.map(function(x){ return x.short+" practice answered"; })).concat(AREA_META.map(function(x){ return x.short+" practice %"; })).concat(["Defib scenarios passed","Defib scenarios attempted"]).concat(DEFIB_LIST.map(function(x){ return "Defib: "+x[1]; })).concat(["Survey submitted","Last active"]);
+  var head=["Student","Cohort","Strips correct","Strips answered","Strips total","Megacode correct","Megacode answered","Megacode total","Score % (correct of answered)"].concat(GROUPS.map(function(g){return g[1]+" %"})).concat(AREA_META.map(function(x){ return x.short+" practice answered"; })).concat(AREA_META.map(function(x){ return x.short+" practice %"; })).concat(["Defib scenarios passed","Defib scenarios attempted"]).concat(DEFIB_LIST.map(function(x){ return "Defib: "+x[1]; })).concat(["Survey submitted","Last active"]);
   var lines=[head].concat(rows.map(function(r){ var s=r.strips||{}, m=r.mega||{};
-    return [r._name, r.cohort||"", num(s.c), num(s.a), N, num(m.c), num(m.a), TOTAL_Q, num(r.overall)].concat(GROUPS.map(function(g){ var v=(r.groups||{})[g[0]]||[0,0,1]; return pct(v[0],v[2]); })).concat(AREA_META.map(function(x){ var v=(r.areas||{})[x.key]; return v?v[1]:0; })).concat(AREA_META.map(function(x){ var v=(r.areas||{})[x.key]; return v&&v[1]?pct(v[0],v[1]):""; })).concat(defibCounts(r)).concat(DEFIB_LIST.map(function(x){ var v=(r.defib||{})[x[0]]; return v ? (v[2]?"Passed ":"Review ")+v[0]+"/"+v[1] : ""; })).concat([r.surveyAt? new Date(r.surveyAt).toISOString():"", r.updatedAt? new Date(r.updatedAt).toISOString():""]); }));
+    return [r._name, r.cohort||"", num(s.c), num(s.a), N, num(m.c), num(m.a), TOTAL_Q, rowAnswered(r)?rowOverall(r):""].concat(GROUPS.map(function(g){ var v=(r.groups||{})[g[0]]; return v&&v[1]?pct(v[0],v[1]):""; })).concat(AREA_META.map(function(x){ var v=(r.areas||{})[x.key]; return v?v[1]:0; })).concat(AREA_META.map(function(x){ var v=(r.areas||{})[x.key]; return v&&v[1]?pct(v[0],v[1]):""; })).concat(defibCounts(r)).concat(DEFIB_LIST.map(function(x){ var v=(r.defib||{})[x[0]]; return v ? (v[2]?"Passed ":"Review ")+v[0]+"/"+v[1] : ""; })).concat([r.surveyAt? new Date(r.surveyAt).toISOString():"", r.updatedAt? new Date(r.updatedAt).toISOString():""]); }));
   downloadCsv(lines, "cardiac-lab-scores-"+new Date().toISOString().slice(0,10)+".csv");
 });
 function downloadCsv(lines, filename){
@@ -1516,7 +1545,7 @@ function renderDefib(){
   }); if(!defibOpen()) root.insertAdjacentHTML("afterbegin", '<p class="df-preview">Instructor preview: students can\'t see the Defib lab until you open it on the scoreboard.</p>'); };
   if(window.DefibLab){ go(); return; }
   root.innerHTML='<div class="card panel"><p class="empty">Loading the Defib lab…</p></div>';
-  if(!DEFIB_LOADING) DEFIB_LOADING=new Promise(function(res, rej){ var sc=document.createElement("script"); sc.src="/defib.js?v=3"; sc.onload=res; sc.onerror=function(){ DEFIB_LOADING=null; rej(); }; document.head.appendChild(sc); });
+  if(!DEFIB_LOADING) DEFIB_LOADING=new Promise(function(res, rej){ var sc=document.createElement("script"); sc.src="/defib.js?v=4"; sc.onload=res; sc.onerror=function(){ DEFIB_LOADING=null; rej(); }; document.head.appendChild(sc); });
   DEFIB_LOADING.then(go, function(){ root.innerHTML='<div class="card panel problem"><h3>The Defib lab didn\'t load</h3><p>Check your connection and reload the page.</p></div>'; });
 }
 function areaTotals(r){ var c=0,a=0; Object.keys(r.areas||{}).forEach(function(k){ var v=r.areas[k]; if(v){ c+=v[0]; a+=v[1]; } }); return [c,a]; }
@@ -1639,11 +1668,11 @@ function areaSummaryHTML(key){
   var data=AREAS[key], st=areaState(key), sc=areaScore(key), byCat={};
   data.categories.forEach(function(c){ byCat[c]=[0,0,0]; });
   data.items.forEach(function(q){ var b=byCat[q.cat]; b[2]++; var x=st.p[q.n]; if(x!=null){ b[1]++; if(x===q.cat) b[0]++; } });
-  var rows=data.categories.map(function(c){ var b=byCat[c]; return '<div class="barrow"><span>'+esc(c)+'</span><span class="track"><i style="width:'+pct(b[0],b[2])+'%"></i></span><b>'+b[0]+'/'+b[2]+'</b></div>'; }).join("");
+  var rows=data.categories.map(function(c){ var b=byCat[c]; return '<div class="barrow"><span>'+esc(c)+'</span><span class="track"><i style="width:'+pct(b[0],b[1])+'%"></i></span><b>'+(b[1]?b[0]+'/'+b[1]:'—')+'</b></div>'; }).join("");
   var missed=data.items.filter(function(q){ var x=st.p[q.n]; return x!=null && x!==q.cat; });
   var skipped=data.items.filter(function(q){ return st.p[q.n]==null; }).length;
-  return '<div class="card panel area-sum"><div class="area-sum-top"><div><div class="eyebrow">Area score</div><h3 class="num">'+sc.c+' of '+data.items.length+' correct</h3><p class="empty">'+(skipped?skipped+' strip'+(skipped===1?' was':'s were')+' skipped and count as incorrect.':'Every strip answered.')+'</p></div>'+
-    '<div class="area-big num">'+pct(sc.c,data.items.length)+'%</div></div><h4>By rhythm type</h4><div class="bars">'+rows+'</div>'+
+  return '<div class="card panel area-sum"><div class="area-sum-top"><div><div class="eyebrow">Area score</div><h3 class="num">'+sc.c+' of '+sc.a+' answered correct</h3><p class="empty">'+(skipped?skipped+' strip'+(skipped===1?' was':'s were')+' skipped. They don\'t count against your score, but you can go back to them.':'Every strip answered.')+'</p></div>'+
+    '<div class="area-big num">'+(sc.a?pct(sc.c,sc.a)+'%':'–')+'</div></div><h4>By rhythm type</h4><div class="bars">'+rows+'</div>'+
     (missed.length?'<h4>Missed strips</h4><div class="missed" id="arMissed">'+missed.map(function(q){ return '<button data-n="'+q.n+'"><b>#'+q.n+'</b><span style="color:var(--ink)">'+esc(q.name)+'</span></button>'; }).join("")+'</div>':'')+
     '<div class="qnav" style="justify-content:flex-start"><a class="btn btn-primary" href="#practice">Choose another area</a><button class="btn btn-ghost" id="arReview">Review from strip 1</button><span id="arReset"><button class="btn btn-ghost" id="arAsk">Start this area over</button></span></div></div>';
 }
@@ -1656,7 +1685,7 @@ function bindAreaSummary(key){
     $("arNo").onclick=function(){ renderArea(key); }; };
 }
 document.addEventListener("keydown", function(e){
-  if(location.hash.indexOf("#area-")!==0 || e.target.closest("input,textarea") || !$("arOpts")) return;
+  if(location.hash.indexOf("#area-")!==0 || e.target.closest("input,textarea,.cal-ov") || !$("arOpts")) return;
   var idx="ABCD".indexOf(e.key.toUpperCase());
   if(e.key.toUpperCase()==="H" && $("arCardioBtn")){ $("arCardioBtn").click(); return; }
   if(idx>=0){ var btn=$("arOpts").children[idx]; if(btn && !btn.disabled) btn.click(); }
@@ -2007,6 +2036,111 @@ function surveyCsv(rows){
 }
 
 updateTally(); route(); initShared();
+})();
+
+/* ================= CALIPERS (every ECG: strips, practice areas, 12-lead, megacode monitor, Defib lab) =================
+   Two legs joined by a bar. Drag a knob or leg, or focus one and use the arrow keys (1 small box = 0.04 s; Shift for 0.01 s).
+   Positions are shared across strips, so the calipers stay where you left them as you move on.                                  */
+(function(){
+  var CAL = {on:false, a:0.2, b:0.2+800/6000, march:false};
+  try{ var saved = JSON.parse(localStorage.getItem("cl-calipers")||"null"); if(saved){ CAL.on=!!saved.on; CAL.march=!!saved.march; if(saved.a>=0&&saved.a<=1) CAL.a=saved.a; if(saved.b>=0&&saved.b<=1) CAL.b=saved.b; } }catch(e){}
+  function persist(){ try{ localStorage.setItem("cl-calipers", JSON.stringify(CAL)); }catch(e){} }
+  var IC_CAL='<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 3v14M15 3v14M5 6h10"/><circle cx="5" cy="6" r="1.6" fill="currentColor"/><circle cx="15" cy="6" r="1.6" fill="currentColor"/></svg>';
+  var hosts = [];
+  function clamp(x){ return Math.max(0, Math.min(1, x)); }
+  function msOf(h){ return +h.getAttribute("data-cal-ms") || 6000; }
+  function fmtS(ms){ return (ms/1000).toFixed(2)+" s"; }
+
+  function attach(host, ms){
+    host.classList.add("cal-host"); host.setAttribute("data-cal-ms", ms);
+    var btn=document.createElement("button");
+    btn.type="button"; btn.className="cal-toggle"; btn.setAttribute("aria-pressed", CAL.on?"true":"false");
+    btn.setAttribute("aria-label", "Calipers"); btn.title="Calipers: measure intervals and rate";
+    btn.innerHTML=IC_CAL+'<span>Calipers</span>';
+    btn.addEventListener("click", function(){ CAL.on=!CAL.on; persist(); renderAll(); if(CAL.on){ var l=host.querySelector(".cal-leg"); if(l) l.focus(); } });
+    host.appendChild(btn); hosts.push(host); render(host);
+  }
+  function scan(){
+    hosts = hosts.filter(function(h){ return document.body.contains(h); });
+    document.querySelectorAll(".paper > svg, .mon-screen > svg:not(.hero-svg)").forEach(function(svg){
+      if(svg.closest(".cal-wrap") || svg.closest("#heroScreen")) return;
+      var vb=(svg.getAttribute("viewBox")||"0 0 6000 1").split(/\s+/), ms=+vb[2]||6000;
+      var wrap=document.createElement("div"); wrap.className="cal-wrap"+(svg.classList.contains("ecg12")?" wide":"");
+      svg.parentNode.insertBefore(wrap, svg); wrap.appendChild(svg);
+      attach(wrap, ms);
+    });
+    document.querySelectorAll("[data-cal-ms]:not(.cal-host)").forEach(function(h){ attach(h, +h.getAttribute("data-cal-ms")); });
+  }
+  function render(host){
+    var ov=host.querySelector(".cal-ov"); if(ov) ov.remove();
+    var btn=host.querySelector(".cal-toggle"); if(btn){ btn.setAttribute("aria-pressed", CAL.on?"true":"false"); btn.classList.toggle("on", CAL.on); }
+    if(!CAL.on) return;
+    ov=document.createElement("div"); ov.className="cal-ov";
+    ov.innerHTML='<div class="cal-ticks" aria-hidden="true"></div>'+
+      '<div class="cal-bar" role="slider" tabindex="0" aria-label="Calipers: move both legs"></div>'+
+      '<div class="cal-leg" data-k="a" role="slider" tabindex="0" aria-label="Caliper leg 1"><i></i></div>'+
+      '<div class="cal-leg" data-k="b" role="slider" tabindex="0" aria-label="Caliper leg 2"><i></i></div>'+
+      '<div class="cal-read"><output class="cal-val" aria-live="polite"></output>'+
+      '<button type="button" class="cal-march" aria-pressed="'+CAL.march+'" title="March the interval across the strip">March</button>'+
+      '<button type="button" class="cal-x" aria-label="Close calipers" title="Close calipers">×</button></div>';
+    host.appendChild(ov);
+    ov.querySelector(".cal-x").onclick=function(){ CAL.on=false; persist(); renderAll(); var b=host.querySelector(".cal-toggle"); if(b) b.focus(); };
+    ov.querySelector(".cal-march").onclick=function(){ CAL.march=!CAL.march; persist(); updateAll(); };
+    ov.querySelectorAll(".cal-leg, .cal-bar").forEach(function(el){
+      var k=el.getAttribute("data-k");
+      el.addEventListener("pointerdown", function(e){
+        e.preventDefault(); el.setPointerCapture(e.pointerId); el.focus({preventScroll:true});
+        var r=ov.getBoundingClientRect(), x0=e.clientX, a0=CAL.a, b0=CAL.b;
+        var move=function(ev){
+          var f=(ev.clientX-r.left)/r.width;
+          if(k){ CAL[k]=clamp(f); }
+          else { var d=(ev.clientX-x0)/r.width, lo=Math.min(a0,b0), hi=Math.max(a0,b0); d=Math.max(-lo, Math.min(1-hi, d)); CAL.a=a0+d; CAL.b=b0+d; }
+          updateAll();
+        };
+        var up=function(){ el.removeEventListener("pointermove", move); el.removeEventListener("pointerup", up); el.removeEventListener("pointercancel", up); persist(); };
+        el.addEventListener("pointermove", move); el.addEventListener("pointerup", up); el.addEventListener("pointercancel", up);
+      });
+      el.addEventListener("keydown", function(e){
+        var ms=msOf(host), step=(e.shiftKey?10:40)/ms, d=0;
+        if(e.key==="ArrowRight"||e.key==="ArrowUp") d=step; else if(e.key==="ArrowLeft"||e.key==="ArrowDown") d=-step;
+        else if(e.key==="PageUp") d=200/ms; else if(e.key==="PageDown") d=-200/ms;
+        else if(e.key==="Home"&&k){ CAL[k]=0; } else if(e.key==="End"&&k){ CAL[k]=1; }
+        else if(e.key==="Escape"){ CAL.on=false; persist(); renderAll(); var b=host.querySelector(".cal-toggle"); if(b) b.focus(); return; }
+        else return;
+        e.preventDefault(); e.stopPropagation();
+        if(k) CAL[k]=clamp(CAL[k]+d);
+        else { var lo=Math.min(CAL.a,CAL.b), hi=Math.max(CAL.a,CAL.b); d=Math.max(-lo, Math.min(1-hi, d)); CAL.a+=d; CAL.b+=d; }
+        persist(); updateAll();
+      });
+    });
+    update(host);
+  }
+  function update(host){
+    var ov=host.querySelector(".cal-ov"); if(!ov) return;
+    var ms=msOf(host), lo=Math.min(CAL.a,CAL.b), hi=Math.max(CAL.a,CAL.b), d=(hi-lo)*ms;
+    var legs=ov.querySelectorAll(".cal-leg");
+    [["a",legs[0]],["b",legs[1]]].forEach(function(x){ var v=CAL[x[0]]*ms; x[1].style.left=(CAL[x[0]]*100)+"%";
+      x[1].setAttribute("aria-valuemin","0"); x[1].setAttribute("aria-valuemax", String(Math.round(ms))); x[1].setAttribute("aria-valuenow", String(Math.round(v)));
+      x[1].setAttribute("aria-valuetext", "at "+fmtS(v)+"; interval "+fmtS(d)); });
+    var bar=ov.querySelector(".cal-bar"); bar.style.left=(lo*100)+"%"; bar.style.width=((hi-lo)*100)+"%";
+    bar.setAttribute("aria-valuemin","0"); bar.setAttribute("aria-valuemax", String(Math.round(ms))); bar.setAttribute("aria-valuenow", String(Math.round(lo*ms)));
+    bar.setAttribute("aria-valuetext", "interval "+fmtS(d)+" starting at "+fmtS(lo*ms));
+    var boxes=d/40, rate=d>=200?Math.round(60000/d):null;
+    var txt=fmtS(d)+" · "+(Math.round(boxes*10)/10)+" small boxes"+(rate?" · "+rate+"/min":"");
+    var out=ov.querySelector(".cal-val"); if(out.textContent!==txt) out.textContent=txt;
+    var rd=ov.querySelector(".cal-read"), mid=(lo+hi)/2, wide=ov.getBoundingClientRect().width||720, edge=Math.min(0.45, 170/wide);
+    rd.style.left=(Math.max(edge, Math.min(1-edge, mid))*100)+"%";
+    var mb=ov.querySelector(".cal-march"); mb.setAttribute("aria-pressed", CAL.march?"true":"false"); mb.classList.toggle("on", CAL.march);
+    var tk=ov.querySelector(".cal-ticks"), h="";
+    if(CAL.march && hi-lo>0.004){ var w=hi-lo; for(var x=lo-w; x>-0.0001; x-=w) h+='<i style="left:'+(x*100)+'%"></i>'; for(var y=hi+w; y<1.0001; y+=w) h+='<i style="left:'+(y*100)+'%"></i>'; }
+    if(tk.innerHTML!==h) tk.innerHTML=h;
+  }
+  function renderAll(){ hosts.forEach(render); }
+  function updateAll(){ hosts.forEach(update); }
+  var pend=false;
+  new MutationObserver(function(){ if(pend) return; pend=true; requestAnimationFrame(function(){ pend=false; scan(); }); }).observe(document.body, {childList:true, subtree:true});
+  window.addEventListener("resize", function(){ updateAll(); });
+  scan();
 })();
 </script>
 </body>
