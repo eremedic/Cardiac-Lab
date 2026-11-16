@@ -22,7 +22,7 @@ const req = (method, path, { body, auth } = {}) => new Request('http://x' + path
 
 test('config reports scoring and class-code settings', async () => {
   const r = await make({ CLASS_CODE: 'ACLS1' })(req('GET', '/api/config'));
-  assert.deepEqual(await r.json(), { scoring: true, requireCode: true, instructor: false });
+  assert.deepEqual(await r.json(), { scoring: true, requireCode: true, instructor: false, features: { twelveLead: false } });
 });
 
 test('scores routes say so when no database is configured', async () => {
@@ -209,4 +209,28 @@ test('survey respects the class code', async () => {
   const api = make({ CLASS_CODE: 'abc' });
   const r = await api(req('PUT', `/api/scores/${ID}/survey`, { body: { code: 'nope', answers: fullAnswers() } }));
   assert.equal(r.status, 403);
+});
+
+test('12-lead area stays closed until the instructor opens it', async () => {
+  const api = make({ INSTRUCTOR_PASSWORD: 'secret' });
+  const cfg0 = await (await api(req('GET', '/api/config'))).json();
+  assert.equal(cfg0.features.twelveLead, false);
+  // students are refused; the instructor can preview
+  assert.equal((await api(req('GET', '/api/areas/twelve'))).status, 403);
+  const preview = await api(req('GET', '/api/areas/twelve', { auth: 'secret' }));
+  assert.equal(preview.status, 200);
+  const data = await preview.json();
+  assert.equal(data.items.length, 50);
+  assert.ok(data.items.every((it) => Object.keys(it.leads).length === 13));
+  // only the instructor can change settings, and only known ones
+  assert.equal((await api(req('PUT', '/api/settings', { body: { twelveLead: true } }))).status, 401);
+  assert.equal((await api(req('PUT', '/api/settings', { auth: 'secret', body: { twelveLead: 'yes' } }))).status, 400);
+  assert.equal((await api(req('PUT', '/api/settings', { auth: 'secret', body: { other: true } }))).status, 400);
+  const on = await api(req('PUT', '/api/settings', { auth: 'secret', body: { twelveLead: true } }));
+  assert.deepEqual((await on.json()).settings, { twelveLead: true });
+  assert.equal((await (await api(req('GET', '/api/config'))).json()).features.twelveLead, true);
+  assert.equal((await api(req('GET', '/api/areas/twelve'))).status, 200);
+  // and close it again
+  await api(req('PUT', '/api/settings', { auth: 'secret', body: { twelveLead: false } }));
+  assert.equal((await api(req('GET', '/api/areas/twelve'))).status, 403);
 });

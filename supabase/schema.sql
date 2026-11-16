@@ -25,6 +25,14 @@ alter table ecglab.scores add column if not exists survey jsonb;
 alter table ecglab.scores add column if not exists survey_at timestamptz;
 alter table ecglab.scores add column if not exists survey_anonymous boolean not null default false;
 
+-- Instructor settings (added in v1.3), e.g. whether the 12-lead practice area is open.
+create table if not exists ecglab.settings (
+  key        text primary key,
+  value      jsonb not null,
+  updated_at timestamptz not null default now()
+);
+alter table ecglab.settings enable row level security;
+
 create index if not exists scores_updated_at_idx on ecglab.scores (updated_at desc);
 create index if not exists scores_cohort_idx on ecglab.scores (cohort);
 
