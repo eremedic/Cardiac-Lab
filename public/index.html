@@ -770,7 +770,12 @@ body.df-focus .bar{position:relative}
 .cal-toggle:focus-visible,.cal-read button:focus-visible{outline:3px solid var(--cal);outline-offset:2px}
 .cal-ov{position:absolute;inset:0;z-index:4;pointer-events:none}
 .cal-svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
-.cal-guides line{stroke:var(--cal);stroke-width:1.2;stroke-dasharray:4 3;opacity:.85}
+.cal-guides line{stroke:var(--cal);stroke-width:1;stroke-dasharray:4 4;opacity:.6}
+.cal-wrap.cal-on{padding-top:80px;background:linear-gradient(var(--surface-2),var(--surface-2)) top/100% 80px no-repeat}
+.mon-screen .cal-wrap.cal-on{background:linear-gradient(#0B1210,#0B1210) top/100% 80px no-repeat}
+.cal-wrap.cal-on::after{content:"";position:absolute;left:0;right:0;top:79px;border-top:1px solid var(--line)}
+.mon-screen .cal-wrap.cal-on::after{border-top-color:rgba(255,255,255,.12)}
+.cal-wrap.cal-on .cal-toggle{bottom:auto;top:44px;left:auto;right:8px}
 .cal-guides line.up{opacity:.35}
 .cal-guides circle{fill:var(--cal)}
 .cal-ticks line{stroke:var(--cal);stroke-width:1.2;stroke-dasharray:2 4;opacity:.75}
@@ -2055,7 +2060,7 @@ updateTally(); route(); initShared();
   try{ var saved = JSON.parse(localStorage.getItem("cl-calipers")||"null"); if(saved){ CAL.on=!!saved.on; CAL.march=!!saved.march; if(saved.a>=0&&saved.a<=1) CAL.a=saved.a; if(saved.b>=0&&saved.b<=1) CAL.b=saved.b; } }catch(e){}
   function persist(){ try{ localStorage.setItem("cl-calipers", JSON.stringify(CAL)); }catch(e){} }
   var IC_CAL='<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 6.2 4.2 18M10 6.2l5.8 11.8"/><circle cx="10" cy="5.2" r="2.2"/><path d="M10 1.4V3"/></svg>';
-  var hosts = [], CAL_SEQ = 0;
+  var hosts = [], CAL_SEQ = 0, CAL_BAND = 80;
   function clamp(x){ return Math.max(0, Math.min(1, x)); }
   function msOf(h){ return +h.getAttribute("data-cal-ms") || 6000; }
   function fmtS(ms){ return (ms/1000).toFixed(2)+" s"; }
@@ -2083,6 +2088,7 @@ updateTally(); route(); initShared();
   function render(host){
     var ov=host.querySelector(".cal-ov"); if(ov) ov.remove();
     var btn=host.querySelector(".cal-toggle"); if(btn){ btn.setAttribute("aria-pressed", CAL.on?"true":"false"); btn.classList.toggle("on", CAL.on); }
+    host.classList.toggle("cal-on", CAL.on);  // opens a band above the tracing for the caliper body
     if(!CAL.on) return;
     ov=document.createElement("div"); ov.className="cal-ov";
     var gid="calg"+(++CAL_SEQ);
@@ -2137,7 +2143,7 @@ updateTally(); route(); initShared();
       x[1].setAttribute("aria-valuemin","0"); x[1].setAttribute("aria-valuemax", String(Math.round(ms))); x[1].setAttribute("aria-valuenow", String(Math.round(v)));
       x[1].setAttribute("aria-valuetext", "at "+fmtS(v)+"; interval "+fmtS(d)); });
     var W=ov.clientWidth||720, Hh=ov.clientHeight||170;
-    var hingeY=Hh<130?34:46, tipY=Math.min(Hh-8, Math.max(hingeY+44, Math.round(Hh*0.74)));
+    var hingeY=48, tipY=CAL_BAND-2;  // body sits in the band above the ECG; needle points touch the top of the tracing
     var xa=CAL.a*W, xb=CAL.b*W, hx=(xa+xb)/2, gid=ov.querySelector("linearGradient").id.slice(0,-1);
     var leg=function(tx){
       var dx=tx-hx, dy=tipY-hingeY, L=Math.sqrt(dx*dx+dy*dy)||1, ux=dx/L, uy=dy/L, nx=-uy, ny=ux;
@@ -2152,10 +2158,10 @@ updateTally(); route(); initShared();
       '<circle cx="'+hx.toFixed(1)+'" cy="'+hingeY+'" r="9.5" fill="url(#'+gid+'h)" stroke="#3A434A" stroke-width=".9"/>'+
       '<circle cx="'+hx.toFixed(1)+'" cy="'+hingeY+'" r="3.6" fill="#59636B" stroke="#2B3238" stroke-width=".6"/>'+
       '<line x1="'+(hx-2.6).toFixed(1)+'" y1="'+(hingeY+1.2)+'" x2="'+(hx+2.6).toFixed(1)+'" y2="'+(hingeY-1.2)+'" stroke="#D5DBDF" stroke-width=".9" stroke-linecap="round"/>';
-    var gd=function(x){ return '<line x1="'+x.toFixed(1)+'" y1="'+tipY+'" x2="'+x.toFixed(1)+'" y2="'+Hh+'"/><line x1="'+x.toFixed(1)+'" y1="'+(hingeY+12)+'" x2="'+x.toFixed(1)+'" y2="'+(tipY-6)+'" class="up"/><circle cx="'+x.toFixed(1)+'" cy="'+tipY+'" r="2.4"/>'; };
+    var gd=function(x){ return '<line x1="'+x.toFixed(1)+'" y1="'+tipY+'" x2="'+x.toFixed(1)+'" y2="'+Hh+'"/><circle cx="'+x.toFixed(1)+'" cy="'+tipY+'" r="2.4"/>'; };
     var svg=ov.querySelector(".cal-svg"); svg.setAttribute("viewBox","0 0 "+W+" "+Hh);
     ov.querySelector(".cal-body").innerHTML=body; ov.querySelector(".cal-guides").innerHTML=gd(xa)+gd(xb);
-    [legs[0],legs[1]].forEach(function(el){ el.style.top=(tipY-46)+"px"; el.querySelector("i").style.top="37px"; });
+    [legs[0],legs[1]].forEach(function(el){ el.style.top=(tipY-28)+"px"; el.querySelector("i").style.top="19px"; });
     var bar=ov.querySelector(".cal-bar"); bar.style.left=(hx/W*100)+"%"; bar.style.top=(hingeY-24)+"px";
     bar.setAttribute("aria-valuemin","0"); bar.setAttribute("aria-valuemax", String(Math.round(ms))); bar.setAttribute("aria-valuenow", String(Math.round(lo*ms)));
     bar.setAttribute("aria-valuetext", "interval "+fmtS(d)+" starting at "+fmtS(lo*ms));
@@ -2165,7 +2171,7 @@ updateTally(); route(); initShared();
     var rd=ov.querySelector(".cal-read"), mid=(lo+hi)/2, wide=ov.getBoundingClientRect().width||720, edge=Math.min(0.45, 170/wide);
     rd.style.left=(Math.max(edge, Math.min(1-edge, mid))*100)+"%";
     var mb=ov.querySelector(".cal-march"); mb.setAttribute("aria-pressed", CAL.march?"true":"false"); mb.classList.toggle("on", CAL.march);
-    var tk=ov.querySelector(".cal-ticks"), h="", tick=function(f){ var x=(f*W).toFixed(1); return '<line x1="'+x+'" y1="'+(hingeY+12)+'" x2="'+x+'" y2="'+Hh+'"/><path d="M'+x+' '+(tipY-7)+'l-4 -7h8z"/>'; };
+    var tk=ov.querySelector(".cal-ticks"), h="", tick=function(f){ var x=(f*W).toFixed(1); return '<line x1="'+x+'" y1="'+tipY+'" x2="'+x+'" y2="'+Hh+'"/><path d="M'+x+' '+tipY+'l-4 -8h8z"/>'; };
     if(CAL.march && hi-lo>0.004){ var w=hi-lo; for(var x=lo-w; x>-0.0001; x-=w) h+=tick(x); for(var y=hi+w; y<1.0001; y+=w) h+=tick(y); }
     if(tk.innerHTML!==h) tk.innerHTML=h;
   }
