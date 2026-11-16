@@ -769,7 +769,7 @@ body.df-focus .bar{position:relative}
 .cal-toggle.on{background:var(--cal);color:var(--cal-ink)}
 .cal-toggle:focus-visible,.cal-read button:focus-visible{outline:3px solid var(--cal);outline-offset:2px}
 .cal-ov{position:absolute;inset:0;z-index:4;pointer-events:none}
-.cal-svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.cal-svg{position:absolute;inset:0;width:100% !important;height:100% !important;min-width:0 !important;overflow:visible}
 .cal-guides line{stroke:var(--cal);stroke-width:1;stroke-dasharray:4 4;opacity:.6}
 .cal-wrap.cal-on{padding-top:80px;background:linear-gradient(var(--surface-2),var(--surface-2)) top/100% 80px no-repeat}
 .mon-screen .cal-wrap.cal-on{background:linear-gradient(#0B1210,#0B1210) top/100% 80px no-repeat}
@@ -787,13 +787,13 @@ body.df-focus .bar{position:relative}
 .cal-bar{position:absolute;width:34px;height:40px;margin-left:-17px;border-radius:50%;cursor:grab;pointer-events:auto;touch-action:none}
 .cal-bar:active{cursor:grabbing}
 .cal-bar:focus-visible{outline:3px solid var(--cal);outline-offset:0}
-.cal-read{position:absolute;top:0;transform:translateX(-50%);display:flex;align-items:center;gap:4px;pointer-events:auto;white-space:nowrap;
+.cal-read{position:absolute;top:0;transform:translateX(-50%);display:flex;align-items:center;gap:4px;pointer-events:auto;white-space:nowrap;max-width:calc(100% - 4px);flex-wrap:wrap;
   background:var(--cal);color:var(--cal-ink);border-radius:8px;padding:2px 3px 2px 8px;font:600 12px var(--f-mono);box-shadow:0 4px 12px -4px rgba(0,0,0,.4)}
 .cal-read button{border:0;background:rgba(255,255,255,.18);color:inherit;font:inherit;border-radius:6px;padding:1px 6px;cursor:pointer}
 .mon-screen .cal-read button,.sc-wave .cal-read button{background:rgba(0,0,0,.14)}
 .cal-read .cal-march.on{background:var(--cal-ink);color:var(--cal)}
 .cal-ticks i{position:absolute;top:30px;bottom:0;border-left:2px dashed color-mix(in srgb,var(--cal) 70%,transparent)}
-@media (max-width:560px){.cal-read{font-size:11px}.cal-toggle span{display:none}.cal-toggle{padding:4px}}
+@media (max-width:560px){.cal-read{font-size:10.5px;padding:2px 2px 2px 6px}.cal-read button{padding:1px 4px}.cal-toggle span{display:none}.cal-toggle{padding:4px}}
 </style>
 </head>
 <body>
@@ -1664,7 +1664,7 @@ function renderArea(key){
   }).join("");
   var dots=data.items.map(function(it){ var x=st.p[it.n], c = x==null ? "" : (x===it.cat?"r":"w"); return '<button class="dot '+c+(it.n===st.pi?" cur":"")+'" data-n="'+it.n+'" aria-label="Strip '+it.n+'">'+it.n+'</button>'; }).join("");
   body.innerHTML=head+'<div class="card qcard"><div class="strip-top"><div class="stem"><span class="tag">'+esc(m.short)+'</span><p>'+(q.leads?'Interpret this 12-lead ECG.':'Identify this rhythm.')+'</p></div>'+(q.hints?cardioBtnHTML(q, st, done):'')+'</div>'+
-    '<div><div class="paper">'+(q.leads?ecg12SVG(q):stripSVG(q.strip,"paper",false))+'</div><div class="paper-meta"><span>'+(q.leads?'12-lead · 25 mm/s · 10 mm/mV · bottom row: lead II rhythm strip':'Lead II · 25 mm/s · 6-second strip')+'</span><span class="scroll-hint">Swipe to see the whole '+(q.leads?'ECG':'strip')+' →</span></div></div>'+
+    '<div><div class="paper">'+(q.leads?ecg12SVG(q):stripSVG(q.strip,"paper",false))+'</div><div class="paper-meta"><span>'+(q.leads?'12-lead · 25 mm/s · 10 mm/mV · bottom row: lead II rhythm strip':'Lead II · 25 mm/s · 6-second strip')+'</span><span class="scroll-hint">'+(q.leads?'':'Swipe to see the whole strip →')+'</span></div></div>'+
     '<div><div class="eyebrow" style="margin-bottom:10px">'+(q.leads?'What does it show?':'Identify the rhythm')+'</div><div class="opts" id="arOpts" role="group" aria-label="Answer choices">'+opts+'</div></div>'+
     '<div aria-live="polite">'+(done?stripFeedback(q, chosen):'')+'</div>'+
     '<div class="qnav"><button class="btn btn-ghost" id="arPrev" '+(st.pi===1?'disabled':'')+'>← Previous</button><button class="btn btn-primary" id="arNext">'+(st.pi===total?'See area results →':(done?'Next '+unit.toLowerCase()+' →':'Skip →'))+'</button></div></div>'+
@@ -1677,7 +1677,25 @@ function renderArea(key){
   $("arNext").onclick=function(){ st.pi++; save(); renderArea(key); scrollTop(); };
   $("arDots").onclick=function(e){ var b=e.target.closest(".dot"); if(!b) return; st.pi=+b.getAttribute("data-n"); save(); renderArea(key); scrollTop(); };
   updateTally();
+  if(q && q.leads){ var fk=key+":"+q.n, fresh=FIT12_LAST!==fk; FIT12_LAST=fk; fit12(false); setTimeout(function(){ fit12(fresh); }, 0); } else FIT12_LAST=null;
 }
+/* 12-lead: scale the whole printout to the screen and line it up at the top, so no scrolling is needed to see it */
+var FIT12_LAST=null;
+function fit12(scroll){
+  var svg=document.querySelector("#v-area svg.ecg12"); if(!svg || $("v-area").hidden) return;
+  var paper=svg.closest(".paper"), wrap=svg.closest(".cal-wrap"), card=paper.closest(".qcard")||paper, meta=paper.nextElementSibling;
+  var bar=document.querySelector(".bar").getBoundingClientRect().height;
+  var top=function(el){ return el.getBoundingClientRect().top+window.scrollY; };
+  var band=wrap && wrap.classList.contains("cal-on") ? 80 : 0, metaH=meta ? meta.getBoundingClientRect().height+10 : 0;
+  var availH=window.innerHeight-bar-20-(top(paper)-top(card))-band-metaH-4, availW=paper.clientWidth;
+  var w=Math.floor(Math.max(300, Math.min(availW, availH*10000/4800)));
+  if(wrap){ svg.style.width=""; svg.style.minWidth=""; wrap.style.width=w+"px"; wrap.style.minWidth="0"; wrap.style.margin="0 auto"; }
+  else { svg.style.width=w+"px"; svg.style.minWidth="0"; svg.style.margin="0 auto"; }
+  if(window.__calUpdate) window.__calUpdate();  // the calipers redraw for the new size
+  if(scroll) window.scrollTo({top:Math.max(0, top(card)-bar-10), behavior:"auto"});
+}
+window.addEventListener("resize", function(){ if(location.hash==="#area-twelve") fit12(false); });
+window.fit12 = fit12;  // the calipers call this when they open or close the band above the ECG
 function areaSummaryHTML(key){
   var data=AREAS[key], st=areaState(key), sc=areaScore(key), byCat={};
   data.categories.forEach(function(c){ byCat[c]=[0,0,0]; });
@@ -2084,6 +2102,7 @@ updateTally(); route(); initShared();
       attach(wrap, ms);
     });
     document.querySelectorAll("[data-cal-ms]:not(.cal-host)").forEach(function(h){ attach(h, +h.getAttribute("data-cal-ms")); });
+    if(window.fit12 && document.querySelector("#v-area svg.ecg12")) fit12(false);
   }
   function render(host){
     var ov=host.querySelector(".cal-ov"); if(ov) ov.remove();
@@ -2166,17 +2185,20 @@ updateTally(); route(); initShared();
     bar.setAttribute("aria-valuemin","0"); bar.setAttribute("aria-valuemax", String(Math.round(ms))); bar.setAttribute("aria-valuenow", String(Math.round(lo*ms)));
     bar.setAttribute("aria-valuetext", "interval "+fmtS(d)+" starting at "+fmtS(lo*ms));
     var boxes=d/40, rate=d>=200?Math.round(60000/d):null;
-    var txt=fmtS(d)+" · "+(Math.round(boxes*10)/10)+" small boxes"+(rate?" · "+rate+"/min":"");
+    var narrow=(ov.clientWidth||720)<480;
+    var txt=fmtS(d)+(narrow?"":" · "+(Math.round(boxes*10)/10)+" small boxes")+(rate?" · "+rate+"/min":"");
+    if(narrow) ov.querySelector(".cal-val").setAttribute("aria-label", fmtS(d)+", "+(Math.round(boxes*10)/10)+" small boxes"+(rate?", "+rate+" per minute":""));
     var out=ov.querySelector(".cal-val"); if(out.textContent!==txt) out.textContent=txt;
-    var rd=ov.querySelector(".cal-read"), mid=(lo+hi)/2, wide=ov.getBoundingClientRect().width||720, edge=Math.min(0.45, 170/wide);
-    rd.style.left=(Math.max(edge, Math.min(1-edge, mid))*100)+"%";
+    var rd=ov.querySelector(".cal-read"), Wl=ov.clientWidth||720, rw=rd.offsetWidth||300, cx=(lo+hi)/2*Wl;
+    rd.style.left=(rw>=Wl-4 ? Wl/2 : Math.max(rw/2+2, Math.min(Wl-rw/2-2, cx)))+"px";  // keep the readout fully inside the ECG
     var mb=ov.querySelector(".cal-march"); mb.setAttribute("aria-pressed", CAL.march?"true":"false"); mb.classList.toggle("on", CAL.march);
     var tk=ov.querySelector(".cal-ticks"), h="", tick=function(f){ var x=(f*W).toFixed(1); return '<line x1="'+x+'" y1="'+tipY+'" x2="'+x+'" y2="'+Hh+'"/><path d="M'+x+' '+tipY+'l-4 -8h8z"/>'; };
     if(CAL.march && hi-lo>0.004){ var w=hi-lo; for(var x=lo-w; x>-0.0001; x-=w) h+=tick(x); for(var y=hi+w; y<1.0001; y+=w) h+=tick(y); }
     if(tk.innerHTML!==h) tk.innerHTML=h;
   }
-  function renderAll(){ hosts.forEach(render); }
+  function renderAll(){ hosts.forEach(render); if(window.fit12) fit12(false); }
   function updateAll(){ hosts.forEach(update); }
+  window.__calUpdate = updateAll;
   var pend=false;
   new MutationObserver(function(){ if(pend) return; pend=true; requestAnimationFrame(function(){ pend=false; scan(); }); }).observe(document.body, {childList:true, subtree:true});
   window.addEventListener("resize", function(){ updateAll(); });
