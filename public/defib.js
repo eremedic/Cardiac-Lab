@@ -218,7 +218,7 @@
       '      <div class="dv-screen" id="dvScreen">' +
       '        <div class="sc-top"><span class="sc-pt" id="scPt">ADULT</span><span class="sc-pads">PADS</span><span id="scLead" class="sc-lead">II</span><span class="sc-x" id="scSync" hidden>SYNC</span><span class="sc-x pace" id="scPaceTag" hidden>PACING</span><span class="sc-clock" id="scClock">00:00</span><span class="sc-batt" aria-hidden="true"><i></i></span></div>' +
       '        <div class="sc-body">' +
-      '          <div class="sc-waves">' +
+      '          <div class="sc-waves"><div class="sc-pop" id="scPop" role="status" aria-live="polite" hidden><small id="scPopL"></small><b id="scPopV"></b><em id="scPopS"></em></div>' +
       '            <div class="sc-wave ecg"><span class="sc-wl">II  x1.0</span><canvas id="cvEcg"></canvas></div>' +
       '            <div class="sc-wave pl"><span class="sc-wl">SpO₂</span><canvas id="cvPl"></canvas></div>' +
       '            <div class="sc-wave co"><span class="sc-wl">CO₂</span><canvas id="cvCo"></canvas></div>' +
@@ -287,6 +287,7 @@
       drugs: {}, drugT: {}, goodShocks: 0, nibpT: [], lastReady: -9, lastAlarm: -9, lastMedAlarm: -9 };
     stopChargeTone();
     if (sc.syncOn) st.sync = true;
+    st.popT = null;
     root.innerHTML = runnerHTML(sc, i);
     eng = new Engine(); eng.threshold = sc.threshold ? Math.round(rnd(sc.threshold[0], sc.threshold[1]) / 5) * 5 : 999;
     eng.setRhythm(copy(sc.start), !!sc.pulse);
@@ -315,12 +316,12 @@
     var on = function (id, fn) { var b = el(id); if (b) b.onclick = function () { if (!st.done) fn(); }; };
     on("kEup", function () { changeEnergy(1); }); on("kEdn", function () { changeEnergy(-1); });
     on("kCharge", charge); on("kShock", shock);
-    on("kSync", function () { st.sync = !st.sync; if (st.charged && !st.sync) {} logEv("SYNC " + (st.sync ? "on" : "off") + "."); msg(st.sync ? "SYNC MODE: markers on each QRS" : "SYNC off", st.sync ? "info" : ""); updateScreen(); });
+    on("kSync", function () { st.sync = !st.sync; if (st.charged && !st.sync) {} logEv("SYNC " + (st.sync ? "on" : "off") + "."); pop(st.sync ? "SYNC ON" : "SYNC OFF", ENERGIES[st.energyI] + " J", st.sync ? "Shock delivers on the next QRS" : "Unsynchronized"); msg(st.sync ? "SYNC MODE: markers on each QRS" : "SYNC off", st.sync ? "info" : ""); updateScreen(); });
     on("kAnalyze", analyze);
-    on("kPacer", function () { var p = eng.pacer; p.on = !p.on; p.paused = false; if (p.on) { if (st.paceT == null) st.paceT = now(); p.rate = p.rate || 60; logEv("PACER on: " + p.rate + " ppm, " + p.mA + " mA."); msg("PACER ON · set RATE and CURRENT", "info"); } else { logEv("PACER off."); msg("Pacing stopped"); } updateScreen(); });
+    on("kPacer", function () { var p = eng.pacer; p.on = !p.on; p.paused = false; if (p.on) { if (st.paceT == null) st.paceT = now(); p.rate = p.rate || 60; logEv("PACER on: " + p.rate + " ppm, " + p.mA + " mA."); msg("PACER ON · set RATE and CURRENT", "info"); pop("PACER ON", p.rate + " ppm", p.mA + " mA"); } else { logEv("PACER off."); msg("Pacing stopped"); pop("PACER OFF", "", ""); } updateScreen(); });
     on("kRup", function () { pacerAdj("rate", 5); }); on("kRdn", function () { pacerAdj("rate", -5); });
     on("kCup", function () { pacerAdj("mA", 5); }); on("kCdn", function () { pacerAdj("mA", -5); });
-    on("kPause", function () { var p = eng.pacer; if (!p.on) { msg("PACER is off"); return; } p.paused = !p.paused; logEv(p.paused ? "Pacing paused (rate reduced to view the underlying rhythm)." : "Pacing resumed."); updateScreen(); });
+    on("kPause", function () { var p = eng.pacer; if (!p.on) { msg("PACER is off"); return; } p.paused = !p.paused; pop(p.paused ? "PACER PAUSED" : "PACER RESUMED", p.rate + " ppm", p.mA + " mA"); logEv(p.paused ? "Pacing paused (rate reduced to view the underlying rhythm)." : "Pacing resumed."); updateScreen(); });
     on("kLead", function () { var L = ["I", "II", "III", "PADS"]; st.leadI = (st.leadI + 1) % 4; st.leadChanged = true; el("scLead").textContent = L[st.leadI]; root.querySelector(".sc-wave.ecg .sc-wl").textContent = L[st.leadI] + "  x1.0"; logEv("Lead changed to " + L[st.leadI] + "."); });
     on("kNibp", function () { st.nibpT.push(now()); var v = st.perfusing ? (st.bp || "---/---") : "---/---"; el("nBp").textContent = v; el("nBpT").textContent = stamp(); logEv("NIBP: " + (st.perfusing ? v : "no reading (no pulse)") + "."); });
     on("aPulse", checkPulse); on("aCpr", function () { setCpr(!st.cpr); });
@@ -339,6 +340,7 @@
     var n = Math.max(0, Math.min(ENERGIES.length - 1, st.energyI + d));
     if (n === st.energyI) return;
     st.energyI = n;
+    pop("ENERGY SELECT", ENERGIES[n] + " J", st.sync ? "SYNC MODE" : (sc.peds ? "PEDIATRIC" : "DEFIB"));
     if (st.charged || st.charging) { st.charged = false; st.charging = false; stopChargeTone(); logEv("Energy changed while charged: charge removed."); msg("CHARGE REMOVED", "warn"); }
     updateScreen();
   }
@@ -347,6 +349,7 @@
     if (st.charged) { msg("Already charged · press SHOCK", "warn"); return; }
     st.charging = true; st.chargeP = 0; logEv("Charging to " + ENERGIES[st.energyI] + " J.");
     stopChargeTone(); AU.charge = tone(420, 0, 2.6, "sawtooth", 0.18, 1250);
+    pop("CHARGING", "0 J", "to " + ENERGIES[st.energyI] + " J" + (st.sync ? " · SYNC" : ""), true);
   }
   function shock() {
     if (!st.charged) { msg(st.charging ? "Still charging" : "Not charged · press CHARGE first", "warn"); return; }
@@ -362,7 +365,7 @@
     if (st.cpr) { st.shockDuringCpr = true; setCpr(false, true); logEv("Shock delivered while compressions were going: always stop CPR and call \"clear\" before pressing SHOCK.", "bad"); }
     st.shocks = st.shocks || []; st.shocks.push({ t: now(), J: J, sync: synced, rhythm: r, perfusing: st.perfusing });
     logEv((synced ? "Synchronized cardioversion" : "Unsynchronized shock") + " delivered at " + J + " J.", "shock");
-    msg("ENERGY DELIVERED " + J + " J", "shock");
+    msg("ENERGY DELIVERED " + J + " J", "shock"); pop("ENERGY DELIVERED", J + " J", synced ? "SYNCHRONIZED" : "");
     flash(); tone(140, 0, 0.22, "square", 0.9, 45); tone(1200, 0.02, 0.05, "square", 0.25);
     if (eng.pacer.on) { eng.pacer.on = false; logEv("Pacing stopped by the shock."); }
     eng.flat = now() + 1.6;
@@ -423,6 +426,7 @@
   function pacerAdj(k, d) {
     var p = eng.pacer; if (!p.on) { msg("Turn the PACER on first", "warn"); return; }
     if (k === "rate") p.rate = Math.max(40, Math.min(170, p.rate + d)); else p.mA = Math.max(0, Math.min(200, p.mA + d));
+    if (k === "rate") pop("PACER RATE", p.rate + " ppm", "Output " + p.mA + " mA"); else pop("PACER OUTPUT", p.mA + " mA", "Rate " + p.rate + " ppm");
     updateScreen(); clearTimeout(st.pTimer); st.pTimer = setTimeout(function () { logEv("PACER set to " + p.rate + " ppm, " + p.mA + " mA."); }, 900);
   }
   function setCpr(on, quiet) {
@@ -441,6 +445,12 @@
     else if (r === "chb" || r === "b21") res = "Weak, slow pulse at about " + (eng.hr() || 35) + "/min.";
     else res = "Pulse present, about " + (eng.hr() || "--") + "/min" + (st.bp ? ", BP " + st.bp : "") + ".";
     st.pulseChecks.push({ t: now(), res: res }); logEv("Pulse check: " + res); el("ptStatus").innerHTML = '<b>Last pulse check</b> ' + H(res);
+  }
+  function pop(label, value, sub, keep) {
+    var b = el("scPop"); if (!b) return;
+    el("scPopL").textContent = label; el("scPopV").textContent = value || ""; el("scPopS").textContent = sub || "";
+    b.hidden = false; b.classList.toggle("hot", /CHARG|DELIVER/.test(label));
+    clearTimeout(st.popT); if (!keep) st.popT = setTimeout(function () { var x = el("scPop"); if (x) x.hidden = true; }, 3000);
   }
   function flash() { var s = el("dvScreen"); s.classList.remove("flash"); void s.offsetWidth; s.classList.add("flash"); }
 
@@ -490,7 +500,7 @@
     var dt = Math.min(0.1, (ts - lastTs) / 1000); lastTs = ts;
     var t0 = eng.t, t1 = t0 + dt; eng.t = t1;
     // charging
-    if (st.charging) { st.chargeP = Math.min(1, st.chargeP + dt / 2.6); if (st.chargeP >= 1) { st.charging = false; st.charged = true; st.chargedAt = t1; AU.charge = null; msg("CHARGED " + ENERGIES[st.energyI] + " J · PRESS SHOCK", "shock"); logEv("Charged to " + ENERGIES[st.energyI] + " J."); } updateScreen(); }
+    if (st.charging) { st.chargeP = Math.min(1, st.chargeP + dt / 2.6); if (st.chargeP < 1) el("scPopV").textContent = Math.round(ENERGIES[st.energyI] * st.chargeP) + " J"; if (st.chargeP >= 1) { st.charging = false; st.charged = true; st.chargedAt = t1; AU.charge = null; pop("CHARGED", ENERGIES[st.energyI] + " J", "PRESS SHOCK" + (st.sync ? " · SYNC" : "")); msg("CHARGED " + ENERGIES[st.energyI] + " J · PRESS SHOCK", "shock"); logEv("Charged to " + ENERGIES[st.energyI] + " J."); } updateScreen(); }
     if (st.charged && t1 - st.lastReady >= 1) { st.lastReady = t1; tone(1046, 0, 0.12, "square", 0.35); tone(1046, 0.18, 0.12, "square", 0.35); }
     var lethal = (eng.rh.r === "vf" || eng.rh.r === "torsades" || eng.rh.r === "asystole" || (eng.rh.r === "vt" && !st.perfusing)) && t1 >= eng.flat;
     if (lethal && !st.cpr && !st.charged && t1 - st.lastAlarm >= 6) { st.lastAlarm = t1; [0, 0.2, 0.4, 0.9, 1.1].forEach(function (d) { tone(988, d, 0.13, "square", 0.45); }); }
