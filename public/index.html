@@ -2060,7 +2060,7 @@ updateTally(); route(); initShared();
   try{ var saved = JSON.parse(localStorage.getItem("cl-calipers")||"null"); if(saved){ CAL.on=!!saved.on; CAL.march=!!saved.march; if(saved.a>=0&&saved.a<=1) CAL.a=saved.a; if(saved.b>=0&&saved.b<=1) CAL.b=saved.b; } }catch(e){}
   function persist(){ try{ localStorage.setItem("cl-calipers", JSON.stringify(CAL)); }catch(e){} }
   var IC_CAL='<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 6.2 4.2 18M10 6.2l5.8 11.8"/><circle cx="10" cy="5.2" r="2.2"/><path d="M10 1.4V3"/></svg>';
-  var hosts = [], CAL_SEQ = 0, CAL_BAND = 80, CAL_DIP = 22;
+  var hosts = [], CAL_SEQ = 0, CAL_BAND = 80, CAL_DIP = 40;
   function clamp(x){ return Math.max(0, Math.min(1, x)); }
   function msOf(h){ return +h.getAttribute("data-cal-ms") || 6000; }
   function fmtS(ms){ return (ms/1000).toFixed(2)+" s"; }
@@ -2143,14 +2143,14 @@ updateTally(); route(); initShared();
       x[1].setAttribute("aria-valuemin","0"); x[1].setAttribute("aria-valuemax", String(Math.round(ms))); x[1].setAttribute("aria-valuenow", String(Math.round(v)));
       x[1].setAttribute("aria-valuetext", "at "+fmtS(v)+"; interval "+fmtS(d)); });
     var W=ov.clientWidth||720, Hh=ov.clientHeight||170;
-    var hingeY=48, tipY=CAL_BAND+CAL_DIP;  // body sits in the band above the ECG; only the needle points dip into the top of the tracing
+    var hingeY=48, tipY=CAL_BAND+CAL_DIP;  // hinge in the band above the ECG; slim steel legs run down into the tracing, ending in a short fine point
     var xa=CAL.a*W, xb=CAL.b*W, hx=(xa+xb)/2, gid=ov.querySelector("linearGradient").id.slice(0,-1);
     var leg=function(tx){
       var dx=tx-hx, dy=tipY-hingeY, L=Math.sqrt(dx*dx+dy*dy)||1, ux=dx/L, uy=dy/L, nx=-uy, ny=ux;
-      var nl=Math.min(L*0.55, (tipY-CAL_BAND+4)/Math.max(uy,0.15)), px=tx-ux*nl, py=tipY-uy*nl, w0=4.6, w1=1.7;
+      var nl=Math.min(7, L*0.12), px=tx-ux*nl, py=tipY-uy*nl, w0=3.4, w1=1.15;
       var poly=[[hx+nx*w0,hingeY+ny*w0],[px+nx*w1,py+ny*w1],[px-nx*w1,py-ny*w1],[hx-nx*w0,hingeY-ny*w0]].map(function(p){ return p[0].toFixed(1)+","+p[1].toFixed(1); }).join(" ");
-      return '<polygon points="'+poly+'" fill="url(#'+gid+'m)" stroke="#3A434A" stroke-width=".8" stroke-linejoin="round"/>'+
-        '<line x1="'+px.toFixed(1)+'" y1="'+py.toFixed(1)+'" x2="'+tx.toFixed(1)+'" y2="'+tipY+'" stroke="#2B3238" stroke-width="1.2" stroke-linecap="round"/>';
+      return '<polygon points="'+poly+'" fill="url(#'+gid+'m)" stroke="#3A434A" stroke-width=".6" stroke-linejoin="round"/>'+
+        '<line x1="'+px.toFixed(1)+'" y1="'+py.toFixed(1)+'" x2="'+tx.toFixed(1)+'" y2="'+tipY+'" stroke="#2B3238" stroke-width=".8" stroke-linecap="round"/>';
     };
     var body=leg(xa)+leg(xb)+
       '<rect x="'+(hx-6).toFixed(1)+'" y="'+(hingeY-22)+'" width="12" height="13" rx="2.5" fill="url(#'+gid+'m)" stroke="#3A434A" stroke-width=".8"/>'+
@@ -2158,7 +2158,7 @@ updateTally(); route(); initShared();
       '<circle cx="'+hx.toFixed(1)+'" cy="'+hingeY+'" r="9.5" fill="url(#'+gid+'h)" stroke="#3A434A" stroke-width=".9"/>'+
       '<circle cx="'+hx.toFixed(1)+'" cy="'+hingeY+'" r="3.6" fill="#59636B" stroke="#2B3238" stroke-width=".6"/>'+
       '<line x1="'+(hx-2.6).toFixed(1)+'" y1="'+(hingeY+1.2)+'" x2="'+(hx+2.6).toFixed(1)+'" y2="'+(hingeY-1.2)+'" stroke="#D5DBDF" stroke-width=".9" stroke-linecap="round"/>';
-    var gd=function(x){ return '<line x1="'+x.toFixed(1)+'" y1="'+tipY+'" x2="'+x.toFixed(1)+'" y2="'+Hh+'"/><circle cx="'+x.toFixed(1)+'" cy="'+tipY+'" r="2.4"/>'; };
+    var gd=function(x){ return '<line x1="'+x.toFixed(1)+'" y1="'+tipY+'" x2="'+x.toFixed(1)+'" y2="'+Hh+'"/><circle cx="'+x.toFixed(1)+'" cy="'+tipY+'" r="1.3"/>'; };
     var svg=ov.querySelector(".cal-svg"); svg.setAttribute("viewBox","0 0 "+W+" "+Hh);
     ov.querySelector(".cal-body").innerHTML=body; ov.querySelector(".cal-guides").innerHTML=gd(xa)+gd(xb);
     [legs[0],legs[1]].forEach(function(el){ el.style.top=(tipY-28)+"px"; el.querySelector("i").style.top="19px"; });
