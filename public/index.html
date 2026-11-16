@@ -479,10 +479,13 @@ h1,h2,h3,.qhead h2,.runner-head h2,.score-hero h2,.answer-name,.stat b,.hero .me
 .sv-q legend em{font-style:normal;font-weight:400;color:var(--muted);font-size:13.5px}
 .sv-q.sv-bad legend{color:var(--bad)}
 .sv-q.sv-bad legend::after{content:"Required";margin-left:8px;font-size:11.5px;font-weight:700;color:var(--bad);background:var(--bad-soft);padding:2px 7px;border-radius:99px;vertical-align:2px}
-.sv-q input[type=radio],.sv-anon input{position:absolute;opacity:0;pointer-events:none}
+.sv-q input[type=radio],.sv-q input[type=checkbox],.sv-anon input{position:absolute;opacity:0;pointer-events:none}
 .sv-choices{display:flex;flex-wrap:wrap;gap:8px}
 .sv-choices label,.sv-scale label{cursor:pointer;border:1.5px solid var(--line-2);background:var(--surface);border-radius:10px;padding:9px 13px;font-size:14px;font-weight:500;transition:border-color .12s,background .12s}
 .sv-choices label:hover,.sv-scale label:hover{border-color:var(--accent)}
+.sv-q input:disabled+label{opacity:.45;cursor:not-allowed;border-color:var(--line)}
+.sv-choices input[type=checkbox]+label::before{content:"";display:inline-block;width:14px;height:14px;border-radius:4px;border:1.5px solid var(--line-2);margin-right:8px;vertical-align:-2px;background:var(--surface)}
+.sv-choices input[type=checkbox]:checked+label::before{background:var(--accent) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4 8.3l2.5 2.5 5.5-5.6' fill='none' stroke='white' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/12px no-repeat;border-color:var(--accent)}
 .sv-q input:checked+label{border-color:var(--accent);background:var(--accent-soft);color:var(--ink);box-shadow:inset 0 0 0 1px var(--accent)}
 .sv-q input:focus-visible+label{outline:2px solid var(--accent);outline-offset:2px}
 .sv-scale{display:grid;gap:6px}
@@ -519,6 +522,9 @@ h1,h2,h3,.qhead h2,.runner-head h2,.score-hero h2,.answer-name,.stat b,.hero .me
 .sv-stats{grid-template-columns:repeat(4,minmax(0,1fr));margin:0}
 @media (max-width:860px){.sv-stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .sv-stats .stat:nth-child(1) b{color:var(--orange)}.sv-stats .stat:nth-child(2) b{color:var(--navy)}.sv-stats .stat:nth-child(3) b{color:var(--green)}.sv-stats .stat:nth-child(4) b{color:var(--blue)}
+.sv-pay .stat:nth-child(n) b{color:var(--green)}
+.sv-pay-v{font-size:24px!important;line-height:1.15!important}
+.sv-pay-t{font-size:17px!important}
 .sv-of{font-style:normal;font-size:18px;color:var(--muted);margin-left:2px}
 .sv-stars span{color:var(--line-2);font-size:15px}.sv-stars span.on{color:var(--orange)}
 .sv-cols{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:26px}
@@ -1223,7 +1229,7 @@ function surveyPromptHTML(where){
     return '<div class="sv-prompt done"><span class="sv-ic">'+IC_CLIP+'</span><div class="sv-t"><div class="eyebrow">Course survey</div><h3>Thanks for your feedback</h3>'+
       '<p>Your survey was submitted '+ago(S.svDone)+'. You can update your answers at any time.</p></div><a class="btn btn-ghost" href="#survey">Edit my answers</a></div>';
   }
-  return '<div class="sv-prompt open"><span class="sv-ic">'+IC_CLIP+'</span><div class="sv-t"><div class="eyebrow">Course survey · about 3 minutes</div><h3>You finished the program. Tell us how it went.</h3>'+
+  return '<div class="sv-prompt open"><span class="sv-ic">'+IC_CLIP+'</span><div class="sv-t"><div class="eyebrow">Course survey · about 4 minutes</div><h3>You finished the program. Tell us how it went.</h3>'+
     '<p>Your answers help your instructor improve the course.</p></div><a class="btn btn-primary" href="#survey">Take the survey</a></div>';
 }
 function renderSurveyPrompts(){
@@ -1247,6 +1253,9 @@ function svQuestionHTML(q, ans, n){
   var h='<fieldset class="sv-q'+(bad?' sv-bad':'')+'" id="svq-'+q.id+'"><legend><span class="num">'+n+'.</span> '+esc(q.text)+(q.required?'':' <em>(optional)</em>')+'</legend>';
   if(q.type==="choice"){
     h+='<div class="sv-choices">'+q.options.map(function(o,i){ var id="sv-"+q.id+"-"+i; return '<input type="radio" id="'+id+'" name="'+q.id+'" value="'+esc(o)+'"'+(v===o?' checked':'')+'><label for="'+id+'">'+esc(o)+'</label>'; }).join("")+'</div>';
+  } else if(q.type==="multi"){
+    var picked=Array.isArray(v)?v:[], max=q.maxPicks||q.options.length;
+    h+='<div class="sv-choices" data-max="'+max+'">'+q.options.map(function(o,i){ var id="sv-"+q.id+"-"+i, on=picked.indexOf(o)>=0; return '<input type="checkbox" id="'+id+'" name="'+q.id+'" value="'+esc(o)+'"'+(on?' checked':'')+(!on&&picked.length>=max?' disabled':'')+'><label for="'+id+'">'+esc(o)+'</label>'; }).join("")+'</div><div class="sv-ends"><span id="svc-'+q.id+'">'+picked.length+' of '+max+' chosen</span></div>';
   } else if(q.type==="likert"){
     h+=svScale(q, q.id, SV.def.likert, v, 1, 5, "likert");
   } else if(q.type==="stars"){
@@ -1269,6 +1278,9 @@ function readSurveyForm(){
     if(q.type==="confidence"){
       var b=f.querySelector('input[name="'+q.id+'__before"]:checked'), n=f.querySelector('input[name="'+q.id+'__now"]:checked');
       if(b||n) a[q.id]={before:b?+b.value:null, now:n?+n.value:null};
+    } else if(q.type==="multi"){
+      var picks=Array.prototype.map.call(f.querySelectorAll('input[name="'+q.id+'"]:checked'), function(el){ return el.value; });
+      if(picks.length) a[q.id]=picks;
     } else if(q.type==="text"){
       var t=f.elements[q.id].value.trim(); if(t) a[q.id]=t;
     } else {
@@ -1283,6 +1295,7 @@ function svMissing(a){
     if(!q.required) return false;
     var v=a[q.id];
     if(q.type==="confidence") return !v || v.before==null || v.now==null;
+    if(q.type==="multi") return !v || !v.length;
     return v===undefined || v===null || v==="";
   }).map(function(q){ return q.id; });
 }
@@ -1311,11 +1324,17 @@ function renderSurvey(){
       return '<section class="card sv-sec"><h3>'+esc(s.title)+'</h3>'+(s.intro?'<p class="sv-intro">'+esc(s.intro)+'</p>':'')+s.questions.map(function(q){ n++; return svQuestionHTML(q, ans, n); }).join("")+'</section>';
     }).join("");
     var anon = S.svDraftAnon!=null ? S.svDraftAnon : !!S.svAnon;
-    body.innerHTML = head+'<p class="sv-lede">Thanks for finishing the program. This survey takes about 3 minutes. Questions marked (optional) can be skipped.</p>'+
+    body.innerHTML = head+'<p class="sv-lede">Thanks for finishing the program. This survey takes about 4 minutes. Questions marked (optional) can be skipped.</p>'+
       '<form id="svForm" novalidate>'+who+secs+
       '<div class="card sv-sec sv-submit"><label class="sv-anon" for="svAnon"><input type="checkbox" id="svAnon"'+(anon?' checked':'')+'><span><b>Hide my name next to my answers</b><br>Your instructor will see that you completed the survey, but your answers and comments are listed as "Anonymous".</span></label>'+
       '<div class="sv-msg" id="svMsg" role="alert">'+esc(SV.msg)+'</div><div class="qnav" style="justify-content:flex-start"><button class="btn btn-primary" type="submit" id="svSend"'+(SV.sending?' disabled':'')+'>'+(S.svDone?'Update my answers':'Submit survey')+'</button>'+(S.svDone?'<button class="btn btn-ghost" type="button" id="svCancel">Cancel</button>':'')+'</div></div></form>';
     var f=$("svForm");
+    f.addEventListener("change", function(e){
+      var box=e.target.closest(".sv-choices[data-max]");
+      if(box){ var max=+box.getAttribute("data-max"), boxes=box.querySelectorAll('input[type="checkbox"]'), n2=box.querySelectorAll('input:checked').length;
+        boxes.forEach(function(el){ el.disabled = !el.checked && n2>=max; });
+        var cnt=$("svc-"+e.target.name); if(cnt) cnt.textContent=n2+" of "+max+" chosen"; }
+    });
     f.addEventListener("change", function(){ S.svDraft=readSurveyForm(); S.svDraftAnon=$("svAnon").checked; if(SV.missing){ SV.missing=svMissing(S.svDraft); f.querySelectorAll(".sv-q").forEach(function(el){ el.classList.toggle("sv-bad", SV.missing.indexOf(el.id.slice(4))>=0); }); setSvMsg(SV.missing.length ? (SV.missing.length===1 ? "One required question still needs an answer." : SV.missing.length+" required questions still need an answer.") : ""); } try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} });
     f.addEventListener("submit", function(e){ e.preventDefault(); submitSurvey(); });
     if($("svCancel")) $("svCancel").onclick=function(){ SV.editing=false; SV.msg=""; SV.missing=null; renderSurvey(); scrollTop(); };
@@ -1383,6 +1402,18 @@ function surveyPanelHTML(rows){
     '<div class="card stat"><small>Overall rating</small><b class="num">'+f1(stars)+'<i class="sv-of">/5</i></b><span class="sv-stars" aria-hidden="true">'+starRow(stars)+'</span></div>'+
     '<div class="card stat"><small>Net Promoter Score</small><b class="num">'+(nps==null?"—":(nps>0?"+":"")+nps)+'</b><span>from −100 to +100</span></div>'+
     '<div class="card stat"><small>Confidence gain</small><b class="num">'+(gains.length?(avg(gains)>=0?"+":"")+f1(avg(gains)):"—")+'</b><span>average, on a 1–5 scale</span></div></div>';
+  // Willingness to pay
+  var qById={}; qs.forEach(function(q){ qById[q.id]=q; });
+  if(qById.would_buy && qById.max_monthly){
+    var wb=A("would_buy"), top2=wb.filter(function(x){ return qById.would_buy.options.indexOf(x)<=1; }).length;
+    var medianOf=function(id){ var q=qById[id]; if(!q) return "—"; var idx=A(id).map(function(x){return q.options.indexOf(x)}).filter(function(i){return i>=0}).sort(function(a,b){return a-b}); return idx.length ? q.options[idx[Math.floor((idx.length-1)/2)]] : "—"; };
+    var topOf=function(id){ var q=qById[id]; if(!q) return "—"; var v=A(id), best=null, bc=0; q.options.forEach(function(o){ var c=v.filter(function(x){return x===o}).length; if(c>bc){bc=c; best=o;} }); return best ? best+" ("+pct(bc,v.length)+"%)" : "—"; };
+    h+='<div><h4>Willingness to pay</h4><div class="stats sv-stats sv-pay">'+
+      '<div class="card stat"><small>Would buy</small><b class="num">'+(wb.length?pct(top2,wb.length)+'%':'—')+'</b><span>definitely or probably</span></div>'+
+      '<div class="card stat"><small>Most they\'d pay</small><b class="sv-pay-v">'+esc(medianOf("max_monthly").replace(/ \(.*\)$/,""))+'</b><span>per month, median answer</span></div>'+
+      '<div class="card stat"><small>Too expensive at</small><b class="sv-pay-v">'+esc(medianOf("too_expensive"))+'</b><span>per month, median answer</span></div>'+
+      '<div class="card stat"><small>Preferred billing</small><b class="sv-pay-v sv-pay-t">'+esc(topOf("billing"))+'</b><span>most common answer</span></div></div></div>';
+  }
   // Likert statements
   var lik=qs.filter(function(q){return q.type==="likert"});
   h+='<div class="sv-cols"><div><h4>Course statements</h4><div class="sv-likert">'+lik.map(function(q){
@@ -1396,9 +1427,9 @@ function surveyPanelHTML(rows){
     return '<div class="sv-drow"><span class="sv-ltext">'+esc(q.text)+'</span><span class="dumb"><i class="seg" style="left:'+Math.min(x1,x2)+'%;width:'+Math.abs(x2-x1)+'%"></i><i class="pt b" style="left:'+x1+'%"></i><i class="pt n" style="left:'+x2+'%"></i></span><b class="num">'+f1(b)+' → '+f1(n2)+'</b></div>';
   }).join("")+'</div><div class="legend"><span><i style="background:var(--muted)"></i>Before</span><span><i style="background:var(--orange)"></i>Now</span></div></div></div>';
   // NPS + choices
-  var choiceQs=qs.filter(function(q){return q.type==="choice"});
+  var choiceQs=qs.filter(function(q){return q.type==="choice"||q.type==="multi"});
   h+='<div class="sv-cols"><div><h4>Would recommend</h4>'+(npsV.length?'<div class="npsbar"><i class="d" style="width:'+pct(det,npsV.length)+'%"></i><i class="p2" style="width:'+pct(pas,npsV.length)+'%"></i><i class="pr" style="width:'+pct(prom,npsV.length)+'%"></i></div><div class="legend"><span><i style="background:var(--bad)"></i>Detractors 0–6: '+det+'</span><span><i style="background:var(--line-2)"></i>Passives 7–8: '+pas+'</span><span><i style="background:var(--ok)"></i>Promoters 9–10: '+prom+'</span></div>':'<p class="empty">No answers.</p>')+
-    choiceQs.map(function(q){ var v=A(q.id); return '<h4 style="margin-top:16px">'+esc(q.text)+'</h4><div class="bars">'+q.options.map(function(o){ var c=v.filter(function(x){return x===o}).length; return '<div class="barrow"><span>'+esc(o)+'</span><span class="track"><i style="width:'+pct(c,v.length||1)+'%"></i></span><b>'+c+'</b></div>'; }).join("")+'</div>'; }).join("")+'</div>';
+    choiceQs.map(function(q){ var v=A(q.id); return '<h4 style="margin-top:16px">'+esc(q.text)+'</h4><div class="bars">'+q.options.map(function(o){ var c=v.filter(function(x){return q.type==="multi" ? x.indexOf(o)>=0 : x===o}).length; return '<div class="barrow"><span>'+esc(o)+'</span><span class="track"><i style="width:'+pct(c,v.length||1)+'%"></i></span><b>'+c+'</b></div>'; }).join("")+'</div>'; }).join("")+'</div>';
   // Comments
   var textQs=qs.filter(function(q){return q.type==="text"});
   h+='<div><h4>Comments</h4>'+textQs.map(function(q){
@@ -1420,6 +1451,7 @@ function surveyDetailHTML(r){
     else if(q.type==="confidence") t=v.before+" → "+v.now;
     else if(q.type==="stars") t=v+" / 5";
     else if(q.type==="nps") t=v+" / 10";
+    else if(q.type==="multi") t=v.join(", ");
     else t=v;
     return '<li><span>'+esc(q.text)+'</span><b>'+esc(t)+'</b></li>';
   }).join("");
@@ -1431,7 +1463,7 @@ function surveyCsv(rows){
   qs.forEach(function(q){ if(q.type==="confidence"){ head.push(q.text+" (before)", q.text+" (now)"); } else head.push(q.text); });
   var lines=[head].concat(resp.map(function(r){
     var a=r.survey.answers, line=[r.surveyAnonymous?"Anonymous":(r._name||r.name||""), r.surveyAnonymous?"":(r.cohort||""), r.surveyAt?new Date(r.surveyAt).toISOString():""];
-    qs.forEach(function(q){ var v=a[q.id]; if(q.type==="confidence"){ line.push(v?v.before:"", v?v.now:""); } else line.push(v==null?"":v); });
+    qs.forEach(function(q){ var v=a[q.id]; if(q.type==="confidence"){ line.push(v?v.before:"", v?v.now:""); } else if(q.type==="multi"){ line.push(v?v.join("; "):""); } else line.push(v==null?"":v); });
     return line;
   }));
   return lines;

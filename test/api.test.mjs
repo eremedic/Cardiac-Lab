@@ -143,6 +143,7 @@ const fullAnswers = () => {
   const a = {};
   for (const q of QUESTIONS) {
     if (q.type === 'choice') a[q.id] = q.options[0];
+    else if (q.type === 'multi') a[q.id] = q.options.slice(0, 2);
     else if (q.type === 'likert' || q.type === 'stars') a[q.id] = 4;
     else if (q.type === 'nps') a[q.id] = 9;
     else if (q.type === 'confidence') a[q.id] = { before: 2, now: 4 };
@@ -177,6 +178,10 @@ test('survey opens only after both modules are finished, then the instructor see
   assert.equal((await miss.json()).question, 'overall');
   assert.equal((await send({ answers: { ...fullAnswers(), recommend: 11 } })).status, 400);
   assert.equal((await send({ answers: { ...fullAnswers(), role: 'Pilot' } })).status, 400);
+  assert.equal((await send({ answers: { ...fullAnswers(), worth_paying: ['Free pizza'] } })).status, 400);
+  assert.equal((await send({ answers: { ...fullAnswers(), worth_paying: QUESTIONS.find((q) => q.id === 'worth_paying').options.slice(0, 4) } })).status, 400);
+  const noPrice = fullAnswers(); delete noPrice.max_monthly;
+  assert.equal((await (await send({ answers: noPrice })).json()).question, 'max_monthly');
   const ok = await send({ answers: { ...fullAnswers(), role: undefined, sneaky: 'x' }, anonymous: true });
   assert.equal(ok.status, 200);
   const { rows } = await (await api(req('GET', '/api/scores', { auth: 'secret' }))).json();
@@ -187,6 +192,7 @@ test('survey opens only after both modules are finished, then the instructor see
   assert.equal(sam.survey.answers.sneaky, undefined);
   assert.equal(sam.survey.answers.role, undefined);
   assert.deepEqual(sam.survey.answers.conf_blocks, { before: 2, now: 4 });
+  assert.equal(sam.survey.answers.worth_paying.length, 2);
 });
 
 test('survey respects the class code', async () => {
