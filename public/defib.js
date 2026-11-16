@@ -9,6 +9,7 @@
 
   /* ------------------------------------------------------------------ scenarios */
   var SCEN = [
+    /* shockable */
     { id: "vf", title: "Collapse while shoveling snow", type: "defib", start: { r: "vf", amp: 0.55 }, pulse: false, cpr: true,
       text: "A 55-year-old man collapsed while shoveling snow. Bystanders started CPR. Pads are on.", lesson: "Shockable rhythm: defibrillate (unsynchronized), 120–200 J biphasic, then resume CPR immediately." },
     { id: "pvt", title: "Found unresponsive and pulseless", type: "defib", start: { r: "vt", rate: 182 }, pulse: false,
@@ -17,6 +18,15 @@
       text: "A 41-year-old on high-dose methadone collapses. No pulse. Pads are on.", lesson: "Polymorphic VT can't be synchronized: defibrillate, then give magnesium sulfate 1–2 g." },
     { id: "fvf", title: "Long down-time", type: "defib", start: { r: "vf", amp: 0.14 }, pulse: false, cpr: true,
       text: "Unwitnessed arrest, about 8 minutes down. Your partner is doing compressions.", lesson: "Fine VF is still VF and still shockable. Pause CPR briefly to read the rhythm, then shock." },
+    { id: "refvf", title: "VF that won't quit", type: "defib", start: { r: "vf", amp: 0.6 }, pulse: false, cpr: true, shocksNeeded: 2,
+      text: "A 49-year-old collapsed at the gym. Your partner is doing CPR. Pads are on.", lesson: "Refractory VF: after every shock that doesn't convert, resume CPR immediately for 2 minutes, then shock again at the same or higher energy. Epinephrine after the 2nd shock, amiodarone 300 mg after the 3rd." },
+    { id: "pvf", title: "Child in cardiac arrest", type: "defib", peds: true, start: { r: "vf", amp: 0.5 }, pulse: false, cpr: true, minJ: 30, maxJ: 50,
+      text: "A 6-year-old (about 20 kg) collapsed at a pool party. CPR is in progress. Pediatric pads are on.", lesson: "Pediatric VF: first shock 2 J/kg (40 J for 20 kg; select 30 or 50 J), then 4 J/kg, up to 10 J/kg or the adult dose." },
+    { id: "syncvf", title: "Left in SYNC", type: "defib", start: { r: "vf", amp: 0.5 }, pulse: false, syncOn: true,
+      text: "You cardioverted this patient's atrial fibrillation a few minutes ago. Now they're unresponsive and pulseless. The monitor is still in SYNC mode.", lesson: "Many monitors stay in SYNC after a cardioversion. VF has no QRS to sync to, so the shock never fires: turn SYNC off and defibrillate." },
+    { id: "ptdp", title: "Twisting rhythm with a faint pulse", type: "defib", start: { r: "torsades" }, pulse: true, conscious: true, bp: "62/30",
+      text: "A 52-year-old with a known long QT suddenly turns gray and confused. There's a faint pulse. The rhythm is polymorphic and twisting.", lesson: "Unstable polymorphic VT can't be reliably synchronized: give an unsynchronized, defibrillation-dose shock, then magnesium." },
+    /* unstable tachycardia: cardioversion */
     { id: "uvt", title: "Palpitations and chest pain", type: "sync", start: { r: "vt", rate: 164 }, pulse: true, conscious: true, bp: "74/42", minJ: 100, maxJ: 200,
       text: "A 58-year-old with chest pain and palpitations. Pale, diaphoretic, BP 74/42. He has a pulse.", lesson: "Unstable monomorphic VT with a pulse: sedate, SYNC on, cardiovert at 100 J and escalate if needed." },
     { id: "svt", title: "Sudden racing heart", type: "sync", start: { r: "svt", rate: 204 }, pulse: true, conscious: true, bp: "78/46", minJ: 50, maxJ: 100,
@@ -25,15 +35,64 @@
       text: "A 72-year-old, short of breath with chest pressure. BP 80/50.", lesson: "Unstable atrial fibrillation: sedate, SYNC on, cardiovert at 120–200 J biphasic." },
     { id: "afl", title: "Regular at exactly 150", type: "sync", start: { r: "flutter" }, pulse: true, conscious: true, bp: "82/48", minJ: 50, maxJ: 100,
       text: "A 66-year-old, dizzy and hypotensive. BP 82/48.", lesson: "Unstable atrial flutter: sedate, SYNC on, cardiovert at 50–100 J; flutter usually converts at low energy." },
+    /* stable tachycardia: no electricity */
+    { id: "stvt", title: "Wide and fast, but stable", type: "stable", start: { r: "vt", rate: 150 }, pulse: true, conscious: true, bp: "124/78", drug: "amio",
+      text: "A 63-year-old with an hour of palpitations. Alert, no chest pain, BP 124/78. The QRS is wide and regular.", lesson: "Stable monomorphic VT: no shock yet. Get a 12-lead, give amiodarone 150 mg over 10 minutes, call for expert help, and keep the pads on in case they become unstable." },
+    { id: "ssvt", title: "Narrow and fast, but stable", type: "stable", start: { r: "svt", rate: 188 }, pulse: true, conscious: true, bp: "118/74", drug: "aden",
+      text: "A 28-year-old with sudden palpitations. Alert and talking, BP 118/74.", lesson: "Stable narrow, regular tachycardia: vagal maneuvers first, then adenosine 6 mg rapid IV push with a flush (12 mg if needed). No shock for a stable patient." },
+    /* bradycardia */
+    { id: "sb", title: "Slow and lightheaded", type: "atro", start: { r: "sinus", rate: 38 }, pulse: true, conscious: true, bp: "82/50", atropine: "works",
+      text: "A 70-year-old, lightheaded and pale. BP 82/50. Narrow-complex rhythm at about 38. Nothing has been given yet.", lesson: "Symptomatic sinus bradycardia: atropine 1 mg IV first (repeat every 3–5 minutes, max 3 mg), then recheck. Pace or start an infusion only if it doesn't work." },
+    { id: "sbf", title: "Atropine won't work here", type: "pace", start: { r: "sinus", rate: 34 }, pulse: true, conscious: true, bp: "72/40", threshold: [50, 75], atropine: "fails", atroFirst: true,
+      text: "A 79-year-old heart-transplant recipient, confused, BP 72/40. Narrow rhythm in the low 30s. Nothing has been given yet.", lesson: "Atropine is usually first, but a transplanted heart has no vagal nerve supply, so it won't respond. Don't wait: pace at 60–80 ppm, confirm capture and a pulse, and treat the pain." },
     { id: "chb", title: "The slow, confused patient", type: "pace", start: { r: "chb" }, pulse: true, conscious: true, bp: "70/38", threshold: [60, 80],
       text: "An 81-year-old, confused and pale. BP 70/38. Atropine didn't help.", lesson: "Unstable complete heart block: pace at 60–80/min, raise the current until every spike captures, confirm a femoral pulse, and give analgesia or sedation." },
     { id: "b21", title: "Dizzy with a wide, slow rhythm", type: "pace", start: { r: "b21" }, pulse: true, conscious: true, bp: "76/40", threshold: [55, 75],
       text: "A 76-year-old with an anterior MI, dizzy and clammy. BP 76/40.", lesson: "High-grade block with a wide QRS won't respond to atropine: pace, confirm mechanical capture, treat the pain." },
+    /* non-shockable */
     { id: "asy", title: "Found down at home", type: "noshock", start: { r: "asystole" }, pulse: false,
       text: "An 84-year-old found unresponsive in bed. No pulse, not breathing. Pads are on.", lesson: "Asystole isn't shockable and pacing doesn't help: high-quality CPR, epinephrine 1 mg as soon as possible, look for reversible causes." },
     { id: "pea", title: "Organized, but no pulse", type: "noshock", start: { r: "sinus", rate: 72 }, pulse: false, pea: true,
       text: "A 67-year-old dialysis patient, unresponsive. The monitor shows an organized rhythm, but you can't feel a pulse.", lesson: "PEA isn't shockable: CPR, epinephrine as soon as possible, and treat the cause (here, think hyperkalemia: calcium and bicarbonate)." }
   ];
+  var GROUPS = [["defib", "Shockable rhythms: defibrillate"], ["sync", "Unstable tachycardias: synchronized cardioversion"], ["stable", "Stable tachycardias: no shock"], ["brady", "Symptomatic bradycardias: atropine and pacing"], ["noshock", "Non-shockable arrests"]];
+  function groupOf(s) { return s.type === "pace" || s.type === "atro" ? "brady" : s.type; }
+
+  /* ------------------------------------------------------------------ sound (Web Audio, generated, no files) */
+  var AU = { ctx: null, master: null, on: true, charge: null };
+  try { AU.on = localStorage.getItem("cl-defib-sound") !== "0"; } catch (e) {}
+  function audio() {
+    if (!AU.on) return null;
+    if (!AU.ctx) {
+      try { AU.ctx = new (window.AudioContext || window.webkitAudioContext)(); AU.master = AU.ctx.createGain(); AU.master.gain.value = 0.16; AU.master.connect(AU.ctx.destination); }
+      catch (e) { AU.ctx = null; return null; }
+    }
+    if (AU.ctx.state === "suspended") { try { AU.ctx.resume(); } catch (e) {} }
+    return AU.ctx;
+  }
+  function tone(freq, delay, dur, type, vol, endFreq) {
+    var c = audio(); if (!c) return null;
+    var o = c.createOscillator(), g = c.createGain(), t0 = c.currentTime + Math.max(0, delay || 0), v = vol == null ? 1 : vol;
+    o.type = type || "sine"; o.frequency.setValueAtTime(freq, t0);
+    if (endFreq) o.frequency.linearRampToValueAtTime(endFreq, t0 + dur);
+    g.gain.setValueAtTime(0.0001, t0); g.gain.linearRampToValueAtTime(v, t0 + 0.01);
+    g.gain.setValueAtTime(v, t0 + Math.max(0.011, dur - 0.03)); g.gain.linearRampToValueAtTime(0.0001, t0 + dur);
+    o.connect(g); g.connect(AU.master); o.start(t0); o.stop(t0 + dur + 0.05);
+    return o;
+  }
+  function setSound(on) {
+    AU.on = on; try { localStorage.setItem("cl-defib-sound", on ? "1" : "0"); } catch (e) {}
+    if (AU.master) AU.master.gain.value = on ? 0.16 : 0;
+    if (!on && AU.charge) { try { AU.charge.stop(); } catch (e) {} AU.charge = null; }
+    if (on) audio();
+    var b = root && root.querySelector("#kSound");
+    if (b) { b.setAttribute("aria-pressed", on ? "true" : "false"); b.classList.toggle("off", !on); b.querySelector("span").textContent = on ? "SOUND ON" : "SOUND OFF"; }
+  }
+  function qrsBeep(delay) {
+    var sp = spo2(), f = sp == null ? 700 : 520 + (sp - 80) * 20;   // pitch falls as SpO2 falls, like a real monitor
+    tone(f, delay, 0.075, "sine", 0.9);
+  }
+  function stopChargeTone() { if (AU.charge) { try { AU.charge.stop(); } catch (e) {} AU.charge = null; } }
 
   /* ------------------------------------------------------------------ waveform engine */
   function gauss(x, a, w) { return a * Math.exp(-(x * x) / (2 * w * w)); }
@@ -65,7 +124,7 @@
       var pp = r === "sinus" ? 60 / rh.rate : (r === "chb" ? 60 / 82 : 0.78);
       while (this.nextP <= tEnd) {
         var pt = this.nextP; this.ev.push({ t: pt, k: "p" });
-        if (r === "sinus") this.addV(pt + 0.16, rh.wide ? "w" : "n");
+        if (r === "sinus" && pt + 0.16 - this.lastV > 0.3) this.addV(pt + 0.16, rh.wide ? "w" : "n");
         if (r === "b21") { if (this.pCount % 2 === 0 && pt + 0.2 - this.lastV > 0.35) this.addV(pt + 0.2, "w"); }
         this.pCount++; this.nextP += pp * rnd(0.99, 1.01);
       }
@@ -154,10 +213,10 @@
       '<div class="dv" id="dv">' +
       '  <div class="dv-handle" aria-hidden="true"></div>' +
       '  <div class="dv-face">' +
-      '    <div class="dv-brand"><span class="dv-logo"></span><b>CSHealthED</b><span>Monitor · Defibrillator · Pacer trainer</span><i class="dv-pwr" title="Power">●</i></div>' +
+      '    <div class="dv-brand"><span class="dv-logo"></span><b>CSHealthED</b><span>Monitor · Defibrillator · Pacer trainer</span><button class="dv-snd' + (AU.on ? '' : ' off') + '" id="kSound" aria-pressed="' + AU.on + '" title="Monitor sound on or off"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9z" fill="currentColor"/><path class="w" d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path class="x" d="M16 9l5 6M21 9l-5 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg><span>' + (AU.on ? 'SOUND ON' : 'SOUND OFF') + '</span></button><i class="dv-pwr" title="Power">●</i></div>' +
       '    <div class="dv-main">' +
       '      <div class="dv-screen" id="dvScreen">' +
-      '        <div class="sc-top"><span class="sc-pt">ADULT</span><span class="sc-pads">PADS</span><span id="scLead" class="sc-lead">II</span><span class="sc-x" id="scSync" hidden>SYNC</span><span class="sc-x pace" id="scPaceTag" hidden>PACING</span><span class="sc-clock" id="scClock">00:00</span><span class="sc-batt" aria-hidden="true"><i></i></span></div>' +
+      '        <div class="sc-top"><span class="sc-pt" id="scPt">ADULT</span><span class="sc-pads">PADS</span><span id="scLead" class="sc-lead">II</span><span class="sc-x" id="scSync" hidden>SYNC</span><span class="sc-x pace" id="scPaceTag" hidden>PACING</span><span class="sc-clock" id="scClock">00:00</span><span class="sc-batt" aria-hidden="true"><i></i></span></div>' +
       '        <div class="sc-body">' +
       '          <div class="sc-waves">' +
       '            <div class="sc-wave ecg"><span class="sc-wl">II  x1.0</span><canvas id="cvEcg"></canvas></div>' +
@@ -194,14 +253,17 @@
   }
 
   function scenarioListHTML() {
-    var groups = [["defib", "Shockable arrests"], ["sync", "Unstable tachycardias"], ["pace", "Unstable bradycardias"], ["noshock", "Non-shockable arrests"]];
-    var all = SCEN.map(function (s, i) {
+    var card = function (s, i) {
       var r = HOST.load(s.id), badge = r ? (r.ok ? '<span class="pill done">Passed · ' + r.score[0] + '/' + r.score[1] + '</span>' : '<span class="pill part">Review · ' + r.score[0] + '/' + r.score[1] + '</span>') : '<span class="pill">Not started</span>';
       return '<button class="case df-case" data-i="' + i + '"><span class="no">SCENARIO ' + String(i + 1).padStart(2, "0") + '</span><h3>' + H(s.title) + '</h3><span class="focus">' + H(s.text) + '</span><span class="st"><span>' + (s.pulse ? 'Has a pulse' : 'Pulseless') + '</span>' + badge + '</span></button>';
+    };
+    var all = GROUPS.map(function (g) {
+      var list = SCEN.map(function (s, i) { return groupOf(s) === g[0] ? card(s, i) : ""; }).join("");
+      return '<h3 class="df-group">' + H(g[1]) + '</h3><div class="cases">' + list + '</div>';
     });
     return '<div class="qhead"><div><div class="eyebrow">Monitor · defibrillator · pacer</div><h2>Defib lab</h2></div><div class="qstats"><span>Passed <b class="num">' + passed() + '</b> of ' + SCEN.length + '</span></div></div>' +
-      '<p class="sv-lede">Each scenario puts a patient on the monitor who needs the right intervention: defibrillation, synchronized cardioversion, pacing, or no electricity at all. Work the device like you would on scene, then press <b>Done</b> for feedback.</p>' +
-      '<div class="cases">' + all.join("") + '</div>';
+      '<p class="sv-lede">Each scenario puts a patient on the monitor who needs the right intervention: defibrillation, synchronized cardioversion, pacing, a drug, or no electricity at all. The monitor beeps with every QRS, like the real thing; use the SOUND key on the device to turn it off. Work the device like you would on scene, then press <b>Done</b> for feedback.</p>' +
+      all.join("");
   }
   function passed() { return SCEN.filter(function (s) { var r = HOST.load(s.id); return r && r.ok; }).length; }
 
@@ -211,7 +273,8 @@
       '<div class="df-grid"><div class="df-devwrap">' + deviceHTML() + '</div>' +
       '<aside class="card df-side"><div class="scenario">' + '<p>' + H(s.text) + '</p></div>' +
       '<div class="df-pt"><h4>Patient</h4><div id="ptStatus" class="df-ptstat"></div>' +
-      '<div class="df-acts"><button class="btn btn-ghost" id="aPulse">Check pulse</button><button class="btn btn-ghost" id="aCpr">Start CPR</button><button class="btn btn-ghost" id="aSed">Sedation / analgesia</button><button class="btn btn-ghost" id="aEpi">Epinephrine 1 mg</button></div></div>' +
+      '<div class="df-acts"><button class="btn btn-ghost" id="aPulse">Check pulse</button><button class="btn btn-ghost" id="aCpr">Start CPR</button><button class="btn btn-ghost" id="aSed">Sedation / analgesia</button><button class="btn btn-ghost" id="aVagal">Vagal maneuver</button><button class="btn btn-ghost" id="a12">12-lead ECG</button></div>' +
+      '<h4 class="df-drugh">Medications</h4><div class="df-acts drugs"><button class="btn btn-ghost" id="aEpi">Epinephrine 1 mg</button><button class="btn btn-ghost" id="aAmio">Amiodarone</button><button class="btn btn-ghost" id="aAden">Adenosine 6 mg</button><button class="btn btn-ghost" id="aAtro">Atropine 1 mg</button><button class="btn btn-ghost" id="aMag">Magnesium 2 g</button><button class="btn btn-ghost" id="aCa">Calcium</button></div></div>' +
       '<div class="df-log"><h4>Event log</h4><ol id="dfLog"></ol></div></aside></div>' +
       '<div id="dfFb"></div></div>';
   }
@@ -220,13 +283,17 @@
   function startScenario(i) {
     sc = SCEN[i]; st = { i: i, log: [], t0: performance.now(), energyI: ENERGIES.indexOf(200), charging: false, charged: false, chargeP: 0, chargedAt: 0, sync: false,
       pendingSync: 0, cpr: false, perfusing: !!sc.pulse, bp: sc.bp || null, rhythm: sc.start.r, converted: false, induced: false, firstShockT: null,
-      sed: false, epi: 0, pulseChecks: [], leadI: 1, captureT: null, pulseAfterCapture: false, done: false, analyzeUntil: 0 };
+      sed: false, epi: 0, pulseChecks: [], leadI: 1, captureT: null, pulseAfterCapture: false, done: false, analyzeUntil: 0,
+      drugs: {}, drugT: {}, goodShocks: 0, nibpT: [], lastReady: -9, lastAlarm: -9, lastMedAlarm: -9 };
+    stopChargeTone();
+    if (sc.syncOn) st.sync = true;
     root.innerHTML = runnerHTML(sc, i);
     eng = new Engine(); eng.threshold = sc.threshold ? Math.round(rnd(sc.threshold[0], sc.threshold[1]) / 5) * 5 : 999;
     eng.setRhythm(copy(sc.start), !!sc.pulse);
     eng.listeners.push(onEvent);
     if (sc.cpr) setCpr(true, true);
-    bindKeys(); setupCanvases(); updateScreen(); logEv("Scenario started. " + sc.text);
+    bindKeys(); el("scPt").textContent = sc.peds ? "PEDI" : "ADULT"; el("scPt").classList.toggle("pedi", !!sc.peds);
+    if (sc.syncOn) logEv("The monitor is still in SYNC mode from the earlier cardioversion."); setupCanvases(); updateScreen(); logEv("Scenario started. " + sc.text);
     lastTs = performance.now(); tPrev = 0; x = { ecg: 0, pl: 0, co: 0 };
     cancelAnimationFrame(raf); raf = requestAnimationFrame(frame);
     root.querySelector("#dfBack").onclick = function () { DefibLab.stop(); HOST.list(); };
@@ -239,6 +306,7 @@
   function msg(txt, cls) { var m = el("scMsg"); m.textContent = txt; m.className = "sc-msg" + (cls ? " " + cls : ""); }
 
   function onEvent(kind, t) {
+    if (kind === "v" && !eng.cpr && t >= eng.flat) qrsBeep(t - now());
     if (kind === "v" && st.pendingSync && t >= now() - 0.05) { st.pendingSync = 0; deliver(true); }
   }
 
@@ -249,27 +317,36 @@
     on("kCharge", charge); on("kShock", shock);
     on("kSync", function () { st.sync = !st.sync; if (st.charged && !st.sync) {} logEv("SYNC " + (st.sync ? "on" : "off") + "."); msg(st.sync ? "SYNC MODE: markers on each QRS" : "SYNC off", st.sync ? "info" : ""); updateScreen(); });
     on("kAnalyze", analyze);
-    on("kPacer", function () { var p = eng.pacer; p.on = !p.on; p.paused = false; if (p.on) { p.rate = p.rate || 60; logEv("PACER on: " + p.rate + " ppm, " + p.mA + " mA."); msg("PACER ON · set RATE and CURRENT", "info"); } else { logEv("PACER off."); msg("Pacing stopped"); } updateScreen(); });
+    on("kPacer", function () { var p = eng.pacer; p.on = !p.on; p.paused = false; if (p.on) { if (st.paceT == null) st.paceT = now(); p.rate = p.rate || 60; logEv("PACER on: " + p.rate + " ppm, " + p.mA + " mA."); msg("PACER ON · set RATE and CURRENT", "info"); } else { logEv("PACER off."); msg("Pacing stopped"); } updateScreen(); });
     on("kRup", function () { pacerAdj("rate", 5); }); on("kRdn", function () { pacerAdj("rate", -5); });
     on("kCup", function () { pacerAdj("mA", 5); }); on("kCdn", function () { pacerAdj("mA", -5); });
     on("kPause", function () { var p = eng.pacer; if (!p.on) { msg("PACER is off"); return; } p.paused = !p.paused; logEv(p.paused ? "Pacing paused (rate reduced to view the underlying rhythm)." : "Pacing resumed."); updateScreen(); });
     on("kLead", function () { var L = ["I", "II", "III", "PADS"]; st.leadI = (st.leadI + 1) % 4; st.leadChanged = true; el("scLead").textContent = L[st.leadI]; root.querySelector(".sc-wave.ecg .sc-wl").textContent = L[st.leadI] + "  x1.0"; logEv("Lead changed to " + L[st.leadI] + "."); });
-    on("kNibp", function () { var v = st.perfusing ? (st.bp || "---/---") : "---/---"; el("nBp").textContent = v; el("nBpT").textContent = stamp(); logEv("NIBP: " + (st.perfusing ? v : "no reading (no pulse)") + "."); });
+    on("kNibp", function () { st.nibpT.push(now()); var v = st.perfusing ? (st.bp || "---/---") : "---/---"; el("nBp").textContent = v; el("nBpT").textContent = stamp(); logEv("NIBP: " + (st.perfusing ? v : "no reading (no pulse)") + "."); });
     on("aPulse", checkPulse); on("aCpr", function () { setCpr(!st.cpr); });
     on("aSed", function () { if (st.sed) { msg("Sedation already given"); return; } st.sed = true; st.sedT = now(); logEv("Sedation / analgesia given per protocol."); });
-    on("aEpi", function () { st.epi++; logEv("Epinephrine 1 mg IV/IO given (" + st.epi + ")."); });
+    on("aEpi", function () { st.epi++; drug("epi", "Epinephrine 1 mg IV/IO given (" + st.epi + ")."); });
+    on("aAmio", function () { drug("amio", st.perfusing ? "Amiodarone 150 mg IV over 10 minutes started." : "Amiodarone " + ((st.drugs.amio || 0) ? "150" : "300") + " mg IV/IO push given."); });
+    on("aAden", function () { drug("aden", (st.drugs.aden ? "Adenosine 12 mg" : "Adenosine 6 mg") + " rapid IV push with a 20 mL flush."); });
+    on("aAtro", function () { drug("atro", "Atropine 1 mg IV given (" + ((st.drugs.atro || 0) + 1) + " mg total)."); });
+    on("aMag", function () { drug("mag", "Magnesium sulfate 2 g IV given."); });
+    on("aCa", function () { drug("ca", "Calcium chloride 1 g IV given."); });
+    on("aVagal", function () { drug("vagal", "Modified Valsalva maneuver performed."); });
+    on("a12", function () { drug("twelve", "12-lead ECG acquired: " + describe() + "."); });
+    var snd = el("kSound"); if (snd) snd.onclick = function () { setSound(!AU.on); };
   }
   function changeEnergy(d) {
     var n = Math.max(0, Math.min(ENERGIES.length - 1, st.energyI + d));
     if (n === st.energyI) return;
     st.energyI = n;
-    if (st.charged || st.charging) { st.charged = false; st.charging = false; logEv("Energy changed while charged: charge removed."); msg("CHARGE REMOVED", "warn"); }
+    if (st.charged || st.charging) { st.charged = false; st.charging = false; stopChargeTone(); logEv("Energy changed while charged: charge removed."); msg("CHARGE REMOVED", "warn"); }
     updateScreen();
   }
   function charge() {
     if (st.charging) return;
     if (st.charged) { msg("Already charged · press SHOCK", "warn"); return; }
     st.charging = true; st.chargeP = 0; logEv("Charging to " + ENERGIES[st.energyI] + " J.");
+    stopChargeTone(); AU.charge = tone(420, 0, 2.6, "sawtooth", 0.18, 1250);
   }
   function shock() {
     if (!st.charged) { msg(st.charging ? "Still charging" : "Not charged · press CHARGE first", "warn"); return; }
@@ -286,14 +363,16 @@
     st.shocks = st.shocks || []; st.shocks.push({ t: now(), J: J, sync: synced, rhythm: r, perfusing: st.perfusing });
     logEv((synced ? "Synchronized cardioversion" : "Unsynchronized shock") + " delivered at " + J + " J.", "shock");
     msg("ENERGY DELIVERED " + J + " J", "shock");
-    flash();
+    flash(); tone(140, 0, 0.22, "square", 0.9, 45); tone(1200, 0.02, 0.05, "square", 0.25);
     if (eng.pacer.on) { eng.pacer.on = false; logEv("Pacing stopped by the shock."); }
     eng.flat = now() + 1.6;
     var after = function (rh, perf, note) { eng.setRhythm(rh, perf); st.perfusing = perf; if (note) logEv(note); updateScreen(); };
     var shockable = (r === "vf" || r === "torsades" || (r === "vt" && !st.perfusing));
     if (shockable) {
-      if (!synced && J >= 120) { st.converted = true; st.bp = "102/64"; after({ r: "sinus", rate: Math.round(rnd(84, 104)) }, true, "Rhythm changes after the shock."); setCpr(false, true); }
-      else after(eng.rh, false, synced ? "The synchronized shock didn't convert the arrest rhythm." : "No change: the rhythm is still shockable.");
+      var enough = J >= (sc.peds ? 30 : 120);
+      if (!synced && enough) st.goodShocks++;
+      if (!synced && enough && st.goodShocks >= (sc.shocksNeeded || 1)) { st.converted = true; st.bp = sc.pulse ? "108/66" : "102/64"; after({ r: "sinus", rate: Math.round(rnd(84, 104)) }, true, "Rhythm changes after the shock."); setCpr(false, true); }
+      else { st.failShockT = now(); after(eng.rh, st.perfusing && false, synced ? "The synchronized shock didn't convert the arrest rhythm." : (enough ? "Still VF after the shock. Resume CPR right away." : "No change: the rhythm is still shockable.")); if (sc.pulse) { st.perfusing = false; st.bp = null; logEv("The pulse is gone."); } }
       return;
     }
     if (st.perfusing && (r === "svt" || r === "af" || r === "flutter" || r === "vt")) {
@@ -305,6 +384,37 @@
     if (st.perfusing && (r === "chb" || r === "b21" || r === "sinus")) { st.induced = true; st.perfusing = false; st.bp = null; after({ r: "vf", amp: 0.45 }, false, "Shocking a patient with a pulse caused VF."); return; }
     after(eng.rh, st.perfusing, "No change: this rhythm isn't shockable.");
   }
+  function describe() {
+    var r = eng.rh.r, hr = eng.hr();
+    if (st.cpr) return "too much CPR artifact to read";
+    return ({ vf: "ventricular fibrillation", torsades: "polymorphic VT (torsades)", asystole: "no electrical activity in any lead", af: "atrial fibrillation with a fast ventricular rate", flutter: "atrial flutter with 2:1 conduction",
+      svt: "narrow, regular tachycardia without visible P waves", vt: "wide, regular tachycardia with AV dissociation (monomorphic VT)", chb: "complete heart block with a wide escape rhythm", b21: "2:1 AV block with a wide QRS",
+      sinus: hr && hr < 50 ? "sinus bradycardia, narrow QRS, no ST elevation" : "sinus rhythm" })[r] + (hr ? ", rate about " + hr : "");
+  }
+  function later(ms, fn) { var me = st; setTimeout(function () { if (st === me && !me.done && eng) fn(); }, ms); }
+  function convert(rate, bp, note, pause) {
+    if (pause) eng.flat = now() + pause;
+    st.converted = true; st.bp = bp; eng.setRhythm({ r: "sinus", rate: rate }, true); st.perfusing = true; logEv(note); msg("RHYTHM CHANGE", "info"); updateScreen();
+  }
+  function drug(k, text) {
+    st.drugs[k] = (st.drugs[k] || 0) + 1; if (st.drugT[k] == null) st.drugT[k] = now();
+    logEv(text);
+    var r = eng.rh.r;
+    if (k === "aden") {
+      if (!st.perfusing) { logEv("Adenosine has no role in cardiac arrest."); return; }
+      if (r === "svt" && sc.drug === "aden") later(2200, function () { convert(88, "122/76", "A few seconds of asystole after the adenosine, then the rhythm changes.", 3); });
+      else if (r === "flutter") later(2200, function () { eng.flat = now() + 1.5; logEv("Brief slowing reveals flutter waves, then the rhythm returns. Adenosine doesn't convert flutter."); });
+      else later(2200, function () { logEv("No conversion after adenosine."); });
+    }
+    if (k === "atro") {
+      if (r === "sinus" && st.perfusing && sc.atropine === "works") later(3000, function () { st.bp = "112/70"; eng.setRhythm({ r: "sinus", rate: 76 }, true); st.converted = true; logEv("Heart rate rising after atropine."); updateScreen(); });
+      else if (st.perfusing) later(3000, function () { logEv("No change in heart rate after atropine."); });
+      else logEv("Atropine isn't recommended in cardiac arrest.");
+    }
+    if (k === "amio" && r === "vt" && st.perfusing && sc.drug === "amio") later(6000, function () { convert(86, "128/80", "The rhythm changes during the amiodarone infusion."); });
+    if (k === "vagal") { if (!st.perfusing) logEv("A vagal maneuver doesn't help a pulseless patient."); else later(1500, function () { logEv("No change after the vagal maneuver."); }); }
+  }
+  function spo2() { var cap = eng && eng.pacer.on && eng.pacer.mA >= eng.threshold && eng.hasQRS(); return st.perfusing && !st.cpr ? (st.converted || cap ? 97 : (sc.drug ? 95 : 91)) : null; }
   function analyze() {
     if (st.cpr) { msg("MOTION DETECTED · STOP CPR TO ANALYZE", "warn"); logEv("ANALYZE pressed during CPR: motion detected."); return; }
     var r = eng.rh.r, sh = (r === "vf" || r === "torsades" || (r === "vt" && (!st.perfusing || eng.hr() > 150)));
@@ -319,6 +429,7 @@
     st.cpr = on; eng.cpr = on; var b = el("aCpr"); if (b) b.textContent = on ? "Stop CPR" : "Start CPR";
     if (!quiet || on) logEv(on ? "CPR in progress." : "CPR stopped.");
     if (on) st.cprEver = true;
+    if (on && st.failShockT != null && st.cprAfterFail == null) st.cprAfterFail = now() - st.failShockT;
     updateScreen();
   }
   function checkPulse() {
@@ -349,7 +460,7 @@
     if (cap && st.captureT == null) { st.captureT = now(); logEv("Electrical capture: every pacer spike is now followed by a wide QRS."); if (sc.type === "pace" && p.rate >= 60) { setTimeout(function () { if (eng && eng.pacer.on && eng.pacer.mA >= eng.threshold) { st.bp = "104/62"; st.perfusing = true; } }, 2500); } }
     if (!cap && st.captureT != null && p.on) { st.captureT = null; logEv("Capture lost."); }
     var hr = eng.hr(); el("nHr").textContent = hr == null ? "---" : hr;
-    el("nSp").textContent = st.perfusing && !st.cpr ? (st.converted || cap ? 97 : 91) : "---";
+    var sp = spo2(); el("nSp").textContent = sp == null ? "---" : sp;
     var co = st.cpr ? 15 : (st.perfusing ? (st.converted ? 38 : 34) : 5);
     el("nCo").textContent = co; el("nRr").textContent = "RR " + (st.cpr || !st.perfusing ? 10 : 16);
   }
@@ -368,7 +479,12 @@
     var dt = Math.min(0.1, (ts - lastTs) / 1000); lastTs = ts;
     var t0 = eng.t, t1 = t0 + dt; eng.t = t1;
     // charging
-    if (st.charging) { st.chargeP = Math.min(1, st.chargeP + dt / 2.6); if (st.chargeP >= 1) { st.charging = false; st.charged = true; st.chargedAt = t1; msg("CHARGED " + ENERGIES[st.energyI] + " J · PRESS SHOCK", "shock"); logEv("Charged to " + ENERGIES[st.energyI] + " J."); } updateScreen(); }
+    if (st.charging) { st.chargeP = Math.min(1, st.chargeP + dt / 2.6); if (st.chargeP >= 1) { st.charging = false; st.charged = true; st.chargedAt = t1; AU.charge = null; msg("CHARGED " + ENERGIES[st.energyI] + " J · PRESS SHOCK", "shock"); logEv("Charged to " + ENERGIES[st.energyI] + " J."); } updateScreen(); }
+    if (st.charged && t1 - st.lastReady >= 1) { st.lastReady = t1; tone(1046, 0, 0.12, "square", 0.35); tone(1046, 0.18, 0.12, "square", 0.35); }
+    var lethal = (eng.rh.r === "vf" || eng.rh.r === "torsades" || eng.rh.r === "asystole" || (eng.rh.r === "vt" && !st.perfusing)) && t1 >= eng.flat;
+    if (lethal && !st.cpr && !st.charged && t1 - st.lastAlarm >= 6) { st.lastAlarm = t1; [0, 0.2, 0.4, 0.9, 1.1].forEach(function (d) { tone(988, d, 0.13, "square", 0.45); }); }
+    var hrNow = eng.hr();
+    if (!lethal && st.perfusing && hrNow != null && (hrNow > 150 || hrNow < 45) && t1 - st.lastMedAlarm >= 10) { st.lastMedAlarm = t1; [0, 0.25, 0.5].forEach(function (d) { tone(660, d, 0.16, "triangle", 0.4); }); }
     if (st.charged && t1 - st.chargedAt > 60) { st.charged = false; msg("CHARGE REMOVED (60 s)", "warn"); logEv("Charge removed automatically after 60 seconds."); updateScreen(); }
     if (st.pendingSync && t1 - st.pendingSync > 0 && !eng.hasQRS()) { st.pendingSync = 0; }
     eng.advance(t1);
@@ -431,7 +547,7 @@
 
   /* ------------------------------------------------------------------ feedback */
   function finish() {
-    if (st.done) return; st.done = true; cancelAnimationFrame(raf);
+    if (st.done) return; st.done = true; cancelAnimationFrame(raf); stopChargeTone();
     var items = evaluate(), crit = items.filter(function (x) { return x.crit; }), ok = crit.every(function (x) { return x.pass; });
     var p = items.filter(function (x) { return x.pass; }).length;
     HOST.save(sc.id, { ok: ok, score: [p, items.length], at: Date.now() });
@@ -456,14 +572,36 @@
     var paced = !!st.everPaced;
     if (sc.type === "defib") {
       add("Delivered an unsynchronized shock", unsync.some(function (s) { return s.rhythm === sc.start.r || s.rhythm === "vf" || s.rhythm === "torsades" || s.rhythm === "vt"; }), unsync.length ? "Defibrillation is the treatment for VF and pulseless VT." : "This rhythm needed defibrillation and no unsynchronized shock was delivered.", true);
-      var first = unsync[0];
-      add("Used defibrillation energy (120–200 J or higher)", first && first.J >= 120, first ? "Your first shock was " + first.J + " J. Biphasic defibrillation starts at the manufacturer's dose, usually 120–200 J; if unsure, use the maximum." : "No defibrillation energy was selected and delivered.", true);
-      add("Kept SYNC off for the arrest rhythm", !st.syncNoQRS && !synced.length, st.syncNoQRS ? "SYNC was on, so the device waited for a QRS that never came. Turn SYNC off for VF, pulseless VT and torsades." : "Correct: arrest rhythms get unsynchronized shocks.", true);
+      var first = unsync[0], lo = sc.minJ || 120, hi = sc.maxJ || 360;
+      if (sc.peds) add("Pediatric energy: 2 J/kg (30–50 J for 20 kg)", first && first.J >= lo && first.J <= hi, first ? "Your first shock was " + first.J + " J. For a 20 kg child, 2 J/kg is 40 J: select 30 or 50 J, then 4 J/kg (about 70–100 J) for the next shock." : "No shock was delivered.", true);
+      else add("Used defibrillation energy (120–200 J or higher)", first && first.J >= lo, first ? "Your first shock was " + first.J + " J. Biphasic defibrillation starts at the manufacturer's dose, usually 120–200 J; if unsure, use the maximum." : "No defibrillation energy was selected and delivered.", true);
+      add(sc.syncOn ? "Turned SYNC off before defibrillating" : "Kept SYNC off for the shockable rhythm", !st.syncNoQRS && !synced.length && unsync.length > 0, st.syncNoQRS ? "SYNC was on, so the device waited for a QRS that never came and no shock was delivered. Turn SYNC off for VF, pulseless VT and torsades." : (unsync.length ? "Correct: these rhythms get unsynchronized shocks." : "No unsynchronized shock was delivered."), true);
       add("Cleared the patient before shocking", !st.shockDuringCpr, st.shockDuringCpr ? "Compressions were still going when the shock was delivered. Charge during CPR, then stop compressions, call \"clear\", and shock." : "Good: compressions stopped and everyone was clear for the shock.", true);
-      add("CPR during the resuscitation", !!st.cprEver, st.cprEver ? "Good: compressions before and right after shocks." : "Start (or continue) high-quality CPR whenever the patient is pulseless.");
+      if (!sc.pulse) add("CPR during the resuscitation", !!st.cprEver, st.cprEver ? "Good: compressions before and right after shocks." : "Start (or continue) high-quality CPR whenever the patient is pulseless.");
+      if (sc.shocksNeeded > 1) add("Resumed CPR right after a shock that didn't work", st.cprAfterFail != null && st.cprAfterFail <= 10, st.cprAfterFail != null ? "CPR restarted " + Math.round(st.cprAfterFail) + " s after the shock. Restart compressions immediately; don't wait to check the rhythm or pulse." : "After the first shock the patient was still in VF. Restart compressions right away, then shock again at the next rhythm check.");
+      if (sc.start.r === "torsades") add("Gave magnesium", st.drugs.mag > 0, st.drugs.mag ? "Good: magnesium sulfate 1–2 g IV for torsades." : "Torsades calls for magnesium sulfate 1–2 g IV after the shock.");
       add("Fast first shock", st.firstShockT != null && st.firstShockT <= 60, st.firstShockT != null ? "First shock at " + fmt(st.firstShockT) + ". Aim for as soon as a shockable rhythm is seen." : "No shock was delivered.");
       add("Didn't pace a pulseless shockable rhythm", !paced, paced ? "Pacing has no role in VF or pulseless VT." : "Correct.");
       add("Patient converted", st.converted, st.converted ? "The rhythm converted and a pulse returned." : "The rhythm didn't convert.");
+    } else if (sc.type === "stable") {
+      var aden = sc.drug === "aden";
+      add("No shock for a stable patient", !S.length, S.length ? "This patient was stable (alert, normal blood pressure). Electricity is for unstable patients; this one needed " + (aden ? "vagal maneuvers and adenosine." : "a 12-lead and an antiarrhythmic.") : "Correct: stable patients get drugs and expert help first, with the pads on in case they deteriorate.", true);
+      if (aden) {
+        add("Tried a vagal maneuver first", st.drugs.vagal > 0 && (st.drugT.aden == null || st.drugT.vagal <= st.drugT.aden), st.drugs.vagal ? (st.drugT.aden != null && st.drugT.vagal > st.drugT.aden ? "The vagal maneuver came after adenosine. Try it first: it's quick and sometimes all that's needed." : "Good: a modified Valsalva is the first step.") : "Start with a vagal maneuver (modified Valsalva) before adenosine.");
+        add("Gave adenosine", st.drugs.aden > 0, st.drugs.aden ? "Good: adenosine 6 mg rapid IV push with a flush, 12 mg if needed." : "Give adenosine 6 mg rapid IV push with a flush.", true);
+      } else {
+        add("Gave an antiarrhythmic", st.drugs.amio > 0, st.drugs.amio ? "Good: amiodarone 150 mg IV over 10 minutes." : "Stable VT: give amiodarone 150 mg IV over 10 minutes (or procainamide per protocol) and get expert help.", true);
+      }
+      add("Got a 12-lead ECG", st.drugs.twelve > 0, st.drugs.twelve ? "Good: a 12-lead defines the rhythm and the QRS before treatment." : "Get a 12-lead ECG in a stable tachycardia: it defines the rhythm before treatment.");
+      add("Didn't pace a tachycardia", !paced, paced ? "Pacing isn't a treatment here." : "Correct.");
+      add("Patient converted", st.converted, st.converted ? "The rhythm converted with the drug." : "The rhythm didn't convert.");
+    } else if (sc.type === "atro") {
+      var atroOk = st.drugs.atro > 0 && (st.paceT == null || st.drugT.atro <= st.paceT);
+      add("Gave atropine first", atroOk, atroOk ? "Good: atropine 1 mg IV is the first drug for symptomatic sinus bradycardia." : (st.drugs.atro ? "Pacing came before atropine. For sinus bradycardia, atropine 1 mg is first unless the patient is in extremis." : "This sinus bradycardia needed atropine 1 mg IV first."), true);
+      var rechk = st.drugT.atro != null && (st.pulseChecks.some(function (p) { return p.t > st.drugT.atro; }) || st.nibpT.some(function (x) { return x > st.drugT.atro; }));
+      add("Rechecked the patient after the drug", rechk, rechk ? "Good: recheck pulse or blood pressure after every intervention." : "After atropine, recheck the pulse or blood pressure (NIBP) to see whether it worked.");
+      add("No shocks delivered", !S.length, S.length ? "This patient had a pulse and a bradycardia: shocking was harmful." : "Correct.", true);
+      add("Patient improved", st.converted, st.converted ? "The heart rate and blood pressure came up after atropine." : "The patient didn't improve.");
     } else if (sc.type === "sync") {
       var sedOk = st.sed && (!synced.length || st.sedT <= synced[0].t);
       add("Sedated before cardioversion", sedOk, sedOk ? "Good: the patient is awake, so sedation or analgesia comes first when time allows." : (st.sed ? "Sedation came after the first shock. This patient was awake: sedate before cardioverting when time allows." : "This patient was conscious: give sedation or analgesia before cardioverting when time allows."));
@@ -474,6 +612,7 @@
       add("Didn't pace a tachycardia", !paced, paced ? "Pacing isn't a treatment for this tachycardia." : "Correct.");
       add("Patient converted", st.converted, st.converted ? "The rhythm converted and blood pressure improved." : "The rhythm didn't convert" + (st.induced ? " and VF was induced." : "."));
     } else if (sc.type === "pace") {
+      if (sc.atroFirst) add("Tried atropine without delaying pacing", st.drugs.atro > 0, st.drugs.atro ? "Reasonable: atropine is first-line, but it can't work in a transplanted heart, so moving on to pacing was right." : "Atropine is normally tried first while the pacer is set up. Here it wouldn't have worked (a transplanted heart has no vagal supply), so pacing is the definitive treatment.");
       add("Turned the pacer on", !!st.everPaced, st.everPaced ? "Transcutaneous pacing is the treatment for unstable bradycardia that doesn't respond to atropine." : "This patient needed transcutaneous pacing.", true);
       add("Rate 60–80 ppm", st.maxRate >= 60 && st.maxRate <= 80 || (st.rateAtCapture >= 60 && st.rateAtCapture <= 80), "Your pacing rate was " + (st.rateAtCapture || st.maxRate || 0) + " ppm. Set 60–80 ppm for an adult.");
       add("Achieved electrical capture", st.capEver, st.capEver ? "Capture at " + st.capmA + " mA (this patient's threshold was " + eng.threshold + " mA). Set the current about 10% above the capture threshold." : "The current never reached this patient's capture threshold (" + eng.threshold + " mA): spikes without wide QRS complexes don't pump blood.", true);
@@ -483,6 +622,7 @@
     } else {
       add("No shock delivered", !S.length, S.length ? (sc.start.r === "asystole" ? "Asystole isn't shockable." : "PEA isn't shockable, even though the rhythm looks organized.") : "Correct: this rhythm isn't shockable.", true);
       add("CPR started", st.cprEver, st.cprEver ? "Good: high-quality CPR is the main treatment." : "This patient is pulseless and needs CPR.", true);
+      if (sc.pea) add("Considered the cause (calcium for hyperkalemia)", st.drugs.ca > 0, st.drugs.ca ? "Good: in a dialysis patient, PEA from hyperkalemia is treated with calcium and sodium bicarbonate." : "A dialysis patient in PEA: think hyperkalemia and give calcium.");
       add("Epinephrine given", st.epi > 0, st.epi ? "Good: give epinephrine as soon as possible in non-shockable arrests." : "Give epinephrine 1 mg as soon as possible for asystole and PEA.");
       add("Didn't pace", !paced, paced ? "Pacing isn't recommended for asystolic or PEA arrest." : "Correct.");
       if (sc.start.r === "asystole") add("Confirmed asystole in another lead", st.leadChanged, st.leadChanged ? "Good: changing leads helps rule out fine VF or a disconnected lead." : "Confirm a flat line in a second lead (press LEAD) to rule out fine VF.");
@@ -511,7 +651,7 @@
       root.innerHTML = scenarioListHTML();
       root.querySelectorAll(".df-case").forEach(function (b) { b.onclick = function () { startScenario(+b.getAttribute("data-i")); window.scrollTo(0, 0); }; });
     },
-    stop: function () { cancelAnimationFrame(raf); eng = null; },
+    stop: function () { cancelAnimationFrame(raf); eng = null; stopChargeTone(); },
     resize: function () { if (eng) setupCanvases(); }
   };
   window.addEventListener("resize", function () { if (eng) { setupCanvases(); } });

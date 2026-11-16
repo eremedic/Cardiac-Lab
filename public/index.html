@@ -288,7 +288,8 @@ body:has(#cardioPop:not([hidden])) main{padding-bottom:200px}
 .sel{display:grid;gap:4px;font-size:11.5px;color:var(--muted);font-family:var(--f-mono);letter-spacing:.06em;text-transform:uppercase}
 .sel select{padding:8px 10px;font-family:var(--f-body);letter-spacing:0;text-transform:none;min-width:130px}
 .stats{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin-bottom:18px}
-@media (max-width:860px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.stats.stats-4{grid-template-columns:repeat(4,minmax(0,1fr))}
+@media (max-width:860px){.stats,.stats.stats-4{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .stat{padding:16px 18px;display:grid;gap:2px}
 .stat small{font-family:var(--f-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
 .stat b{font-family:var(--f-display);font-size:38px;font-weight:600;line-height:1}
@@ -675,6 +676,16 @@ h1,h2,h3,.qhead h2,.runner-head h2,.score-hero h2,.answer-name,.stat b,.hero .me
 .df-ic{flex:none;width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-weight:700;color:#FFFFFF;background:var(--ok)}
 .df-check li.bad .df-ic{background:var(--bad)}.df-check li.warn .df-ic{background:var(--orange)}
 .df-board{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+.df-group{font-size:15px;font-family:var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--brand-red);margin:22px 0 10px}
+.df-drugh{margin-top:12px}
+.df-acts.drugs .btn{font-size:13px}
+.dv-snd{margin-left:auto;display:inline-flex;align-items:center;gap:6px;border:1px solid #4A5158;background:#1C1F23;color:#3DF08E;border-radius:999px;padding:4px 10px 4px 8px;font:700 10.5px var(--f-mono);letter-spacing:.06em;cursor:pointer}
+.dv-snd svg{width:16px;height:16px}.dv-snd .x{display:none}
+.dv-snd.off{color:#9AA3AA}.dv-snd.off .w{display:none}.dv-snd.off .x{display:inline}
+.dv-snd:focus-visible{outline:3px solid #4FD8F2;outline-offset:2px}
+.dv-snd + .dv-pwr{margin-left:8px}
+.sc-pt.pedi{background:#FF8AD8;color:#000;padding:0 6px;border-radius:4px;font-weight:700}
+@media (max-width:560px){.dv-brand>span:not(.dv-logo){display:none}}
 /* the device */
 .dv{position:relative;padding-top:18px}
 .dv-handle{position:absolute;top:0;left:22%;right:22%;height:30px;border:9px solid #2A2E33;border-bottom:0;border-radius:22px 22px 0 0}
@@ -1280,7 +1291,7 @@ var SWITCHES = [
   {key:"twelveLead", eyebrow:"Practice area control", title:"12-lead ECG practice area", icon:function(){ return MINI_ECG; }, preview:"#area-twelve",
    on:"Students see a 12-lead tile on the Overview and Practice pages and can work through all 100 ECGs.", off:"Students can't see or open it. Preview it yourself, then open it when the class is ready."},
   {key:"defibLab", eyebrow:"Module control", title:"Defib lab: monitor, defibrillator and pacer", icon:function(){ return IC_BOLT; }, preview:"#defib",
-   on:"Students see a Defib lab tab and run 12 scenarios: defibrillation, synchronized cardioversion, pacing and non-shockable arrests.", off:"Students can't see or open it. Preview it yourself, then turn it on when the class is ready."}
+   on:"Students see a Defib lab tab and run 20 scenarios: defibrillation (adult and pediatric), synchronized cardioversion, stable tachycardias, atropine and pacing, and non-shockable arrests.", off:"Students can't see or open it. Preview it yourself, then turn it on when the class is ready."}
 ];
 var IC_BOLT='<svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor" aria-hidden="true"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg>';
 function renderSettings(msg, which){
@@ -1385,17 +1396,18 @@ function renderBoard(){
     '<div class="card stat"><small>Strips</small><b class="num">'+sAvg+'%</b><span>class average</span></div>'+
     '<div class="card stat"><small>Megacode</small><b class="num">'+mAvg+'%</b><span>class average</span></div>'+
     '<div class="card stat"><small>Finished</small><b class="num">'+done+'</b><span>completed both modules</span></div></div>';
+  h+=newModulesStatsHTML(rows);
   var body=rows.map(function(r){
     var s=r.strips||{}, m=r.mega||{}, open=SB.open===r.id;
     var weak="—", wv=101; GROUPS.forEach(function(g){ var x=(r.groups||{})[g[0]]; if(x && x[1]>=3){ var p=pct(x[0],x[1]); if(p<wv){wv=p; weak=g[1]+" ("+p+"%)";} } });
     var tr='<tr class="row'+(open?' open':'')+'" data-id="'+esc(r.id)+'" tabindex="0" aria-expanded="'+open+'"><td><div class="who"><div><b>'+esc(r._name)+'</b>'+(r.cohort?'<small>'+esc(r.cohort)+'</small>':'')+'</div></div></td>'+
       '<td class="mono">'+num(s.c)+' / '+num(s.a)+'<br><small style="color:var(--muted)">of '+N+' answered</small></td>'+
       '<td class="mono">'+num(m.c)+' / '+num(m.a)+'<br><small style="color:var(--muted)">of '+TOTAL_Q+' answered</small></td>'+
-      '<td>'+mini(num(s.c)+num(m.c), N+TOTAL_Q)+'</td><td>'+esc(weak)+'</td>'+(r.survey?'<td class="sv-cell"><span class="sv-done">✓ Done</span></td>':'<td class="sv-cell">—</td>')+'<td class="mono">'+ago(r.updatedAt)+'</td></tr>';
-    if(open) tr+='<tr class="detail"><td colspan="7">'+detailHTML(r)+'</td></tr>';
+      '<td>'+mini(num(s.c)+num(m.c), N+TOTAL_Q)+'</td><td>'+esc(weak)+'</td>'+(r.survey?'<td class="sv-cell"><span class="sv-done">✓ Done</span></td>':'<td class="sv-cell">—</td>')+'<td class="mono">'+practiceCell(r)+'</td><td class="mono">'+defibCell(r)+'</td><td class="mono">'+ago(r.updatedAt)+'</td></tr>';
+    if(open) tr+='<tr class="detail"><td colspan="9">'+detailHTML(r)+'</td></tr>';
     return tr;
   }).join("");
-  h+='<div class="sb-grid"><div class="card panel"><h3>Students <span class="num">'+n+'</span></h3><div class="tablewrap"><table class="sbt"><thead><tr><th>Student</th><th>Strips</th><th>Megacode</th><th>Overall</th><th>Weakest family</th><th>Survey</th><th>Last active</th></tr></thead><tbody id="sbRows">'+body+'</tbody></table></div><p class="empty">Overall counts unanswered items as incorrect. Select a student for detail.</p></div>'+
+  h+='<div class="sb-grid"><div class="card panel"><h3>Students <span class="num">'+n+'</span></h3><div class="tablewrap"><table class="sbt"><thead><tr><th>Student</th><th>Strips</th><th>Megacode</th><th>Overall</th><th>Weakest family</th><th>Survey</th><th>Practice areas</th><th>Defib lab</th><th>Last active</th></tr></thead><tbody id="sbRows">'+body+'</tbody></table></div><p class="empty">Overall counts unanswered items as incorrect. Select a student for detail.</p></div>'+
      '<div class="card panel"><h3>Most-missed strips</h3><div class="hard" id="sbHard">'+hardHTML(rows)+'</div></div></div>'+areasPanelHTML(rows)+defibPanelHTML(rows)+surveyPanelHTML(rows);
   $("sbBody").innerHTML=h;
 }
@@ -1436,9 +1448,9 @@ $("sbRefresh").addEventListener("click", function(){ loadBoard(true); });
 $("sbOut").addEventListener("click", function(){ SB.pass=null; SB.admin=false; SB.rows=null; SB.settings=null; delete AREAS.twelve; AREA_LOADING.twelve=null; renderAreaTiles(); defibNav(); stopPoll(); try{ sessionStorage.removeItem("cl-instructor"); }catch(e){} $("tabBoard").hidden=true; showLogin(""); });
 $("sbCsv").addEventListener("click", function(){
   var rows=boardRows();
-  var head=["Student","Cohort","Strips correct","Strips answered","Strips total","Megacode correct","Megacode answered","Megacode total","Overall %"].concat(GROUPS.map(function(g){return g[1]+" %"})).concat(AREA_META.map(function(x){ return x.short+" practice answered"; })).concat(AREA_META.map(function(x){ return x.short+" practice %"; })).concat(["Defib scenarios passed","Defib scenarios attempted"]).concat(["Survey submitted","Last active"]);
+  var head=["Student","Cohort","Strips correct","Strips answered","Strips total","Megacode correct","Megacode answered","Megacode total","Overall %"].concat(GROUPS.map(function(g){return g[1]+" %"})).concat(AREA_META.map(function(x){ return x.short+" practice answered"; })).concat(AREA_META.map(function(x){ return x.short+" practice %"; })).concat(["Defib scenarios passed","Defib scenarios attempted"]).concat(DEFIB_LIST.map(function(x){ return "Defib: "+x[1]; })).concat(["Survey submitted","Last active"]);
   var lines=[head].concat(rows.map(function(r){ var s=r.strips||{}, m=r.mega||{};
-    return [r._name, r.cohort||"", num(s.c), num(s.a), N, num(m.c), num(m.a), TOTAL_Q, num(r.overall)].concat(GROUPS.map(function(g){ var v=(r.groups||{})[g[0]]||[0,0,1]; return pct(v[0],v[2]); })).concat(AREA_META.map(function(x){ var v=(r.areas||{})[x.key]; return v?v[1]:0; })).concat(AREA_META.map(function(x){ var v=(r.areas||{})[x.key]; return v&&v[1]?pct(v[0],v[1]):""; })).concat(defibCounts(r)).concat([r.surveyAt? new Date(r.surveyAt).toISOString():"", r.updatedAt? new Date(r.updatedAt).toISOString():""]); }));
+    return [r._name, r.cohort||"", num(s.c), num(s.a), N, num(m.c), num(m.a), TOTAL_Q, num(r.overall)].concat(GROUPS.map(function(g){ var v=(r.groups||{})[g[0]]||[0,0,1]; return pct(v[0],v[2]); })).concat(AREA_META.map(function(x){ var v=(r.areas||{})[x.key]; return v?v[1]:0; })).concat(AREA_META.map(function(x){ var v=(r.areas||{})[x.key]; return v&&v[1]?pct(v[0],v[1]):""; })).concat(defibCounts(r)).concat(DEFIB_LIST.map(function(x){ var v=(r.defib||{})[x[0]]; return v ? (v[2]?"Passed ":"Review ")+v[0]+"/"+v[1] : ""; })).concat([r.surveyAt? new Date(r.surveyAt).toISOString():"", r.updatedAt? new Date(r.updatedAt).toISOString():""]); }));
   downloadCsv(lines, "cardiac-lab-scores-"+new Date().toISOString().slice(0,10)+".csv");
 });
 function downloadCsv(lines, filename){
@@ -1449,7 +1461,7 @@ function downloadCsv(lines, filename){
 }
 
 /* ================= DEFIB LAB (public/defib.js, loaded on demand) ================= */
-var DEFIB_LIST = [["vf","VF"],["pvt","Pulseless VT"],["tdp","Torsades"],["fvf","Fine VF"],["uvt","Unstable VT"],["svt","Unstable SVT"],["af","Unstable AF"],["afl","Unstable flutter"],["chb","Complete heart block"],["b21","2:1 block"],["asy","Asystole"],["pea","PEA"]];
+var DEFIB_LIST = [["vf","VF"],["pvt","Pulseless VT"],["tdp","Torsades"],["fvf","Fine VF"],["refvf","Refractory VF"],["pvf","Pediatric VF"],["syncvf","VF left in SYNC"],["ptdp","Torsades with a pulse"],["uvt","Unstable VT"],["svt","Unstable SVT"],["af","Unstable AF"],["afl","Unstable flutter"],["stvt","Stable VT"],["ssvt","Stable SVT"],["sb","Sinus brady: atropine"],["sbf","Brady: atropine fails"],["chb","Complete heart block"],["b21","2:1 block"],["asy","Asystole"],["pea","PEA"]];
 var DEFIB_LOADING = null;
 function defibOpen(){ return (SB.features||{}).defibLab===true; }
 function defibNav(){
@@ -1459,7 +1471,7 @@ function defibNav(){
   if(!show){ h.innerHTML=""; return; }
   var c=defibCounts({defib:defibDoc()});
   h.innerHTML='<a class="card df-home" href="#defib"><span class="df-home-ic">'+IC_BOLT+'</span><span class="df-home-t"><span class="eyebrow">'+(defibOpen()?'New module':'Closed to students · instructor preview')+'</span><b>Defib lab: monitor, defibrillator and pacer</b>'+
-    '<span>Run a real-time monitor. Select energy, charge, shock, synchronize, and pace through 12 scenarios, then get step-by-step feedback.</span></span><span class="df-home-n num">'+c[0]+'/'+DEFIB_LIST.length+'<small>passed</small></span></a>';
+    '<span>Run a real-time monitor with sound. Select energy, charge, shock, synchronize, pace and give drugs through '+DEFIB_LIST.length+' scenarios, then get step-by-step feedback.</span></span><span class="df-home-n num">'+c[0]+'/'+DEFIB_LIST.length+'<small>passed</small></span></a>';
 }
 function defibDoc(){ var out={}, d=S.df||{}; Object.keys(d).forEach(function(k){ var r=d[k]; if(r && r.score) out[k]=[r.score[0], r.score[1], r.ok?1:0]; }); return out; }
 function defibCounts(r){ var d=r.defib||{}, p=0, a=0; Object.keys(d).forEach(function(k){ a++; if(d[k][2]===1) p++; }); return [p, a]; }
@@ -1473,15 +1485,29 @@ function renderDefib(){
   var go=function(){ if(location.hash!=="#defib") return; DefibLab.render(root, {
     esc:esc,
     load:function(id){ return (S.df||{})[id]||null; },
-    save:function(id, r){ S.df=S.df||{}; var old=S.df[id]; S.df[id]={ok:r.ok||(old&&old.ok)||false, score:r.score, best:Math.max(r.score[0], old&&old.best||0), at:r.at, tries:((old&&old.tries)||0)+1}; save(); defibNav(); }
+    save:function(id, r){ S.df=S.df||{}; var old=S.df[id], keep=old && old.ok && !r.ok;  // a later failed retry doesn't erase a pass
+      S.df[id]={ok:keep?true:!!r.ok, score:keep?old.score:r.score, last:r.score, lastOk:!!r.ok, at:r.at, tries:((old&&old.tries)||0)+1}; save(); defibNav(); }
   }); if(!defibOpen()) root.insertAdjacentHTML("afterbegin", '<p class="df-preview">Instructor preview: students can\'t see the Defib lab until you open it on the scoreboard.</p>'); };
   if(window.DefibLab){ go(); return; }
   root.innerHTML='<div class="card panel"><p class="empty">Loading the Defib lab…</p></div>';
-  if(!DEFIB_LOADING) DEFIB_LOADING=new Promise(function(res, rej){ var sc=document.createElement("script"); sc.src="/defib.js?v=1"; sc.onload=res; sc.onerror=function(){ DEFIB_LOADING=null; rej(); }; document.head.appendChild(sc); });
+  if(!DEFIB_LOADING) DEFIB_LOADING=new Promise(function(res, rej){ var sc=document.createElement("script"); sc.src="/defib.js?v=2"; sc.onload=res; sc.onerror=function(){ DEFIB_LOADING=null; rej(); }; document.head.appendChild(sc); });
   DEFIB_LOADING.then(go, function(){ root.innerHTML='<div class="card panel problem"><h3>The Defib lab didn\'t load</h3><p>Check your connection and reload the page.</p></div>'; });
 }
+function areaTotals(r){ var c=0,a=0; Object.keys(r.areas||{}).forEach(function(k){ var v=r.areas[k]; if(v){ c+=v[0]; a+=v[1]; } }); return [c,a]; }
+function practiceCell(r){ var t=areaTotals(r); return t[1] ? t[0]+' / '+t[1]+'<br><small style="color:var(--muted)">'+pct(t[0],t[1])+'% correct</small>' : '—'; }
+function defibCell(r){ var c=defibCounts(r); return c[1] ? c[0]+' / '+c[1]+'<br><small style="color:var(--muted)">passed of '+DEFIB_LIST.length+'</small>' : '—'; }
+function newModulesStatsHTML(rows){
+  var prac=rows.filter(function(r){ return areaTotals(r)[1]>0; }), pc=0, pa=0; prac.forEach(function(r){ var t=areaTotals(r); pc+=t[0]; pa+=t[1]; });
+  var tw=rows.filter(function(r){ var v=(r.areas||{}).twelve; return v && v[1]>0; }), tc=0, ta=0; tw.forEach(function(r){ tc+=r.areas.twelve[0]; ta+=r.areas.twelve[1]; });
+  var df=rows.filter(function(r){ return defibCounts(r)[1]>0; }), dp=0, da=0; df.forEach(function(r){ var c=defibCounts(r); dp+=c[0]; da+=c[1]; });
+  var sv=rows.filter(function(r){ return r.survey; }).length, el=rows.filter(rowEligible).length;
+  return '<div class="stats stats-4">'+
+    '<div class="card stat"><small>Practice areas</small><b class="num">'+(pa?pct(pc,pa)+'%':'—')+'</b><span>'+prac.length+' student'+(prac.length===1?'':'s')+' · '+pa+' strips answered</span></div>'+
+    '<div class="card stat"><small>12-lead ECGs</small><b class="num">'+(ta?pct(tc,ta)+'%':'—')+'</b><span>'+tw.length+' student'+(tw.length===1?'':'s')+' · '+ta+' ECGs answered</span></div>'+
+    '<div class="card stat"><small>Defib lab</small><b class="num">'+(da?pct(dp,da)+'%':'—')+'</b><span>'+df.length+' student'+(df.length===1?'':'s')+' · '+dp+' of '+da+' runs passed</span></div>'+
+    '<div class="card stat"><small>Course survey</small><b class="num">'+sv+'</b><span>of '+el+' eligible submitted</span></div></div>';
+}
 function defibPanelHTML(rows){
-  if(!rows.some(function(r){ return r.defib && Object.keys(r.defib).length; }) && !(SB.settings||{}).defibLab) return '';
   var cells=DEFIB_LIST.map(function(x){
     var tried=rows.filter(function(r){ return r.defib && r.defib[x[0]]; }), pass=tried.filter(function(r){ return r.defib[x[0]][2]===1; }).length;
     return '<div class="ar-cell" style="--ac:var(--band-red);--ai:var(--brand-red)"><b>'+esc(x[1])+'</b><span class="ar-big num">'+(tried.length?pct(pass,tried.length)+'%':'—')+'</span><span>passed of students who tried</span><span class="progress"><i style="width:'+pct(tried.length,rows.length||1)+'%"></i></span><small class="num">'+tried.length+' tried · '+pass+' passed</small></div>';
@@ -1687,7 +1713,11 @@ function areasPanelHTML(rows){
 /* ================= COURSE SURVEY ================= */
 var SV = {def:null, loading:null, sending:false, msg:"", missing:null, editing:false};
 function programCounts(){ var s=stripScore(), m=megaScore(); return {done:s.a+m.a, total:N+TOTAL_Q, strips:s.a, mega:m.a}; }
-function programDone(){ var c=programCounts(); return c.strips>=N && c.mega>=TOTAL_Q; }
+var SURVEY_UNLOCK_PCT = 10;  // matches lib/api.mjs
+function surveyNeed(){ return Math.ceil((N+TOTAL_Q)*SURVEY_UNLOCK_PCT/100); }
+function surveyEligible(sa, ma){ return (sa+ma)*100 >= (N+TOTAL_Q)*SURVEY_UNLOCK_PCT; }
+function programDone(){ var c=programCounts(); return surveyEligible(c.strips, c.mega); }
+function rowEligible(r){ return surveyEligible(num(r.strips&&r.strips.a), num(r.mega&&r.mega.a)); }
 function loadSurveyDef(){
   if(SV.def) return Promise.resolve(SV.def);
   if(!SV.loading) SV.loading = fetch(API+"/survey", {cache:"no-store"}).then(function(r){ if(!r.ok) throw new Error("http "+r.status); return r.json(); })
@@ -1702,16 +1732,16 @@ var IC_CLIP='<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-w
 function surveyPromptHTML(where){
   var c=programCounts();
   if(!programDone()){
-    return '<div class="sv-prompt locked"><span class="sv-ic">'+IC_LOCK+'</span><div class="sv-t"><div class="eyebrow">Course survey</div><h3>Opens when you finish the program</h3>'+
-      '<p>Answer all '+N+' strips and all '+TOTAL_Q+' megacode decisions to unlock a short survey about the course.</p>'+
-      '<div class="progress"><i style="width:'+pct(c.done,c.total)+'%"></i></div><small class="num">'+c.done+' of '+c.total+' answered</small></div></div>';
+    return '<div class="sv-prompt locked"><span class="sv-ic">'+IC_LOCK+'</span><div class="sv-t"><div class="eyebrow">Course survey</div><h3>Opens after '+SURVEY_UNLOCK_PCT+'% of the course</h3>'+
+      '<p>Answer '+surveyNeed()+' strips or megacode decisions to unlock a short survey about the course.</p>'+
+      '<div class="progress"><i style="width:'+pct(c.done,surveyNeed())+'%"></i></div><small class="num">'+c.done+' of '+surveyNeed()+' answered</small></div></div>';
   }
   if(S.svDone){
     return '<div class="sv-prompt done"><span class="sv-ic">'+IC_CLIP+'</span><div class="sv-t"><div class="eyebrow">Course survey</div><h3>Thanks for your feedback</h3>'+
       '<p>Your survey was submitted '+ago(S.svDone)+'. You can update your answers at any time.</p></div><a class="btn btn-ghost" href="#survey">Edit my answers</a></div>';
   }
-  return '<div class="sv-prompt open"><span class="sv-ic">'+IC_CLIP+'</span><div class="sv-t"><div class="eyebrow">Course survey · about 4 minutes</div><h3>You finished the program. Tell us how it went.</h3>'+
-    '<p>Your answers help your instructor improve the course.</p></div><a class="btn btn-primary" href="#survey">Take the survey</a></div>';
+  return '<div class="sv-prompt open"><span class="sv-ic">'+IC_CLIP+'</span><div class="sv-t"><div class="eyebrow">Course survey · about 4 minutes</div><h3>Tell us how the course is going</h3>'+
+    '<p>Your answers help your instructor improve the course. You can update them any time as you keep going.</p></div><a class="btn btn-primary" href="#survey">Take the survey</a></div>';
 }
 function renderSurveyPrompts(){
   var h=$("homeSurvey"); if(h) h.innerHTML=surveyPromptHTML("home");
@@ -1805,7 +1835,7 @@ function renderSurvey(){
       return '<section class="card sv-sec"><h3>'+esc(s.title)+'</h3>'+(s.intro?'<p class="sv-intro">'+esc(s.intro)+'</p>':'')+s.questions.map(function(q){ n++; return svQuestionHTML(q, ans, n); }).join("")+'</section>';
     }).join("");
     var anon = S.svDraftAnon!=null ? S.svDraftAnon : !!S.svAnon;
-    body.innerHTML = head+'<p class="sv-lede">Thanks for finishing the program. This survey takes about 4 minutes. Questions marked (optional) can be skipped.</p>'+
+    body.innerHTML = head+'<p class="sv-lede">Thanks for working through the course. This survey takes about 4 minutes, and you can update your answers later. Questions marked (optional) can be skipped.</p>'+
       '<form id="svForm" novalidate>'+who+secs+
       '<div class="card sv-sec sv-submit"><label class="sv-anon" for="svAnon"><input type="checkbox" id="svAnon"'+(anon?' checked':'')+'><span><b>Hide my name next to my answers</b><br>Your instructor will see that you completed the survey, but your answers and comments are listed as "Anonymous".</span></label>'+
       '<div class="sv-msg" id="svMsg" role="alert">'+esc(SV.msg)+'</div><div class="qnav" style="justify-content:flex-start"><button class="btn btn-primary" type="submit" id="svSend"'+(SV.sending?' disabled':'')+'>'+(S.svDone?'Update my answers':'Submit survey')+'</button>'+(S.svDone?'<button class="btn btn-ghost" type="button" id="svCancel">Cancel</button>':'')+'</div></div></form>';
@@ -1849,7 +1879,7 @@ function submitSurvey(retried){
     if(r.ok){ S.svDone=Date.now(); S.svAnswers=a; S.svAnon=anon; delete S.svDraft; delete S.svDraftAnon; SV.editing=false; SV.msg=""; save(); renderSurvey(); renderSurveyPrompts(); scrollTop(); return; }
     if(r.status===403){ setSvMsg("That class code doesn't match. Check it on the Overview page and try again."); }
     else if(r.status===409 && !retried){ SB.last=""; setTimeout(function(){ submitSurvey(true); }, 1500); setSvMsg("Saving your latest results first…"); return; }
-    else if(r.status===409){ setSvMsg("Your finished results haven't reached the scoreboard yet. Check that you're online and that the top bar says \"Shared with instructor\", then try again."); }
+    else if(r.status===409){ setSvMsg("Your latest results haven't reached the scoreboard yet. Check that you're online and that the top bar says \"Shared with instructor\", then try again."); }
     else setSvMsg("The survey couldn't be sent. Check your connection and try again.");
     $("svSend").disabled=false;
   }, function(){ SV.sending=false; $("svSend").disabled=false; setSvMsg("The survey couldn't be sent. Check your connection and try again."); });
@@ -1868,18 +1898,18 @@ function avg(list){ return list.length ? list.reduce(function(a,b){return a+b},0
 function f1(x){ return x==null ? "—" : (Math.round(x*10)/10).toFixed(1); }
 function surveyPanelHTML(rows){
   if(!SV.def) return '<div class="card panel sv-board"><h3>Course survey</h3><p class="empty">Loading survey results…</p></div>';
-  var finished=rows.filter(function(r){ return num(r.strips&&r.strips.a)>=N && num(r.mega&&r.mega.a)>=TOTAL_Q; });
+  var finished=rows.filter(rowEligible);
   var resp=rows.filter(function(r){ return r.survey && r.survey.answers; });
   var A=function(id){ return resp.map(function(r){ return r.survey.answers[id]; }).filter(function(v){ return v!==undefined && v!==null && v!==""; }); };
   var head='<div class="sv-board-head"><div><div class="eyebrow">End-of-course survey</div><h3>Course survey</h3></div>'+(resp.length?'<button class="btn btn-ghost" id="svCsv">Download survey CSV</button>':'')+'</div>';
-  if(!resp.length) return '<div class="card panel sv-board">'+head+'<p class="empty">No survey responses yet. Students see the survey after they answer every strip and megacode decision'+(finished.length?' ('+finished.length+' student'+(finished.length===1?' has':'s have')+' finished so far)':'')+'.</p></div>';
+  if(!resp.length) return '<div class="card panel sv-board">'+head+'<p class="empty">No survey responses yet. Students see the survey once they\'ve answered '+SURVEY_UNLOCK_PCT+'% of the strips and megacode decisions'+(finished.length?' ('+finished.length+' student'+(finished.length===1?' has':'s have')+' unlocked it so far)':'')+'.</p></div>';
   var stars=avg(A("overall")), npsV=A("recommend"), prom=npsV.filter(function(v){return v>=9}).length, det=npsV.filter(function(v){return v<=6}).length, pas=npsV.length-prom-det;
   var nps = npsV.length ? Math.round(100*(prom-det)/npsV.length) : null;
   var qs=svQuestions(), conf=qs.filter(function(q){return q.type==="confidence"});
   var gains=[]; conf.forEach(function(q){ A(q.id).forEach(function(v){ gains.push(v.now-v.before); }); });
   var h='<div class="card panel sv-board">'+head+
     '<div class="stats sv-stats">'+
-    '<div class="card stat"><small>Responses</small><b class="num">'+resp.length+'</b><span>of '+finished.length+' finished student'+(finished.length===1?'':'s')+'</span></div>'+
+    '<div class="card stat"><small>Responses</small><b class="num">'+resp.length+'</b><span>of '+finished.length+' eligible student'+(finished.length===1?'':'s')+'</span></div>'+
     '<div class="card stat"><small>Overall rating</small><b class="num">'+f1(stars)+'<i class="sv-of">/5</i></b><span class="sv-stars" aria-hidden="true">'+starRow(stars)+'</span></div>'+
     '<div class="card stat"><small>Net Promoter Score</small><b class="num">'+(nps==null?"—":(nps>0?"+":"")+nps)+'</b><span>from −100 to +100</span></div>'+
     '<div class="card stat"><small>Confidence gain</small><b class="num">'+(gains.length?(avg(gains)>=0?"+":"")+f1(avg(gains)):"—")+'</b><span>average, on a 1–5 scale</span></div></div>';
@@ -1922,7 +1952,7 @@ function surveyPanelHTML(rows){
 }
 function starRow(x){ var s=""; for(var i=1;i<=5;i++) s+='<span class="'+(x!=null && x>=i-0.25?"on":"")+'">★</span>'; return s; }
 function surveyDetailHTML(r){
-  if(!r.survey || !r.survey.answers) return '<h4 style="margin-top:14px">Course survey</h4><div class="tags"><span>'+(num(r.strips&&r.strips.a)>=N && num(r.mega&&r.mega.a)>=TOTAL_Q?'Finished, survey not submitted yet':'Opens when the student finishes')+'</span></div>';
+  if(!r.survey || !r.survey.answers) return '<h4 style="margin-top:14px">Course survey</h4><div class="tags"><span>'+(rowEligible(r)?'Unlocked, survey not submitted yet':'Opens at '+SURVEY_UNLOCK_PCT+'% of the course')+'</span></div>';
   if(r.surveyAnonymous) return '<h4 style="margin-top:14px">Course survey</h4><div class="tags"><span>Submitted '+ago(r.surveyAt)+' · answers shared anonymously</span></div>';
   if(!SV.def) return '';
   var a=r.survey.answers;

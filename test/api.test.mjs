@@ -170,17 +170,17 @@ test('survey questions are served', async () => {
   assert.equal(j.likert.length, 5);
 });
 
-test('survey opens only after both modules are finished, then the instructor sees it', async () => {
+test('survey opens after 10% of the program is answered, then the instructor sees it', async () => {
   const SID = '7c1e2d3f-4a5b-4c6d-8e7f-0a1b2c3d4e5f';
   const api = make({ INSTRUCTOR_PASSWORD: 'secret' });
   const send = (body) => api(req('PUT', `/api/scores/${SID}/survey`, { body }));
   // no saved results yet
   assert.equal((await send({ answers: fullAnswers() })).status, 409);
-  // partly finished
-  await api(req('PUT', '/api/scores/' + SID, { body: { name: 'Sam', doc: doc() } }));
+  // 16 of 168 answered: just under 10%
+  await api(req('PUT', '/api/scores/' + SID, { body: { name: 'Sam', doc: { ...doc(), strips: { c: 8, a: 10, n: 102 } } } }));
   assert.equal((await send({ answers: fullAnswers() })).status, 409);
-  // finished
-  const finished = { ...doc(), strips: { c: 90, a: 102, n: 102 }, mega: { c: 60, a: 66, n: 66 }, overall: 89 };
+  // 17 of 168 answered: 10%
+  const finished = { ...doc(), strips: { c: 8, a: 11, n: 102 }, mega: { c: 5, a: 6, n: 66 }, overall: 8 };
   await api(req('PUT', '/api/scores/' + SID, { body: { name: 'Sam', doc: finished } }));
   const bad = fullAnswers(); delete bad.overall;
   const miss = await send({ answers: bad });
