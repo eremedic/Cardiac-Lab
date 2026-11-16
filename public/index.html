@@ -81,6 +81,7 @@ button{font:inherit;color:inherit}
 @media (max-width:720px){.tally{display:none}.brand span{display:none}.tabs{width:100%}.tabs a{flex:1;text-align:center;padding:7px 6px}}
 
 main{padding-block:28px 64px}
+body:has(#cardioPop:not([hidden])) main{padding-bottom:200px}
 .view[hidden]{display:none}
 .qcard>*,.runner>*,.decision>*,.monitor,.hero>*,.modules>*,.split>*,.case-summary>*{min-width:0}
 .mon-screen svg.hero-svg{min-width:0}
@@ -493,28 +494,38 @@ h1,h2,h3,.qhead h2,.runner-head h2,.score-hero h2,.answer-name,.stat b,.hero .me
 .ar-cell small{font-size:12px;color:var(--ink-2)}
 .tabs a[data-v="practice"]{--tc:var(--teal);--ts:var(--teal-soft)}
 .area-tile.wide{grid-column:1/-1}
-.cardio{display:grid;gap:12px}
-.cardio-bar{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
-.cardio-btn{background:var(--surface);border:1.5px solid var(--band-red);color:var(--brand-red);padding:10px 16px;gap:10px}
+.strip-top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.strip-top .stem{flex:1 1 240px;min-width:0}
+.cardio-btn{background:var(--surface);border:1.5px solid var(--band-red);color:var(--brand-red);padding:9px 14px;gap:9px;flex:none}
 .cardio-btn:hover{background:var(--red-soft)}
 .cardio-btn svg{width:18px;height:18px}
 .cardio-btn small{font-family:var(--f-mono);font-size:11.5px;font-weight:500;color:var(--muted)}
 .cardio-btn.reveal{border-style:dashed}
-.cardio-note{font-size:13px;color:var(--muted);flex:1 1 260px}
-.cardio-box{border-radius:16px;border:1px solid color-mix(in srgb,var(--band-red) 35%,var(--line));background:linear-gradient(135deg,var(--red-soft),var(--surface) 70%);padding:14px 16px;box-shadow:var(--shadow);animation:cardioIn .25s ease-out}
-.cardio-head{display:flex;gap:10px;align-items:center;margin-bottom:8px}
-.cardio-head b{display:block;font-size:15px}
-.cardio-head small{font-family:var(--f-mono);font-size:11.5px;color:var(--muted)}
-.cardio-av{flex:none;width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:var(--band-red);color:#FFFFFF}
-.cardio-av svg{width:18px;height:18px}
+.cardio-btn.ghost{border-color:var(--line-2);color:var(--ink-2)}
+.cardio-pop{position:fixed;z-index:40;right:max(18px,env(safe-area-inset-right,0px));bottom:calc(18px + env(safe-area-inset-bottom,0px));width:min(400px,calc(100vw - 36px));max-height:min(62vh,560px);display:flex;flex-direction:column;
+  background:var(--surface);border:1px solid color-mix(in srgb,var(--band-red) 40%,var(--line));border-radius:18px;box-shadow:0 24px 60px -18px rgba(2,36,93,.45),0 4px 14px -6px rgba(2,36,93,.25);overflow:hidden;animation:cardioIn .22s ease-out}
+.cardio-pop.min{width:auto;max-width:calc(100vw - 36px);border-radius:999px}
+.cardio-pop-head{display:flex;gap:10px;align-items:center;width:100%;text-align:left;border:0;cursor:pointer;padding:10px 12px 10px 10px;background:linear-gradient(135deg,var(--red-soft),var(--surface) 80%);color:var(--ink)}
+.cardio-pop.min .cardio-pop-head{padding:8px 14px 8px 8px;background:var(--surface)}
+.cardio-pop-head:focus-visible{outline:2px solid var(--brand-red);outline-offset:-2px}
+.cardio-pop-t{flex:1;min-width:0;display:grid}
+.cardio-pop-t b{font-size:14.5px}
+.cardio-pop-t small{font-family:var(--f-mono);font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cardio-min{flex:none;width:30px;height:30px;border-radius:9px;display:grid;place-items:center;color:var(--ink-2);background:var(--surface-2)}
+.cardio-min svg{width:16px;height:16px}
+.cardio-pop-body{overflow:auto;padding:4px 12px 12px;display:grid;gap:8px}
+.cardio-pop-note{font-size:12.5px;color:var(--muted)}
+.cardio-av{flex:none;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:var(--band-red);color:#FFFFFF}
+.cardio-av svg{width:17px;height:17px}
 .cardio-hints{list-style:none;margin:0;padding:0;display:grid;gap:8px}
-.cardio-hints li{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:9px 12px}
+.cardio-hints li{background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:9px 12px}
 .cardio-hints li b{font-family:var(--f-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--brand-red)}
-.cardio-hints li p{font-size:14.5px;margin-top:2px}
-.cardio-hints li.new{animation:cardioIn .3s ease-out;border-color:var(--band-red)}
+.cardio-hints li p{font-size:14px;margin-top:2px}
+.cardio-hints li.new{animation:cardioIn .3s ease-out;border-color:var(--band-red);background:var(--surface)}
 .fb-note{font-size:14px;color:var(--ink-2)}
-@keyframes cardioIn{from{opacity:.0;transform:translateY(6px)}to{opacity:1;transform:none}}
-@media (prefers-reduced-motion:reduce){.cardio-box,.cardio-hints li.new{animation:none}}
+@keyframes cardioIn{from{opacity:.0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@media (max-width:600px){.cardio-pop{left:max(12px,env(safe-area-inset-left,0px));right:max(12px,env(safe-area-inset-right,0px));width:auto;bottom:calc(12px + env(safe-area-inset-bottom,0px));max-height:48vh}.cardio-pop.min{left:auto}.strip-top .cardio-btn{width:100%;justify-content:center}}
+@media (prefers-reduced-motion:reduce){.cardio-pop,.cardio-hints li.new{animation:none}}
 .area-tile.wide .area-band{background:var(--ac)}
 .area-tile.wide .area-ecg svg{width:150px}
 .area-locked{justify-items:start;max-width:620px}
@@ -834,6 +845,7 @@ h1,h2,h3,.qhead h2,.runner-head h2,.score-hero h2,.answer-name,.stat b,.hero .me
     <a class="foot-link" href="#scoreboard">Instructor sign-in</a>
   </div>
 </footer>
+<aside class="cardio-pop" id="cardioPop" hidden aria-label="Cardiologist hints"></aside>
 
 <script src="/trainer-data.js"></script>
 <script>
@@ -1080,7 +1092,7 @@ function route(){
   VIEWS.forEach(function(x){ $("v-"+x).hidden = x!==v; });
   var tabV = v==="area" ? "practice" : v;
   document.querySelectorAll(".tabs a").forEach(function(a){ if(a.getAttribute("data-v")===tabV) a.setAttribute("aria-current","page"); else a.removeAttribute("aria-current"); });
-  if(v==="area") renderArea(areaKey); else CUR_AREA=null;
+  if(v==="area") renderArea(areaKey); else { CUR_AREA=null; renderCardioPop(null); }
   if(v==="practice" || v==="home") renderAreaTiles();
   if(v==="strips") renderStrip();
   if(v==="megacode") renderMega();
@@ -1404,14 +1416,15 @@ function renderArea(key){
     return '<button class="opt '+cls+'" data-o="'+esc(o)+'" '+(done?"disabled":"")+'><span class="k">'+letters[i]+'</span><span>'+esc(o)+'</span></button>';
   }).join("");
   var dots=data.items.map(function(it){ var x=st.p[it.n], c = x==null ? "" : (x===it.cat?"r":"w"); return '<button class="dot '+c+(it.n===st.pi?" cur":"")+'" data-n="'+it.n+'" aria-label="Strip '+it.n+'">'+it.n+'</button>'; }).join("");
-  body.innerHTML=head+'<div class="card qcard"><div class="stem"><span class="tag">'+esc(m.short)+'</span><p>'+(q.leads?'Interpret this 12-lead ECG.':'Identify this rhythm.')+'</p></div>'+
+  body.innerHTML=head+'<div class="card qcard"><div class="strip-top"><div class="stem"><span class="tag">'+esc(m.short)+'</span><p>'+(q.leads?'Interpret this 12-lead ECG.':'Identify this rhythm.')+'</p></div>'+(q.hints?cardioBtnHTML(q, st, done):'')+'</div>'+
     '<div><div class="paper">'+(q.leads?ecg12SVG(q):stripSVG(q.strip,"paper",false))+'</div><div class="paper-meta"><span>'+(q.leads?'12-lead · 25 mm/s · 10 mm/mV · bottom row: lead II rhythm strip':'Lead II · 25 mm/s · 6-second strip')+'</span><span class="scroll-hint">Swipe to see the whole '+(q.leads?'ECG':'strip')+' →</span></div></div>'+
     '<div><div class="eyebrow" style="margin-bottom:10px">'+(q.leads?'What does it show?':'Identify the rhythm')+'</div><div class="opts" id="arOpts" role="group" aria-label="Answer choices">'+opts+'</div></div>'+
-    (q.hints ? cardioHTML(q, st, done) : '')+
     '<div aria-live="polite">'+(done?stripFeedback(q, chosen):'')+'</div>'+
     '<div class="qnav"><button class="btn btn-ghost" id="arPrev" '+(st.pi===1?'disabled':'')+'>← Previous</button><button class="btn btn-primary" id="arNext">'+(st.pi===total?'See area results →':(done?'Next '+unit.toLowerCase()+' →':'Skip →'))+'</button></div></div>'+
     '<details class="card grid-nav"><summary>All '+total+' '+unit.toLowerCase()+'s in this area</summary><div class="dots" id="arDots">'+dots+'</div><div class="legend"><span><i style="background:var(--ok)"></i>Correct</span><span><i style="background:var(--bad)"></i>Incorrect</span><span><i style="background:var(--line-2)"></i>Not answered</span></div></details>';
   if($("arCardioBtn")) $("arCardioBtn").onclick=function(){ callCardiologist(key, q, st); };
+  if($("arCardioShow")) $("arCardioShow").onclick=function(){ S.cmin=false; save(); renderCardioPop(q, st, done); };
+  renderCardioPop(q.hints ? q : null, st, done);
   $("arOpts").onclick=function(e){ var b=e.target.closest(".opt"); if(!b||b.disabled) return; st.p[q.n]=b.getAttribute("data-o"); st.ok=st.ok||{}; st.ok[q.n]=st.p[q.n]===q.cat; save(); renderArea(key); };
   $("arPrev").onclick=function(){ if(st.pi>1){ st.pi--; save(); renderArea(key); scrollTop(); } };
   $("arNext").onclick=function(){ st.pi++; save(); renderArea(key); scrollTop(); };
@@ -1466,20 +1479,34 @@ function ecg12SVG(q){
 }
 /* ----- "Call the cardiologist" (12-lead): three hints, then the answer ----- */
 var IC_PHONE='<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5.2 2.8h2.4l1.2 3.4-1.7 1.1a9.6 9.6 0 0 0 5.6 5.6l1.1-1.7 3.4 1.2v2.4a1.6 1.6 0 0 1-1.7 1.6A14.2 14.2 0 0 1 3.6 4.5a1.6 1.6 0 0 1 1.6-1.7z"/></svg>';
-function cardioHTML(q, st, done){
+function cardioBtnHTML(q, st, done){
+  st.h = st.h || {};
+  var used = Math.min(st.h[q.n]||0, 3);
+  if(done) return used ? '<button class="btn cardio-btn ghost" id="arCardioShow">'+IC_PHONE+'<span>Cardiologist</span><small>'+(st.p[q.n]===REVEALED?'answer revealed':used+' hint'+(used===1?'':'s')+' used')+'</small></button>' : '';
+  var tip = 'Each call gives you a hint. The 4th call reveals the answer and counts it as wrong.';
+  return used < 3
+    ? '<button class="btn cardio-btn" id="arCardioBtn" title="'+tip+'">'+IC_PHONE+'<span>Call the cardiologist</span><small>hint '+(used+1)+' of 3</small></button>'
+    : '<button class="btn cardio-btn reveal" id="arCardioBtn" title="'+tip+'">'+IC_PHONE+'<span>Call again for the answer</span><small>counts as wrong</small></button>';
+}
+var POP_Q = null;
+function renderCardioPop(q, st, done, fresh){
+  var pop = $("cardioPop");
+  if(!q || !location.hash.match(/^#area-/)){ pop.hidden = true; POP_Q = null; return; }
   st.h = st.h || {};
   var used = Math.min(st.h[q.n]||0, 3), revealed = st.p[q.n]===REVEALED;
-  var list = q.hints.slice(0, used).map(function(h, i){ return '<li class="'+(i===used-1 && !done ? 'new' : '')+'"><b>Hint '+(i+1)+'</b><p>'+esc(h)+'</p></li>'; }).join("");
-  var btn = '';
-  if(!done){
-    btn = used < 3
-      ? '<button class="btn cardio-btn" id="arCardioBtn">'+IC_PHONE+'<span>Call the cardiologist</span><small>hint '+(used+1)+' of 3</small></button>'
-      : '<button class="btn cardio-btn reveal" id="arCardioBtn">'+IC_PHONE+'<span>Call again for the answer</span><small>counts as wrong</small></button>';
-  }
-  var box = used ? '<div class="cardio-box" role="status" aria-live="polite"><div class="cardio-head"><span class="cardio-av">'+IC_PHONE+'</span><div><b>Cardiologist on the line</b><small>'+
-      (revealed ? 'Answer revealed after 3 hints' : (done ? used+' hint'+(used===1?'':'s')+' used' : used+' of 3 hints'))+'</small></div></div><ol class="cardio-hints">'+list+'</ol></div>' : '';
-  if(!btn && !box) return '';
-  return '<div class="cardio">'+(btn?'<div class="cardio-bar">'+btn+'<span class="cardio-note">Stuck? Each call gives you a hint. The 4th call reveals the answer and counts it as wrong.</span></div>':'')+box+'</div>';
+  if(!used){ pop.hidden = true; POP_Q = null; return; }
+  var min = !!S.cmin;
+  var sub = revealed ? 'Answer revealed after 3 hints' : (done ? used+' hint'+(used===1?'':'s')+' used' : used+' of 3 hints'+(used===3?' · next call reveals the answer':''));
+  var list = q.hints.slice(0, used).map(function(h, i){ return '<li class="'+(fresh && i===used-1 ? 'new' : '')+'"><b>Hint '+(i+1)+'</b><p>'+esc(h)+'</p></li>'; }).join("");
+  pop.className = 'cardio-pop'+(min?' min':'');
+  pop.innerHTML = '<button class="cardio-pop-head" id="cardioToggle" aria-expanded="'+(!min)+'" aria-controls="cardioPopBody" title="'+(min?'Show hints':'Minimize')+'">'+
+      '<span class="cardio-av">'+IC_PHONE+'</span><span class="cardio-pop-t"><b>Cardiologist on the line</b><small>'+sub+'</small></span>'+
+      '<span class="cardio-min" aria-hidden="true">'+(min?'<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12l5-5 5 5"/></svg>':'<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 10h10"/></svg>')+'</span></button>'+
+    '<div class="cardio-pop-body" id="cardioPopBody" role="status" aria-live="polite"'+(min?' hidden':'')+'><ol class="cardio-hints">'+list+'</ol>'+
+      (!done && used < 3 ? '<p class="cardio-pop-note">Still stuck? Call again for hint '+(used+1)+' of 3.</p>' : '')+
+      (!done && used === 3 ? '<p class="cardio-pop-note">One more call reveals the answer and counts it as wrong.</p>' : '')+'</div>';
+  pop.hidden = false; POP_Q = q;
+  $("cardioToggle").onclick = function(){ S.cmin = !S.cmin; try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} renderCardioPop(q, st, done); };
 }
 function callCardiologist(key, q, st){
   st.h = st.h || {};
@@ -1487,9 +1514,10 @@ function callCardiologist(key, q, st){
   if(st.p[q.n]!=null) return;
   if(used < 3){ st.h[q.n] = used+1; }
   else { st.h[q.n] = 4; st.p[q.n] = REVEALED; st.ok = st.ok || {}; st.ok[q.n] = false; }
+  S.cmin = false;  // a new hint always opens the panel
   save(); renderArea(key);
-  var el = document.querySelector(used < 3 ? ".cardio-box" : "#v-area .fb");
-  if(el) el.scrollIntoView({behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "center"});
+  if(used < 3) renderCardioPop(q, st, false, true);
+  else { var el = document.querySelector("#v-area .fb"); if(el) el.scrollIntoView({behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "center"}); }
 }
 function areasDoc(){ var out={}; AREA_META.forEach(function(m){ var sc=areaScore(m.key); out[m.key]=[sc.c, sc.a, sc.t]; }); return out; }
 function areasPanelHTML(rows){

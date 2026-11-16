@@ -12,6 +12,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import ecg_web  # noqa: E402  (also provides the waveform encoder)
 import areas    # noqa: E402
+import area_hints  # noqa: E402
 
 PUB = os.path.normpath(os.path.join(HERE, "..", "..", "public"))
 OUT = os.path.join(PUB, "areas")
@@ -39,7 +40,8 @@ def main():
             others = [c for c in cats if c != it["cat"]]
             opts = rng.sample(others, min(3, len(others))) + [it["cat"]]
             rng.shuffle(opts)
-            out_items.append({"n": n, "strip": sid, "cat": it["cat"], "name": it["name"], "rows": it["rows"], "action": it["action"], "options": opts})
+            out_items.append({"n": n, "strip": sid, "cat": it["cat"], "name": it["name"], "rows": it["rows"], "action": it["action"], "options": opts,
+                              "hints": area_hints.hints_for(it)})
         doc = {"key": key, "title": title, "categories": cats, "items": out_items, "strips": strips}
         with open(os.path.join(OUT, f"{key}.json"), "w") as f:
             json.dump(doc, f, ensure_ascii=False, separators=(",", ":"))
