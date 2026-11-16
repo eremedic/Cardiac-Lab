@@ -22,7 +22,7 @@ const req = (method, path, { body, auth } = {}) => new Request('http://x' + path
 
 test('config reports scoring and class-code settings', async () => {
   const r = await make({ CLASS_CODE: 'ACLS1' })(req('GET', '/api/config'));
-  assert.deepEqual(await r.json(), { scoring: true, requireCode: true, instructor: false, features: { twelveLead: false } });
+  assert.deepEqual(await r.json(), { scoring: true, requireCode: true, instructor: false, features: { twelveLead: false, defibLab: false } });
 });
 
 test('scores routes say so when no database is configured', async () => {
@@ -228,10 +228,25 @@ test('12-lead area stays closed until the instructor opens it', async () => {
   assert.equal((await api(req('PUT', '/api/settings', { auth: 'secret', body: { twelveLead: 'yes' } }))).status, 400);
   assert.equal((await api(req('PUT', '/api/settings', { auth: 'secret', body: { other: true } }))).status, 400);
   const on = await api(req('PUT', '/api/settings', { auth: 'secret', body: { twelveLead: true } }));
-  assert.deepEqual((await on.json()).settings, { twelveLead: true });
+  assert.deepEqual((await on.json()).settings, { twelveLead: true, defibLab: false });
   assert.equal((await (await api(req('GET', '/api/config'))).json()).features.twelveLead, true);
   assert.equal((await api(req('GET', '/api/areas/twelve'))).status, 200);
   // and close it again
   await api(req('PUT', '/api/settings', { auth: 'secret', body: { twelveLead: false } }));
   assert.equal((await api(req('GET', '/api/areas/twelve'))).status, 403);
+});
+
+test('defib lab: switch defaults off and scenario results are validated and stored', async () => {
+  const api = make({ INSTRUCTOR_PASSWORD: 'secret' });
+  assert.equal((await (await api(req('GET', '/api/config'))).json()).features.defibLab, false);
+  const on = await api(req('PUT', '/api/settings', { auth: 'secret', body: { defibLab: true } }));
+  assert.equal((await on.json()).settings.defibLab, true);
+  assert.equal((await (await api(req('GET', '/api/config'))).json()).features.defibLab, true);
+  await api(req('PUT', '/api/settings', { auth: 'secret', body: { defibLab: false } }));
+  // only well-formed [correct, total, passed] triples survive
+  const v = validateDoc({ ...doc(), defib: { vf: [6, 7, 1], chb: [3, 6, 0], bad: [9, 6, 1], x: [1, 2, 0], pea: [1, 2, 'yes'] } });
+  assert.deepEqual(v.defib, { vf: [6, 7, 1], chb: [3, 6, 0] });
+  assert.equal((await api(req('PUT', '/api/scores/' + ID2, { body: { name: 'Dee', doc: { ...doc(), defib: { vf: [7, 7, 1] } } } }))).status, 200);
+  const rows = (await (await api(req('GET', '/api/scores', { auth: 'secret' }))).json()).rows;
+  assert.deepEqual(rows.find((r) => r.id === ID2).defib, { vf: [7, 7, 1] });
 });

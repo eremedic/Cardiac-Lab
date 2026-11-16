@@ -646,6 +646,94 @@ h1,h2,h3,.qhead h2,.runner-head h2,.score-hero h2,.answer-name,.stat b,.hero .me
 .foot{border-top:1px solid var(--line);background:var(--surface);padding-block:22px}
 .foot-in{display:flex;gap:20px;align-items:center;flex-wrap:wrap}
 .foot .note{margin:0;flex:1 1 320px}
+/* ---------- Defib lab ---------- */
+.df-home{display:flex;gap:18px;align-items:center;padding:18px 22px;margin-bottom:22px;text-decoration:none;color:var(--ink);background:linear-gradient(120deg,var(--red-soft),var(--surface) 60%);border-left:6px solid var(--band-red)}
+.df-home:hover{box-shadow:var(--shadow-lg,var(--shadow))}
+.df-home-ic{flex:none;width:56px;height:56px;border-radius:16px;display:grid;place-items:center;color:#FFD400;background:#1F2328}
+.df-home-t{flex:1;display:grid;gap:3px;min-width:0}.df-home-t b{font-size:18px}.df-home-t>span:last-child{color:var(--ink-2);font-size:14.5px}
+.df-home-n{flex:none;font-size:26px;font-weight:700;color:var(--brand-red);display:grid;text-align:center}.df-home-n small{font-size:11px;font-weight:500;color:var(--muted);font-family:var(--f-mono)}
+.df-preview{font-family:var(--f-mono);font-size:12.5px;color:var(--orange);background:var(--orange-soft);border-radius:10px;padding:8px 12px;margin-bottom:14px}
+.df-case .st{display:flex;justify-content:space-between;gap:8px;align-items:center}
+.df-run .runner-head{display:flex;justify-content:space-between;align-items:flex-end;gap:14px;flex-wrap:wrap;margin-bottom:16px}
+.df-grid{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:18px;align-items:start}
+@media (max-width:1100px){.df-grid{grid-template-columns:minmax(0,1fr)}}
+.df-side{padding:18px;display:grid;gap:16px}
+.df-side h4{font-family:var(--f-mono);font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+.df-acts{display:grid;grid-template-columns:1fr 1fr;gap:8px}.df-acts .btn{justify-content:center;padding:9px 8px;font-size:13.5px}
+.df-ptstat{font-size:14px;margin-bottom:10px;color:var(--ink-2)}.df-ptstat b{display:block;font-size:12px;color:var(--muted);font-family:var(--f-mono);text-transform:uppercase;letter-spacing:.06em}
+.df-log ol{list-style:none;margin:0;padding:0;display:grid;gap:6px;max-height:300px;overflow:auto;font-size:13px}
+.df-log li{padding:6px 9px;border-radius:8px;background:var(--surface-2)}.df-log li b{font-family:var(--f-mono);font-size:11.5px;color:var(--muted);margin-right:4px}
+.df-log li.shock{background:var(--orange-soft)}.df-log li.bad{background:var(--red-soft)}
+.df-fb{margin-top:18px;padding:22px;border-left:6px solid var(--ok)}.df-fb.fail{border-left-color:var(--bad)}
+.df-fb-head{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;align-items:flex-start}
+.df-fb .verdict{font-family:var(--f-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--ok)}.df-fb.fail .verdict{color:var(--bad)}
+.df-fb h3{font-size:24px;margin:2px 0}.df-fb-actions{display:flex;gap:10px;flex-wrap:wrap}
+.df-lesson{margin:14px 0;padding:12px 14px;background:var(--surface-2);border-radius:12px;font-size:14.5px}
+.df-check{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.df-check li{display:flex;gap:12px;padding:10px 12px;border-radius:12px;border:1px solid var(--line)}
+.df-check li p{font-size:14px;color:var(--ink-2);margin-top:2px}.df-check li em{font-style:normal;font-family:var(--f-mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--bad);margin-left:6px}
+.df-ic{flex:none;width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-weight:700;color:#FFFFFF;background:var(--ok)}
+.df-check li.bad .df-ic{background:var(--bad)}.df-check li.warn .df-ic{background:var(--orange)}
+.df-board{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+/* the device */
+.dv{position:relative;padding-top:18px}
+.dv-handle{position:absolute;top:0;left:22%;right:22%;height:30px;border:9px solid #2A2E33;border-bottom:0;border-radius:22px 22px 0 0}
+.dv-face{position:relative;background:linear-gradient(180deg,#3A3F45,#2A2E33 40%,#23272B);border-radius:26px;padding:14px 16px 12px;box-shadow:0 30px 60px -24px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.12),inset 0 -2px 0 rgba(0,0,0,.4);color:#E8ECEF}
+.dv-brand{display:flex;align-items:center;gap:10px;font-size:12px;letter-spacing:.06em;margin:0 4px 10px;color:#B9C1C8}
+.dv-brand b{color:#FFFFFF;letter-spacing:.04em;font-size:14px}.dv-brand span{text-transform:uppercase;font-family:var(--f-mono);font-size:10.5px}
+.dv-logo{width:14px;height:14px;border-radius:4px;background:conic-gradient(#2E9A00 0 25%,#0A6FDD 0 50%,#EA6A00 0 75%,#D9121A 0)}
+.dv-pwr{margin-left:auto;font-style:normal;color:#3DF08E;text-shadow:0 0 8px #3DF08E;font-size:12px}
+.dv-main{display:grid;grid-template-columns:minmax(0,1fr) 200px;gap:14px}
+@media (max-width:760px){.dv-main{grid-template-columns:minmax(0,1fr)}}
+.dv-screen{position:relative;background:#050807;border-radius:12px;border:6px solid #15181B;box-shadow:inset 0 0 0 1px #000,inset 0 0 30px rgba(0,0,0,.8);display:flex;flex-direction:column;min-height:360px;overflow:hidden;font-family:var(--f-mono);color:#DDE6E2}
+.dv-screen.flash{animation:dvFlash .5s ease-out}
+@keyframes dvFlash{0%{background:#FFF7C2}100%{background:#050807}}
+.sc-top{display:flex;gap:10px;align-items:center;padding:5px 10px;background:#0E1A2E;font-size:11px;letter-spacing:.05em;color:#BFD0E8}
+.sc-lead{color:#3DF08E;font-weight:700}.sc-x{padding:1px 6px;border-radius:4px;background:#FFFFFF;color:#000;font-weight:700}.sc-x.pace{background:#FF8A00}
+.sc-clock{margin-left:auto}.sc-batt{width:22px;height:10px;border:1.5px solid #BFD0E8;border-radius:2px;position:relative}.sc-batt i{position:absolute;inset:1px 4px 1px 1px;background:#3DF08E}
+.sc-body{flex:1;display:grid;grid-template-columns:minmax(0,1fr) 128px;min-height:0}
+.sc-waves{display:grid;grid-template-rows:2.2fr 1fr 1fr;min-width:0}
+.sc-wave{position:relative;border-bottom:1px solid #12201A;min-height:60px}
+.sc-wave canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.sc-wl{position:absolute;left:8px;top:4px;font-size:11px;z-index:1}
+.sc-wave.ecg .sc-wl{color:#3DF08E}.sc-wave.pl .sc-wl{color:#4FD8F2}.sc-wave.co .sc-wl{color:#F5C842}
+.sc-nums{display:grid;grid-template-rows:2fr 1fr 1fr 1fr;border-left:1px solid #12201A}
+.sc-n{padding:4px 8px;display:flex;flex-direction:column;justify-content:center;border-bottom:1px solid #12201A}
+.sc-n small{font-size:10px;letter-spacing:.06em}.sc-n b{font-size:24px;line-height:1.05}.sc-n em{font-style:normal;font-size:10px;opacity:.8}
+.sc-n.hr{color:#3DF08E}.sc-n.hr b{font-size:46px}.sc-n.sp{color:#4FD8F2}.sc-n.bp{color:#E6E6E6}.sc-n.bp b{font-size:20px}.sc-n.co{color:#F5C842}
+.sc-therapy{display:flex;gap:14px;align-items:center;padding:6px 10px;background:#101418;border-top:1px solid #1D2A24;font-size:14px;flex-wrap:wrap}
+.sc-energy{font-weight:700;color:#FFD400}.sc-energy.charging{color:#FF9E2C}.sc-energy.ready{background:#FFD400;color:#000;padding:1px 8px;border-radius:4px;animation:dvBlink 1s steps(2) infinite}
+.sc-pacer{color:#FF9E2C}.sc-pacer b{color:#FFFFFF}
+@keyframes dvBlink{50%{opacity:.55}}
+.sc-msg{padding:7px 10px;background:#1B2430;color:#FFFFFF;font-size:13px;font-weight:600;letter-spacing:.03em;text-transform:uppercase;min-height:32px}
+.sc-msg.warn{background:#5A3B00;color:#FFD48A}.sc-msg.shock{background:#B5121B}.sc-msg.info{background:#0E3550}
+@media (max-width:560px){.sc-body{grid-template-columns:minmax(0,1fr) 96px}.sc-n.hr b{font-size:34px}.sc-n b{font-size:18px}.sc-n.bp b{font-size:15px}.dv-screen{min-height:300px}}
+.dv-keys{display:grid;gap:10px;align-content:start;min-width:0}
+.kgrp,.key{min-width:0}
+@media (max-width:760px){.dv-keys{grid-template-columns:1fr 1fr}.dv-keys{align-items:start}.dv-keys .kgrp.pacer{grid-column:1/-1;grid-template-columns:1fr 1fr}.dv-keys .kgrp.pacer .klab,.dv-keys .kgrp.pacer>.key{grid-column:1/-1}.dv-face{padding:12px 10px 10px}.dv-handle{left:30%;right:30%}}
+@media (max-width:420px){.kpair{grid-template-columns:1fr 40px 40px}}
+.kgrp{display:grid;gap:5px;background:#1C1F23;border-radius:12px;padding:8px;box-shadow:inset 0 1px 2px rgba(0,0,0,.5)}
+.kgrp.row{grid-template-columns:1fr 1fr}
+.klab{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.08em;color:#C9D0D6;display:flex;align-items:center;gap:6px}
+.klab i{font-style:normal;width:17px;height:17px;border-radius:50%;background:#E8ECEF;color:#1C1F23;display:grid;place-items:center;font-weight:700;font-size:10.5px}
+.krow{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.key{appearance:none;border:0;cursor:pointer;border-radius:10px;padding:10px 6px;font:700 13px/1 var(--f-mono);letter-spacing:.04em;color:#1C1F23;background:linear-gradient(180deg,#F2F4F6,#C9CED3);box-shadow:0 3px 0 #7D858C,0 4px 6px rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;gap:6px;min-height:40px;transition:transform .05s}
+.key:active{transform:translateY(2px);box-shadow:0 1px 0 #7D858C}
+.key:focus-visible{outline:3px solid #4FD8F2;outline-offset:2px}
+.key.charge{background:linear-gradient(180deg,#FFE45C,#F2B900);box-shadow:0 3px 0 #9A7500,0 4px 6px rgba(0,0,0,.4);min-height:48px;font-size:15px}
+.key.shock{background:linear-gradient(180deg,#FF6B3D,#D6340A);color:#FFFFFF;box-shadow:0 3px 0 #7E1C02,0 4px 6px rgba(0,0,0,.4);min-height:58px;border-radius:50%;width:58px;justify-self:center}
+.key.shock svg{width:28px;height:28px}
+.key.shock.armed{animation:dvArm .7s ease-in-out infinite alternate}
+@keyframes dvArm{from{box-shadow:0 3px 0 #7E1C02,0 0 0 0 rgba(255,107,61,.0)}to{box-shadow:0 3px 0 #7E1C02,0 0 0 8px rgba(255,107,61,.55)}}
+.key.soft{background:linear-gradient(180deg,#5A6168,#3E444A);color:#F0F3F5;box-shadow:0 3px 0 #1A1D20,0 4px 6px rgba(0,0,0,.4);font-size:12px}
+.key.mini{min-height:34px;padding:6px}
+.led-dot{width:8px;height:8px;border-radius:50%;background:#2B3136;box-shadow:inset 0 0 0 1px #000}
+.key.on .led-dot{background:#3DF08E;box-shadow:0 0 8px #3DF08E}
+.kgrp.pacer{grid-template-columns:1fr;border:1px solid #FF8A00}
+.kgrp.pacer .klab{color:#FF9E2C}
+.kpair{display:grid;grid-template-columns:1fr 44px 44px;gap:6px;align-items:center;font:600 10.5px var(--f-mono);letter-spacing:.06em;color:#C9D0D6}
+.dv-grill{height:8px;margin:12px 30% 0;border-radius:4px;background:repeating-linear-gradient(90deg,#15181B 0 6px,transparent 6px 10px)}
+@media (prefers-reduced-motion:reduce){.dv-screen.flash,.key.shock.armed,.sc-energy.ready{animation:none}}
 </style>
 </head>
 <body>
@@ -669,6 +757,7 @@ h1,h2,h3,.qhead h2,.runner-head h2,.score-hero h2,.answer-name,.stat b,.hero .me
       <a href="#strips" data-v="strips">Strips</a>
       <a href="#practice" data-v="practice">Practice</a>
       <a href="#megacode" data-v="megacode">Megacode</a>
+      <a href="#defib" data-v="defib" id="tabDefib" hidden>Defib lab</a>
       <a href="#results" data-v="results">Results</a>
       <a href="#survey" data-v="survey">Survey</a>
       <a href="#scoreboard" data-v="scoreboard" id="tabBoard" hidden>Scoreboard</a>
@@ -740,6 +829,7 @@ h1,h2,h3,.qhead h2,.runner-head h2,.score-hero h2,.answer-name,.stat b,.hero .me
       <div class="area-head"><div><div class="eyebrow">Practice by rhythm family</div><h2 id="areasTitle">Six practice areas, 50 strips each</h2></div><p>Drill one family at a time. Every strip is different and follows the rules of the rhythm it shows.</p></div>
       <div class="area-grid" id="homeAreas"></div>
     </section>
+    <div id="homeDefib"></div>
     <div class="card sv-home" id="homeSurvey"></div>
     <div class="card method">
       <div class="lab">Use the same five steps on every strip</div>
@@ -799,6 +889,11 @@ h1,h2,h3,.qhead h2,.runner-head h2,.score-hero h2,.answer-name,.stat b,.hero .me
       <div class="cases" id="mCases"></div>
     </div>
     <div id="mRun" hidden></div>
+  </section>
+
+  <!-- DEFIB LAB (instructor switch: defibLab) -->
+  <section class="view" id="v-defib" hidden>
+    <div id="dfRoot"></div>
   </section>
 
   <!-- SCOREBOARD (instructors) -->
@@ -1080,11 +1175,11 @@ function renderResults(){
   $("rCases").onclick=function(e){ var b=e.target.closest("button"); if(!b)return; S.ci=+b.getAttribute("data-c"); var k=caseScore(S.ci); S.si=k.a>=k.t?k.t:k.a; save(); location.hash="megacode"; };
   var b; if((b=$("rAsk"))) b.onclick=function(){confirmReset=true; renderResults();};
   if((b=$("rNo"))) b.onclick=function(){confirmReset=false; renderResults();};
-  if((b=$("rYes"))) b.onclick=function(){ S={p:{},m:{},pi:1,ci:null,cohort:S.cohort||"",name:S.name||"",code:S.code||"",sid:S.sid,svDone:S.svDone,svAnswers:S.svAnswers,svAnon:S.svAnon,ar:S.ar}; save(); confirmReset=false; renderResults(); updateTally(); };
+  if((b=$("rYes"))) b.onclick=function(){ S={p:{},m:{},pi:1,ci:null,cohort:S.cohort||"",name:S.name||"",code:S.code||"",sid:S.sid,svDone:S.svDone,svAnswers:S.svAnswers,svAnon:S.svAnon,ar:S.ar,df:S.df}; save(); confirmReset=false; renderResults(); updateTally(); };
 }
 
 /* ================= ROUTER ================= */
-var VIEWS=["home","strips","practice","area","megacode","results","survey","scoreboard"];
+var VIEWS=["home","strips","practice","area","megacode","defib","results","survey","scoreboard"];
 function route(){
   var v=(location.hash||"#home").slice(1), areaKey=null;
   if(v.indexOf("area-")===0 && areaMeta(v.slice(5))){ areaKey=v.slice(5); v="area"; }
@@ -1094,8 +1189,10 @@ function route(){
   document.querySelectorAll(".tabs a").forEach(function(a){ if(a.getAttribute("data-v")===tabV) a.setAttribute("aria-current","page"); else a.removeAttribute("aria-current"); });
   if(v==="area") renderArea(areaKey); else { CUR_AREA=null; renderCardioPop(null); }
   if(v==="practice" || v==="home") renderAreaTiles();
+  defibNav();
   if(v==="strips") renderStrip();
   if(v==="megacode") renderMega();
+  if(v==="defib") renderDefib(); else if(window.DefibLab) DefibLab.stop();
   if(v==="results") renderResults();
   if(v==="survey") renderSurvey(); else if(SV.editing && !SV.sending){ SV.editing=false; }
   if(v==="home" || v==="results") renderSurveyPrompts();
@@ -1130,7 +1227,7 @@ function summaryDoc(){
   var s=stripScore(), m=megaScore(), groups={};
   GROUPS.forEach(function(g){ var t=0,c=0,a=0; P.forEach(function(q){ if(CATS[q.cat].group===g[0]){ t++; var x=S.p[q.n]; if(x!=null){a++; if(x===q.cat)c++;} } }); groups[g[0]]=[c,a,t]; });
   var cases=CASES.map(function(_,ci){ var k=caseScore(ci); return [k.c,k.a,k.t]; });
-  return {strips:{c:s.c,a:s.a,n:N}, mega:{c:m.c,a:m.a,n:TOTAL_Q}, overall:pct(s.c+m.c, N+TOTAL_Q), groups:groups, cases:cases, areas:areasDoc(), p:S.p, m:S.m};
+  return {strips:{c:s.c,a:s.a,n:N}, mega:{c:m.c,a:m.a,n:TOTAL_Q}, overall:pct(s.c+m.c, N+TOTAL_Q), groups:groups, cases:cases, areas:areasDoc(), defib:defibDoc(), p:S.p, m:S.m};
 }
 function pushNow(){
   if(!SB.online) return;
@@ -1159,7 +1256,7 @@ function initShared(){
   fetch(API+"/config", {cache:"no-store"}).then(function(r){ return r.ok ? r.json() : null; }).then(function(cfg){
     SB.configDone=true;
     SB.features=(cfg && cfg.features) || {};
-    renderAreaTiles(); if(location.hash.indexOf("#area-")===0) route();
+    renderAreaTiles(); defibNav(); if(location.hash.indexOf("#area-")===0 || location.hash==="#defib") route();
     if(!cfg || !cfg.scoring){ setSync("offline"); if(location.hash==="#survey") renderSurvey(); return; }
     SB.online=true; SB.requireCode=!!cfg.requireCode; $("codeWrap").hidden=!SB.requireCode;
     pushNow();
@@ -1177,22 +1274,32 @@ function loginHTML(msg){
 }
 function loadSettings(){
   return fetch(API+"/settings", {headers:{authorization:"Bearer "+SB.pass}, cache:"no-store"}).then(function(r){ return r.ok ? r.json() : null; })
-    .then(function(j){ if(j && j.settings){ SB.settings=j.settings; SB.features=j.settings; renderSettings(); renderAreaTiles(); } }, function(){});
+    .then(function(j){ if(j && j.settings){ SB.settings=j.settings; SB.features=j.settings; renderSettings(); renderAreaTiles(); defibNav(); } }, function(){});
 }
-function renderSettings(msg){
+var SWITCHES = [
+  {key:"twelveLead", eyebrow:"Practice area control", title:"12-lead ECG practice area", icon:function(){ return MINI_ECG; }, preview:"#area-twelve",
+   on:"Students see a 12-lead tile on the Overview and Practice pages and can work through all 100 ECGs.", off:"Students can't see or open it. Preview it yourself, then open it when the class is ready."},
+  {key:"defibLab", eyebrow:"Module control", title:"Defib lab: monitor, defibrillator and pacer", icon:function(){ return IC_BOLT; }, preview:"#defib",
+   on:"Students see a Defib lab tab and run 12 scenarios: defibrillation, synchronized cardioversion, pacing and non-shockable arrests.", off:"Students can't see or open it. Preview it yourself, then turn it on when the class is ready."}
+];
+var IC_BOLT='<svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor" aria-hidden="true"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg>';
+function renderSettings(msg, which){
   var box=$("sbSettings"); if(!box) return;
   if(!SB.admin || !SB.settings || location.hash!=="#scoreboard"){ box.innerHTML=""; return; }
-  var on=SB.settings.twelveLead===true;
-  box.innerHTML='<div class="card sb-switch"><div class="sb-switch-ic">'+MINI_ECG+'</div><div class="sb-switch-t"><div class="eyebrow">Practice area control</div><h3>12-lead ECG practice area <span class="pill '+(on?'done':'part')+'">'+(on?'Open to students':'Closed to students')+'</span></h3>'+
-    '<p>'+(on?'Students see a 12-lead tile on the Overview and Practice pages and can work through all 50 ECGs.':'Students can\'t see or open it. Preview it yourself, then open it when the class is ready.')+'</p>'+(msg?'<p class="login-msg" role="alert">'+esc(msg)+'</p>':'')+'</div>'+
-    '<div class="sb-switch-a"><a class="btn btn-ghost" href="#area-twelve">Preview</a><button class="btn '+(on?'btn-ghost':'btn-primary')+'" id="sbTwelve">'+(on?'Close to students':'Open to students')+'</button></div></div>';
-  $("sbTwelve").onclick=function(){
-    var btn=this; btn.disabled=true; btn.textContent=on?"Closing…":"Opening…";
-    fetch(API+"/settings", {method:"PUT", headers:{"content-type":"application/json", authorization:"Bearer "+SB.pass}, body:JSON.stringify({twelveLead:!on})})
+  box.innerHTML=SWITCHES.map(function(w){
+    var on=SB.settings[w.key]===true;
+    return '<div class="card sb-switch"><div class="sb-switch-ic">'+w.icon()+'</div><div class="sb-switch-t"><div class="eyebrow">'+w.eyebrow+'</div><h3>'+esc(w.title)+' <span class="pill '+(on?'done':'part')+'">'+(on?'Open to students':'Closed to students')+'</span></h3>'+
+      '<p>'+(on?w.on:w.off)+'</p>'+(msg && which===w.key?'<p class="login-msg" role="alert">'+esc(msg)+'</p>':'')+'</div>'+
+      '<div class="sb-switch-a"><a class="btn btn-ghost" href="'+w.preview+'">Preview</a><button class="btn '+(on?'btn-ghost':'btn-primary')+'" data-switch="'+w.key+'" id="'+(w.key==="twelveLead"?"sbTwelve":"sb_"+w.key)+'">'+(on?'Close to students':'Open to students')+'</button></div></div>';
+  }).join("");
+  box.querySelectorAll("[data-switch]").forEach(function(btn){ btn.onclick=function(){
+    var k=btn.getAttribute("data-switch"), on=SB.settings[k]===true, body={}; body[k]=!on;
+    btn.disabled=true; btn.textContent=on?"Closing…":"Opening…";
+    fetch(API+"/settings", {method:"PUT", headers:{"content-type":"application/json", authorization:"Bearer "+SB.pass}, body:JSON.stringify(body)})
       .then(function(r){ return r.json().then(function(j){ return {ok:r.ok, j:j}; }); })
-      .then(function(x){ if(x.ok){ SB.settings=x.j.settings; SB.features=x.j.settings; renderSettings(); renderAreaTiles(); } else renderSettings((x.j && x.j.detail) || "That didn't save. Try again."); },
-            function(){ renderSettings("That didn't save. Check your connection and try again."); });
-  };
+      .then(function(x){ if(x.ok){ SB.settings=x.j.settings; SB.features=x.j.settings; renderSettings(); renderAreaTiles(); defibNav(); } else renderSettings((x.j && x.j.detail) || "That didn't save. Try again.", k); },
+            function(){ renderSettings("That didn't save. Check your connection and try again.", k); });
+  }; });
 }
 function showLogin(msg){
   ["sbCsv","sbRefresh","sbOut"].forEach(function(i){ $(i).hidden=true; });
@@ -1226,7 +1333,7 @@ function loadBoard(silent){
     return r.json();
   }).then(function(data){
     if(!data) return;
-    SB.admin=true; SB.rows=data.rows||[]; $("tabBoard").hidden=false;
+    SB.admin=true; SB.rows=data.rows||[]; $("tabBoard").hidden=false; defibNav();
     if(!SB.settings) loadSettings();
     renderAreaTiles();
     if(location.hash==="#area-twelve" && !AREAS.twelve){ AREA_LOADING.twelve=null; route(); }
@@ -1289,7 +1396,7 @@ function renderBoard(){
     return tr;
   }).join("");
   h+='<div class="sb-grid"><div class="card panel"><h3>Students <span class="num">'+n+'</span></h3><div class="tablewrap"><table class="sbt"><thead><tr><th>Student</th><th>Strips</th><th>Megacode</th><th>Overall</th><th>Weakest family</th><th>Survey</th><th>Last active</th></tr></thead><tbody id="sbRows">'+body+'</tbody></table></div><p class="empty">Overall counts unanswered items as incorrect. Select a student for detail.</p></div>'+
-     '<div class="card panel"><h3>Most-missed strips</h3><div class="hard" id="sbHard">'+hardHTML(rows)+'</div></div></div>'+areasPanelHTML(rows)+surveyPanelHTML(rows);
+     '<div class="card panel"><h3>Most-missed strips</h3><div class="hard" id="sbHard">'+hardHTML(rows)+'</div></div></div>'+areasPanelHTML(rows)+defibPanelHTML(rows)+surveyPanelHTML(rows);
   $("sbBody").innerHTML=h;
 }
 function detailHTML(r){
@@ -1301,7 +1408,7 @@ function detailHTML(r){
     ? '<div class="confirm"><span>Remove '+esc(r._name)+'\'s results permanently?</span><button class="btn btn-primary" data-del-yes="'+esc(r.id)+'">Remove</button><button class="btn btn-ghost" data-del-no="1">Cancel</button></div>'
     : '<button class="btn btn-ghost" data-del="'+esc(r.id)+'">Remove this student</button>';
   var ap=AREA_META.map(function(x){ var v=(r.areas||{})[x.key]||[0,0,x.size||AREA_SIZE]; return '<div class="barrow"><span>'+esc(x.short)+'</span><span class="track"><i style="width:'+pct(v[1],v[2])+'%;background:'+x.color+'"></i></span><b>'+(v[1]?v[0]+'/'+v[1]:'—')+'</b></div>'; }).join("");
-  return '<div class="inner"><div><h4>Strips by rhythm family</h4><div class="bars">'+g+'</div><h4 style="margin-top:14px">Practice areas · correct / answered</h4><div class="bars">'+ap+'</div><div style="margin-top:14px">'+del+'</div></div><div><h4>Missed strips ('+missed.length+')</h4><div class="tags">'+ml+'</div><h4 style="margin-top:14px">Megacode cases</h4><div class="tags">'+cs+'</div>'+surveyDetailHTML(r)+'</div></div>';
+  return '<div class="inner"><div><h4>Strips by rhythm family</h4><div class="bars">'+g+'</div><h4 style="margin-top:14px">Practice areas · correct / answered</h4><div class="bars">'+ap+'</div><div style="margin-top:14px">'+del+'</div></div><div><h4>Missed strips ('+missed.length+')</h4><div class="tags">'+ml+'</div><h4 style="margin-top:14px">Megacode cases</h4><div class="tags">'+cs+'</div>'+defibDetailHTML(r)+surveyDetailHTML(r)+'</div></div>';
 }
 function hardHTML(rows){
   var stat={}; rows.forEach(function(r){ var p=r.p||{}; Object.keys(p).forEach(function(n){ var q=P[n-1]; if(!q) return; stat[n]=stat[n]||[0,0]; stat[n][1]++; if(p[n]!==q.cat) stat[n][0]++; }); });
@@ -1326,12 +1433,12 @@ $("sbBody").addEventListener("keydown", function(e){ if((e.key==="Enter"||e.key=
 $("sbCohort").addEventListener("change", renderBoard);
 $("sbSort").addEventListener("change", renderBoard);
 $("sbRefresh").addEventListener("click", function(){ loadBoard(true); });
-$("sbOut").addEventListener("click", function(){ SB.pass=null; SB.admin=false; SB.rows=null; SB.settings=null; delete AREAS.twelve; AREA_LOADING.twelve=null; renderAreaTiles(); stopPoll(); try{ sessionStorage.removeItem("cl-instructor"); }catch(e){} $("tabBoard").hidden=true; showLogin(""); });
+$("sbOut").addEventListener("click", function(){ SB.pass=null; SB.admin=false; SB.rows=null; SB.settings=null; delete AREAS.twelve; AREA_LOADING.twelve=null; renderAreaTiles(); defibNav(); stopPoll(); try{ sessionStorage.removeItem("cl-instructor"); }catch(e){} $("tabBoard").hidden=true; showLogin(""); });
 $("sbCsv").addEventListener("click", function(){
   var rows=boardRows();
-  var head=["Student","Cohort","Strips correct","Strips answered","Strips total","Megacode correct","Megacode answered","Megacode total","Overall %"].concat(GROUPS.map(function(g){return g[1]+" %"})).concat(AREA_META.map(function(x){ return x.short+" practice answered"; })).concat(AREA_META.map(function(x){ return x.short+" practice %"; })).concat(["Survey submitted","Last active"]);
+  var head=["Student","Cohort","Strips correct","Strips answered","Strips total","Megacode correct","Megacode answered","Megacode total","Overall %"].concat(GROUPS.map(function(g){return g[1]+" %"})).concat(AREA_META.map(function(x){ return x.short+" practice answered"; })).concat(AREA_META.map(function(x){ return x.short+" practice %"; })).concat(["Defib scenarios passed","Defib scenarios attempted"]).concat(["Survey submitted","Last active"]);
   var lines=[head].concat(rows.map(function(r){ var s=r.strips||{}, m=r.mega||{};
-    return [r._name, r.cohort||"", num(s.c), num(s.a), N, num(m.c), num(m.a), TOTAL_Q, num(r.overall)].concat(GROUPS.map(function(g){ var v=(r.groups||{})[g[0]]||[0,0,1]; return pct(v[0],v[2]); })).concat(AREA_META.map(function(x){ var v=(r.areas||{})[x.key]; return v?v[1]:0; })).concat(AREA_META.map(function(x){ var v=(r.areas||{})[x.key]; return v&&v[1]?pct(v[0],v[1]):""; })).concat([r.surveyAt? new Date(r.surveyAt).toISOString():"", r.updatedAt? new Date(r.updatedAt).toISOString():""]); }));
+    return [r._name, r.cohort||"", num(s.c), num(s.a), N, num(m.c), num(m.a), TOTAL_Q, num(r.overall)].concat(GROUPS.map(function(g){ var v=(r.groups||{})[g[0]]||[0,0,1]; return pct(v[0],v[2]); })).concat(AREA_META.map(function(x){ var v=(r.areas||{})[x.key]; return v?v[1]:0; })).concat(AREA_META.map(function(x){ var v=(r.areas||{})[x.key]; return v&&v[1]?pct(v[0],v[1]):""; })).concat(defibCounts(r)).concat([r.surveyAt? new Date(r.surveyAt).toISOString():"", r.updatedAt? new Date(r.updatedAt).toISOString():""]); }));
   downloadCsv(lines, "cardiac-lab-scores-"+new Date().toISOString().slice(0,10)+".csv");
 });
 function downloadCsv(lines, filename){
@@ -1339,6 +1446,51 @@ function downloadCsv(lines, filename){
   var url=URL.createObjectURL(new Blob(["\ufeff"+csv], {type:"text/csv;charset=utf-8"}));
   var a=document.createElement("a"); a.href=url; a.download=filename; document.body.appendChild(a); a.click(); a.remove();
   setTimeout(function(){ URL.revokeObjectURL(url); }, 2000);
+}
+
+/* ================= DEFIB LAB (public/defib.js, loaded on demand) ================= */
+var DEFIB_LIST = [["vf","VF"],["pvt","Pulseless VT"],["tdp","Torsades"],["fvf","Fine VF"],["uvt","Unstable VT"],["svt","Unstable SVT"],["af","Unstable AF"],["afl","Unstable flutter"],["chb","Complete heart block"],["b21","2:1 block"],["asy","Asystole"],["pea","PEA"]];
+var DEFIB_LOADING = null;
+function defibOpen(){ return (SB.features||{}).defibLab===true; }
+function defibNav(){
+  var show = defibOpen() || SB.admin;
+  $("tabDefib").hidden = !show;
+  var h=$("homeDefib"); if(!h) return;
+  if(!show){ h.innerHTML=""; return; }
+  var c=defibCounts({defib:defibDoc()});
+  h.innerHTML='<a class="card df-home" href="#defib"><span class="df-home-ic">'+IC_BOLT+'</span><span class="df-home-t"><span class="eyebrow">'+(defibOpen()?'New module':'Closed to students · instructor preview')+'</span><b>Defib lab: monitor, defibrillator and pacer</b>'+
+    '<span>Run a real-time monitor. Select energy, charge, shock, synchronize, and pace through 12 scenarios, then get step-by-step feedback.</span></span><span class="df-home-n num">'+c[0]+'/'+DEFIB_LIST.length+'<small>passed</small></span></a>';
+}
+function defibDoc(){ var out={}, d=S.df||{}; Object.keys(d).forEach(function(k){ var r=d[k]; if(r && r.score) out[k]=[r.score[0], r.score[1], r.ok?1:0]; }); return out; }
+function defibCounts(r){ var d=r.defib||{}, p=0, a=0; Object.keys(d).forEach(function(k){ a++; if(d[k][2]===1) p++; }); return [p, a]; }
+function renderDefib(){
+  var root=$("dfRoot");
+  if(!defibOpen() && !SB.admin){
+    if(!SB.configDone){ root.innerHTML='<div class="card panel"><p class="empty">Loading…</p></div>'; return; }
+    root.innerHTML='<div class="card panel area-locked" style="--ac:var(--band-red)"><span class="sv-ic">'+IC_LOCK+'</span><h3>The Defib lab isn\'t open yet</h3><p class="empty">Your instructor will turn on the monitor, defibrillator and pacer scenarios when the class is ready.</p><a class="btn btn-primary" href="#home">Back to overview</a></div>';
+    return;
+  }
+  var go=function(){ if(location.hash!=="#defib") return; DefibLab.render(root, {
+    esc:esc,
+    load:function(id){ return (S.df||{})[id]||null; },
+    save:function(id, r){ S.df=S.df||{}; var old=S.df[id]; S.df[id]={ok:r.ok||(old&&old.ok)||false, score:r.score, best:Math.max(r.score[0], old&&old.best||0), at:r.at, tries:((old&&old.tries)||0)+1}; save(); defibNav(); }
+  }); if(!defibOpen()) root.insertAdjacentHTML("afterbegin", '<p class="df-preview">Instructor preview: students can\'t see the Defib lab until you open it on the scoreboard.</p>'); };
+  if(window.DefibLab){ go(); return; }
+  root.innerHTML='<div class="card panel"><p class="empty">Loading the Defib lab…</p></div>';
+  if(!DEFIB_LOADING) DEFIB_LOADING=new Promise(function(res, rej){ var sc=document.createElement("script"); sc.src="/defib.js?v=1"; sc.onload=res; sc.onerror=function(){ DEFIB_LOADING=null; rej(); }; document.head.appendChild(sc); });
+  DEFIB_LOADING.then(go, function(){ root.innerHTML='<div class="card panel problem"><h3>The Defib lab didn\'t load</h3><p>Check your connection and reload the page.</p></div>'; });
+}
+function defibPanelHTML(rows){
+  if(!rows.some(function(r){ return r.defib && Object.keys(r.defib).length; }) && !(SB.settings||{}).defibLab) return '';
+  var cells=DEFIB_LIST.map(function(x){
+    var tried=rows.filter(function(r){ return r.defib && r.defib[x[0]]; }), pass=tried.filter(function(r){ return r.defib[x[0]][2]===1; }).length;
+    return '<div class="ar-cell" style="--ac:var(--band-red);--ai:var(--brand-red)"><b>'+esc(x[1])+'</b><span class="ar-big num">'+(tried.length?pct(pass,tried.length)+'%':'—')+'</span><span>passed of students who tried</span><span class="progress"><i style="width:'+pct(tried.length,rows.length||1)+'%"></i></span><small class="num">'+tried.length+' tried · '+pass+' passed</small></div>';
+  }).join("");
+  return '<div class="card panel ar-board"><div class="sv-board-head"><div><div class="eyebrow">Monitor · defibrillator · pacer</div><h3>Defib lab</h3></div></div><div class="ar-board-grid df-board">'+cells+'</div></div>';
+}
+function defibDetailHTML(r){
+  var d=r.defib||{}; if(!Object.keys(d).length) return '';
+  return '<h4 style="margin-top:14px">Defib lab</h4><div class="tags">'+DEFIB_LIST.filter(function(x){ return d[x[0]]; }).map(function(x){ var v=d[x[0]]; return '<span>'+(v[2]?'✓ ':'✗ ')+esc(x[1])+' '+v[0]+'/'+v[1]+'</span>'; }).join("")+'</div>';
 }
 
 /* ================= PRACTICE AREAS (50 strips per rhythm family) ================= */
