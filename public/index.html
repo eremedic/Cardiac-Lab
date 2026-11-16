@@ -1106,7 +1106,23 @@ function renderCases(){
   }).join("");
 }
 $("mCases").addEventListener("click", function(e){ var b=e.target.closest(".case"); if(!b)return; openCase(+b.getAttribute("data-c")); });
-function openCase(ci){ S.ci=ci; var s=caseScore(ci); S.si = s.a>=s.t ? s.t : s.a; save(); renderMega(); scrollTop(); }
+function openCase(ci){ S.ci=ci; var s=caseScore(ci); S.si = s.a>=s.t ? s.t : s.a; save(); renderMega(); megaFit(true); }
+/* Bring the monitor and the question into view together: scroll to the case and shrink the monitor just enough to fit. */
+var MEGA_Z = 1;
+function megaFit(scroll){
+  var mon=document.querySelector("#mRun .monitor"), opts=$("mOpts"), scen=document.querySelector("#mRun .scenario");
+  if(!mon || !opts){ if(scroll) scrollTop(); return; }
+  mon.style.zoom="";
+  var bar=document.querySelector(".bar").getBoundingClientRect().height, avail=window.innerHeight-bar-20;
+  var top=function(el){ return el.getBoundingClientRect().top+window.scrollY; };
+  var monH=mon.getBoundingClientRect().height, below=top(opts)+opts.getBoundingClientRect().height-(top(mon)+monH);
+  var start=scen||mon, z=(avail-below-(top(mon)-top(start)))/monH;
+  if(z<0.75){ start=mon; z=(avail-below)/monH; }
+  MEGA_Z=Math.max(0.5, Math.min(1, z)); if(MEGA_Z>0.995) MEGA_Z=1;
+  mon.style.zoom = MEGA_Z<1 ? MEGA_Z.toFixed(3) : "";
+  if(scroll) window.scrollTo({top:Math.max(0, top(start)-bar-10), behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth"});
+}
+var megaRT; window.addEventListener("resize", function(){ if(location.hash!=="#megacode" || S.ci==null) return; clearTimeout(megaRT); megaRT=setTimeout(function(){ megaFit(false); }, 150); });
 function vitalsFrom(str){
   var v={hr:"--",bp:"--/--",sp:"--",co:"--"};
   var m;
@@ -1149,6 +1165,7 @@ function renderMega(){
   var last = si===cs.stages.length-1;
   var nav = '<div class="qnav"><button class="btn btn-ghost" id="mPrev" '+(si===0?"disabled":"")+'>← Previous decision</button><button class="btn btn-primary" id="mNext" '+(done?"":"disabled")+'>'+(last?"Finish case →":"Next decision →")+'</button></div>';
   $("mRun").innerHTML = '<div class="runner">'+head+scen+mon+'<div class="card decision"><h3>'+esc(st.prompt)+'</h3><div class="opt-list" id="mOpts">'+opts+'</div>'+fb+nav+'</div></div>';
+  if(MEGA_Z<1) document.querySelector("#mRun .monitor").style.zoom=MEGA_Z.toFixed(3);
   bindRun();
   updateTally();
 }
@@ -1162,11 +1179,12 @@ function caseSummary(ci){
 function bindRun(){
   var b;
   if((b=$("mBack"))) b.onclick=function(){ S.ci=null; save(); renderMega(); scrollTop(); };
-  if((b=$("mOpts"))) b.onclick=function(e){ var o=e.target.closest(".opt"); if(!o||o.disabled)return; S.m[S.ci+"-"+S.si]=+o.getAttribute("data-i"); save(); renderMega(); };
-  if((b=$("mPrev"))) b.onclick=function(){ if(S.si>0){S.si--; save(); renderMega();} };
-  if((b=$("mNext"))) b.onclick=function(){ S.si++; save(); renderMega(); scrollTop(); };
+  if((b=$("mOpts"))) b.onclick=function(e){ var o=e.target.closest(".opt"); if(!o||o.disabled)return; S.m[S.ci+"-"+S.si]=+o.getAttribute("data-i"); save(); renderMega();
+    var fb=document.querySelector("#mRun .decision .fb"); if(fb && fb.getBoundingClientRect().top > window.innerHeight*0.75) fb.scrollIntoView({behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth", block:"nearest"}); };
+  if((b=$("mPrev"))) b.onclick=function(){ if(S.si>0){S.si--; save(); renderMega(); megaFit(true);} };
+  if((b=$("mNext"))) b.onclick=function(){ S.si++; save(); renderMega(); megaFit(true); };
   if((b=$("mNextCase"))) b.onclick=function(){ openCase(S.ci+1); };
-  if((b=$("mRetry"))) b.onclick=function(){ var cs=CASES[S.ci]; cs.stages.forEach(function(_,si){ delete S.m[S.ci+"-"+si]; }); S.si=0; save(); renderMega(); scrollTop(); };
+  if((b=$("mRetry"))) b.onclick=function(){ var cs=CASES[S.ci]; cs.stages.forEach(function(_,si){ delete S.m[S.ci+"-"+si]; }); S.si=0; save(); renderMega(); megaFit(true); };
 }
 
 /* ================= RESULTS ================= */
@@ -1210,7 +1228,7 @@ function route(){
   if(v==="practice" || v==="home") renderAreaTiles();
   defibNav();
   if(v==="strips") renderStrip();
-  if(v==="megacode") renderMega();
+  if(v==="megacode"){ renderMega(); if(S.ci!=null) setTimeout(function(){ megaFit(true); }, 0); }
   if(v==="defib") renderDefib(); else if(window.DefibLab) DefibLab.stop();
   if(v==="results") renderResults();
   if(v==="survey") renderSurvey(); else if(SV.editing && !SV.sending){ SV.editing=false; }
