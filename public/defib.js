@@ -219,7 +219,7 @@
       '        <div class="sc-top"><span class="sc-pt" id="scPt">ADULT</span><span class="sc-pads">PADS</span><span id="scLead" class="sc-lead">II</span><span class="sc-x" id="scSync" hidden>SYNC</span><span class="sc-x pace" id="scPaceTag" hidden>PACING</span><span class="sc-clock" id="scClock">00:00</span><span class="sc-batt" aria-hidden="true"><i></i></span></div>' +
       '        <div class="sc-body">' +
       '          <div class="sc-waves">' +
-      '            <div class="sc-wave ecg" data-cal-ms="' + SWEEP * 1000 + '"><span class="sc-wl">II  x1.0</span><canvas id="cvEcg"></canvas></div>' +
+      '            <div class="sc-wave ecg"><span class="sc-wl">II  x1.0</span><canvas id="cvEcg"></canvas></div>' +
       '            <div class="sc-wave pl"><span class="sc-wl">SpO₂</span><canvas id="cvPl"></canvas></div>' +
       '            <div class="sc-wave co"><span class="sc-wl">CO₂</span><canvas id="cvCo"></canvas></div>' +
       '          </div>' +

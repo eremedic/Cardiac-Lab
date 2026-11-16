@@ -204,7 +204,8 @@ body:has(#cardioPop:not([hidden])) main{padding-bottom:200px}
 .action ul{margin:0;padding-left:18px;display:grid;gap:4px;font-size:14px}
 .qnav{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center}
 .grid-nav{margin-top:22px;padding:18px 20px}
-.grid-nav summary{cursor:pointer;font-weight:600;display:flex;justify-content:space-between;align-items:center;list-style:none}
+.grid-nav summary{cursor:pointer;font-weight:600;display:flex;justify-content:flex-start;gap:.3em;align-items:center;list-style:none}
+.grid-nav summary::after{margin-left:auto}
 .grid-nav summary::-webkit-details-marker{display:none}
 .grid-nav summary::after{content:"Show";font-family:var(--f-mono);font-size:12px;color:var(--muted)}
 .grid-nav[open] summary::after{content:"Hide"}
@@ -766,13 +767,21 @@ body.df-focus .bar{position:relative}
 .cal-toggle svg{width:15px !important;height:15px !important;min-width:0 !important;display:inline-block !important}
 .cal-toggle:hover,.cal-toggle:focus-visible,.cal-toggle.on{opacity:1}
 .cal-toggle.on{background:var(--cal);color:var(--cal-ink)}
-.cal-toggle:focus-visible,.cal-leg:focus-visible,.cal-bar:focus-visible,.cal-read button:focus-visible{outline:3px solid var(--cal);outline-offset:2px}
+.cal-toggle:focus-visible,.cal-read button:focus-visible{outline:3px solid var(--cal);outline-offset:2px}
 .cal-ov{position:absolute;inset:0;z-index:4;pointer-events:none}
-.cal-leg{position:absolute;top:30px;bottom:0;width:24px;margin-left:-12px;cursor:ew-resize;pointer-events:auto;touch-action:none}
-.cal-leg::before{content:"";position:absolute;left:11px;top:0;bottom:0;width:2px;background:var(--cal);box-shadow:0 0 0 1px color-mix(in srgb,var(--cal-ink) 35%,transparent)}
-.cal-leg i{position:absolute;left:5px;top:-7px;width:14px;height:14px;border-radius:50%;background:var(--cal);border:2px solid var(--cal-ink)}
-.cal-bar{position:absolute;top:25px;height:10px;cursor:grab;pointer-events:auto;touch-action:none}
-.cal-bar::before{content:"";position:absolute;left:0;right:0;top:4px;height:2px;background:var(--cal)}
+.cal-svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.cal-guides line{stroke:var(--cal);stroke-width:1.2;stroke-dasharray:4 3;opacity:.85}
+.cal-guides line.up{opacity:.35}
+.cal-guides circle{fill:var(--cal)}
+.cal-ticks line{stroke:var(--cal);stroke-width:1.2;stroke-dasharray:2 4;opacity:.75}
+.cal-ticks path{fill:var(--cal);opacity:.75}
+.cal-leg{position:absolute;bottom:0;width:30px;margin-left:-15px;cursor:ew-resize;pointer-events:auto;touch-action:none;border-radius:8px}
+.cal-leg i{position:absolute;left:6px;width:18px;height:18px;border-radius:50%;border:2px solid transparent}
+.cal-leg:hover i,.cal-leg:focus-visible i{border-color:var(--cal);background:color-mix(in srgb,var(--cal) 18%,transparent)}
+.cal-leg:focus-visible{outline:none}
+.cal-bar{position:absolute;width:34px;height:40px;margin-left:-17px;border-radius:50%;cursor:grab;pointer-events:auto;touch-action:none}
+.cal-bar:active{cursor:grabbing}
+.cal-bar:focus-visible{outline:3px solid var(--cal);outline-offset:0}
 .cal-read{position:absolute;top:0;transform:translateX(-50%);display:flex;align-items:center;gap:4px;pointer-events:auto;white-space:nowrap;
   background:var(--cal);color:var(--cal-ink);border-radius:8px;padding:2px 3px 2px 8px;font:600 12px var(--f-mono);box-shadow:0 4px 12px -4px rgba(0,0,0,.4)}
 .cal-read button{border:0;background:rgba(255,255,255,.18);color:inherit;font:inherit;border-radius:6px;padding:1px 6px;cursor:pointer}
@@ -1545,7 +1554,7 @@ function renderDefib(){
   }); if(!defibOpen()) root.insertAdjacentHTML("afterbegin", '<p class="df-preview">Instructor preview: students can\'t see the Defib lab until you open it on the scoreboard.</p>'); };
   if(window.DefibLab){ go(); return; }
   root.innerHTML='<div class="card panel"><p class="empty">Loading the Defib lab…</p></div>';
-  if(!DEFIB_LOADING) DEFIB_LOADING=new Promise(function(res, rej){ var sc=document.createElement("script"); sc.src="/defib.js?v=4"; sc.onload=res; sc.onerror=function(){ DEFIB_LOADING=null; rej(); }; document.head.appendChild(sc); });
+  if(!DEFIB_LOADING) DEFIB_LOADING=new Promise(function(res, rej){ var sc=document.createElement("script"); sc.src="/defib.js?v=5"; sc.onload=res; sc.onerror=function(){ DEFIB_LOADING=null; rej(); }; document.head.appendChild(sc); });
   DEFIB_LOADING.then(go, function(){ root.innerHTML='<div class="card panel problem"><h3>The Defib lab didn\'t load</h3><p>Check your connection and reload the page.</p></div>'; });
 }
 function areaTotals(r){ var c=0,a=0; Object.keys(r.areas||{}).forEach(function(k){ var v=r.areas[k]; if(v){ c+=v[0]; a+=v[1]; } }); return [c,a]; }
@@ -2038,15 +2047,15 @@ function surveyCsv(rows){
 updateTally(); route(); initShared();
 })();
 
-/* ================= CALIPERS (every ECG: strips, practice areas, 12-lead, megacode monitor, Defib lab) =================
+/* ================= CALIPERS (strips, practice areas, 12-lead and the megacode monitor; not the Defib lab) =================
    Two legs joined by a bar. Drag a knob or leg, or focus one and use the arrow keys (1 small box = 0.04 s; Shift for 0.01 s).
    Positions are shared across strips, so the calipers stay where you left them as you move on.                                  */
 (function(){
   var CAL = {on:false, a:0.2, b:0.2+800/6000, march:false};
   try{ var saved = JSON.parse(localStorage.getItem("cl-calipers")||"null"); if(saved){ CAL.on=!!saved.on; CAL.march=!!saved.march; if(saved.a>=0&&saved.a<=1) CAL.a=saved.a; if(saved.b>=0&&saved.b<=1) CAL.b=saved.b; } }catch(e){}
   function persist(){ try{ localStorage.setItem("cl-calipers", JSON.stringify(CAL)); }catch(e){} }
-  var IC_CAL='<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 3v14M15 3v14M5 6h10"/><circle cx="5" cy="6" r="1.6" fill="currentColor"/><circle cx="15" cy="6" r="1.6" fill="currentColor"/></svg>';
-  var hosts = [];
+  var IC_CAL='<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 6.2 4.2 18M10 6.2l5.8 11.8"/><circle cx="10" cy="5.2" r="2.2"/><path d="M10 1.4V3"/></svg>';
+  var hosts = [], CAL_SEQ = 0;
   function clamp(x){ return Math.max(0, Math.min(1, x)); }
   function msOf(h){ return +h.getAttribute("data-cal-ms") || 6000; }
   function fmtS(ms){ return (ms/1000).toFixed(2)+" s"; }
@@ -2076,8 +2085,13 @@ updateTally(); route(); initShared();
     var btn=host.querySelector(".cal-toggle"); if(btn){ btn.setAttribute("aria-pressed", CAL.on?"true":"false"); btn.classList.toggle("on", CAL.on); }
     if(!CAL.on) return;
     ov=document.createElement("div"); ov.className="cal-ov";
-    ov.innerHTML='<div class="cal-ticks" aria-hidden="true"></div>'+
-      '<div class="cal-bar" role="slider" tabindex="0" aria-label="Calipers: move both legs"></div>'+
+    var gid="calg"+(++CAL_SEQ);
+    ov.innerHTML='<svg class="cal-svg" aria-hidden="true" focusable="false"><defs>'+
+        '<linearGradient id="'+gid+'m" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#7C8790"/><stop offset=".35" stop-color="#F4F7F9"/><stop offset=".6" stop-color="#C3CBD1"/><stop offset="1" stop-color="#6A757E"/></linearGradient>'+
+        '<radialGradient id="'+gid+'h" cx=".35" cy=".35" r=".8"><stop offset="0" stop-color="#FFFFFF"/><stop offset=".45" stop-color="#C9D1D7"/><stop offset="1" stop-color="#5E6972"/></radialGradient>'+
+        '<filter id="'+gid+'s" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="1.5" dy="2" stdDeviation="1.6" flood-color="#000" flood-opacity=".35"/></filter></defs>'+
+        '<g class="cal-guides"></g><g class="cal-ticks"></g><g class="cal-body" filter="url(#'+gid+'s)"></g></svg>'+
+      '<div class="cal-bar" role="slider" tabindex="0" aria-label="Calipers hinge: move both legs"></div>'+
       '<div class="cal-leg" data-k="a" role="slider" tabindex="0" aria-label="Caliper leg 1"><i></i></div>'+
       '<div class="cal-leg" data-k="b" role="slider" tabindex="0" aria-label="Caliper leg 2"><i></i></div>'+
       '<div class="cal-read"><output class="cal-val" aria-live="polite"></output>'+
@@ -2122,7 +2136,27 @@ updateTally(); route(); initShared();
     [["a",legs[0]],["b",legs[1]]].forEach(function(x){ var v=CAL[x[0]]*ms; x[1].style.left=(CAL[x[0]]*100)+"%";
       x[1].setAttribute("aria-valuemin","0"); x[1].setAttribute("aria-valuemax", String(Math.round(ms))); x[1].setAttribute("aria-valuenow", String(Math.round(v)));
       x[1].setAttribute("aria-valuetext", "at "+fmtS(v)+"; interval "+fmtS(d)); });
-    var bar=ov.querySelector(".cal-bar"); bar.style.left=(lo*100)+"%"; bar.style.width=((hi-lo)*100)+"%";
+    var W=ov.clientWidth||720, Hh=ov.clientHeight||170;
+    var hingeY=Hh<130?34:46, tipY=Math.min(Hh-8, Math.max(hingeY+44, Math.round(Hh*0.74)));
+    var xa=CAL.a*W, xb=CAL.b*W, hx=(xa+xb)/2, gid=ov.querySelector("linearGradient").id.slice(0,-1);
+    var leg=function(tx){
+      var dx=tx-hx, dy=tipY-hingeY, L=Math.sqrt(dx*dx+dy*dy)||1, ux=dx/L, uy=dy/L, nx=-uy, ny=ux;
+      var nl=Math.min(14, L*0.25), px=tx-ux*nl, py=tipY-uy*nl, w0=4.6, w1=1.7;
+      var poly=[[hx+nx*w0,hingeY+ny*w0],[px+nx*w1,py+ny*w1],[px-nx*w1,py-ny*w1],[hx-nx*w0,hingeY-ny*w0]].map(function(p){ return p[0].toFixed(1)+","+p[1].toFixed(1); }).join(" ");
+      return '<polygon points="'+poly+'" fill="url(#'+gid+'m)" stroke="#3A434A" stroke-width=".8" stroke-linejoin="round"/>'+
+        '<line x1="'+px.toFixed(1)+'" y1="'+py.toFixed(1)+'" x2="'+tx.toFixed(1)+'" y2="'+tipY+'" stroke="#2B3238" stroke-width="1.3" stroke-linecap="round"/>';
+    };
+    var body=leg(xa)+leg(xb)+
+      '<rect x="'+(hx-6).toFixed(1)+'" y="'+(hingeY-22)+'" width="12" height="13" rx="2.5" fill="url(#'+gid+'m)" stroke="#3A434A" stroke-width=".8"/>'+
+      [-3,0,3].map(function(o){ return '<line x1="'+(hx+o).toFixed(1)+'" y1="'+(hingeY-20)+'" x2="'+(hx+o).toFixed(1)+'" y2="'+(hingeY-11)+'" stroke="#4A545B" stroke-width=".7"/>'; }).join("")+
+      '<circle cx="'+hx.toFixed(1)+'" cy="'+hingeY+'" r="9.5" fill="url(#'+gid+'h)" stroke="#3A434A" stroke-width=".9"/>'+
+      '<circle cx="'+hx.toFixed(1)+'" cy="'+hingeY+'" r="3.6" fill="#59636B" stroke="#2B3238" stroke-width=".6"/>'+
+      '<line x1="'+(hx-2.6).toFixed(1)+'" y1="'+(hingeY+1.2)+'" x2="'+(hx+2.6).toFixed(1)+'" y2="'+(hingeY-1.2)+'" stroke="#D5DBDF" stroke-width=".9" stroke-linecap="round"/>';
+    var gd=function(x){ return '<line x1="'+x.toFixed(1)+'" y1="'+tipY+'" x2="'+x.toFixed(1)+'" y2="'+Hh+'"/><line x1="'+x.toFixed(1)+'" y1="'+(hingeY+12)+'" x2="'+x.toFixed(1)+'" y2="'+(tipY-6)+'" class="up"/><circle cx="'+x.toFixed(1)+'" cy="'+tipY+'" r="2.4"/>'; };
+    var svg=ov.querySelector(".cal-svg"); svg.setAttribute("viewBox","0 0 "+W+" "+Hh);
+    ov.querySelector(".cal-body").innerHTML=body; ov.querySelector(".cal-guides").innerHTML=gd(xa)+gd(xb);
+    [legs[0],legs[1]].forEach(function(el){ el.style.top=(tipY-46)+"px"; el.querySelector("i").style.top="37px"; });
+    var bar=ov.querySelector(".cal-bar"); bar.style.left=(hx/W*100)+"%"; bar.style.top=(hingeY-24)+"px";
     bar.setAttribute("aria-valuemin","0"); bar.setAttribute("aria-valuemax", String(Math.round(ms))); bar.setAttribute("aria-valuenow", String(Math.round(lo*ms)));
     bar.setAttribute("aria-valuetext", "interval "+fmtS(d)+" starting at "+fmtS(lo*ms));
     var boxes=d/40, rate=d>=200?Math.round(60000/d):null;
@@ -2131,8 +2165,8 @@ updateTally(); route(); initShared();
     var rd=ov.querySelector(".cal-read"), mid=(lo+hi)/2, wide=ov.getBoundingClientRect().width||720, edge=Math.min(0.45, 170/wide);
     rd.style.left=(Math.max(edge, Math.min(1-edge, mid))*100)+"%";
     var mb=ov.querySelector(".cal-march"); mb.setAttribute("aria-pressed", CAL.march?"true":"false"); mb.classList.toggle("on", CAL.march);
-    var tk=ov.querySelector(".cal-ticks"), h="";
-    if(CAL.march && hi-lo>0.004){ var w=hi-lo; for(var x=lo-w; x>-0.0001; x-=w) h+='<i style="left:'+(x*100)+'%"></i>'; for(var y=hi+w; y<1.0001; y+=w) h+='<i style="left:'+(y*100)+'%"></i>'; }
+    var tk=ov.querySelector(".cal-ticks"), h="", tick=function(f){ var x=(f*W).toFixed(1); return '<line x1="'+x+'" y1="'+(hingeY+12)+'" x2="'+x+'" y2="'+Hh+'"/><path d="M'+x+' '+(tipY-7)+'l-4 -7h8z"/>'; };
+    if(CAL.march && hi-lo>0.004){ var w=hi-lo; for(var x=lo-w; x>-0.0001; x-=w) h+=tick(x); for(var y=hi+w; y<1.0001; y+=w) h+=tick(y); }
     if(tk.innerHTML!==h) tk.innerHTML=h;
   }
   function renderAll(){ hosts.forEach(render); }

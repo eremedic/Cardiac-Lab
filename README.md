@@ -76,8 +76,8 @@ Progress is kept in the student's browser. Using a different device or browser s
 - The scoreboard works this out from each student's saved counts, so older rows follow the same rule.
 
 **Calipers**
-- Every ECG has a **Calipers** button: the Strips module, every practice area, the 12-lead printouts, the megacode monitor and the live Defib lab screen. It shows two legs joined by a bar with a readout of the interval in seconds, small boxes and the matching rate per minute. **March** repeats the interval across the strip (useful for P–P and R–R regularity and hidden P waves).
-- Drag a leg or the bar with a mouse or finger. With a keyboard: Tab to a leg or the bar, then arrow keys move one small box (0.04 s); Shift + arrow moves 0.01 s, Page Up/Down moves one large box, Home/End jumps to either end, and Escape closes the calipers. The legs are labeled sliders that announce their position and the interval to screen readers.
+- Every ECG has a **Calipers** button: the Strips module, every practice area, the 12-lead printouts and the megacode monitor. The Defib lab monitor doesn't have them. They look like a real steel divider: two tapered legs on a hinge with an adjustment knob, needle points on the strip, and a faint guide line from each point, with a readout of the interval in seconds, small boxes and the matching rate per minute. **March** repeats the interval across the strip (useful for P–P and R–R regularity and hidden P waves).
+- Drag a needle point to open or close the calipers, or drag the hinge to move them. With a keyboard: Tab to a leg or the hinge, then arrow keys move one small box (0.04 s); Shift + arrow moves 0.01 s, Page Up/Down moves one large box, Home/End jumps to either end, and Escape closes the calipers. The legs are labeled sliders that announce their position and the interval to screen readers.
 - The calipers stay open and in place as you move from strip to strip, and the browser remembers the setting.
 
 **Practice areas**
