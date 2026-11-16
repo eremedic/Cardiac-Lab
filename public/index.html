@@ -1664,7 +1664,7 @@ function renderArea(key){
   }).join("");
   var dots=data.items.map(function(it){ var x=st.p[it.n], c = x==null ? "" : (x===it.cat?"r":"w"); return '<button class="dot '+c+(it.n===st.pi?" cur":"")+'" data-n="'+it.n+'" aria-label="Strip '+it.n+'">'+it.n+'</button>'; }).join("");
   body.innerHTML=head+'<div class="card qcard"><div class="strip-top"><div class="stem"><span class="tag">'+esc(m.short)+'</span><p>'+(q.leads?'Interpret this 12-lead ECG.':'Identify this rhythm.')+'</p></div>'+(q.hints?cardioBtnHTML(q, st, done):'')+'</div>'+
-    '<div><div class="paper">'+(q.leads?ecg12SVG(q):stripSVG(q.strip,"paper",false))+'</div><div class="paper-meta"><span>'+(q.leads?'12-lead · 25 mm/s · 10 mm/mV · bottom row: lead II rhythm strip':'Lead II · 25 mm/s · 6-second strip')+'</span><span class="scroll-hint">'+(q.leads?'':'Swipe to see the whole strip →')+'</span></div></div>'+
+    '<div><div class="paper">'+(q.leads?ecg12SVG(q):stripSVG(q.strip,"paper",false))+'</div><div class="paper-meta"><span>'+(q.leads?'12-lead · 25 mm/s · 10 mm/mV · bottom row: lead II rhythm strip':'Lead II · 25 mm/s · 6-second strip')+'</span><span class="scroll-hint"></span></div></div>'+
     '<div><div class="eyebrow" style="margin-bottom:10px">'+(q.leads?'What does it show?':'Identify the rhythm')+'</div><div class="opts" id="arOpts" role="group" aria-label="Answer choices">'+opts+'</div></div>'+
     '<div aria-live="polite">'+(done?stripFeedback(q, chosen):'')+'</div>'+
     '<div class="qnav"><button class="btn btn-ghost" id="arPrev" '+(st.pi===1?'disabled':'')+'>← Previous</button><button class="btn btn-primary" id="arNext">'+(st.pi===total?'See area results →':(done?'Next '+unit.toLowerCase()+' →':'Skip →'))+'</button></div></div>'+
@@ -1677,24 +1677,25 @@ function renderArea(key){
   $("arNext").onclick=function(){ st.pi++; save(); renderArea(key); scrollTop(); };
   $("arDots").onclick=function(e){ var b=e.target.closest(".dot"); if(!b) return; st.pi=+b.getAttribute("data-n"); save(); renderArea(key); scrollTop(); };
   updateTally();
-  if(q && q.leads){ var fk=key+":"+q.n, fresh=FIT12_LAST!==fk; FIT12_LAST=fk; fit12(false); setTimeout(function(){ fit12(fresh); }, 0); } else FIT12_LAST=null;
+  if(q){ var fk=key+":"+q.n, fresh=FIT12_LAST!==fk; FIT12_LAST=fk; fit12(false); setTimeout(function(){ fit12(fresh); }, 0); } else FIT12_LAST=null;
 }
-/* 12-lead: scale the whole printout to the screen and line it up at the top, so no scrolling is needed to see it */
+/* Practice areas (rhythm strips and 12-leads): scale the whole ECG to the screen and line it up at the top, so no scrolling is needed to see it */
 var FIT12_LAST=null;
 function fit12(scroll){
-  var svg=document.querySelector("#v-area svg.ecg12"); if(!svg || $("v-area").hidden) return;
+  var svg=document.querySelector("#v-area .paper svg:not(.cal-svg)"); if(!svg || $("v-area").hidden) return;
+  var vb=(svg.getAttribute("viewBox")||"0 0 6000 1000").split(/\s+/), aspect=(+vb[2])/(+vb[3]||1);
   var paper=svg.closest(".paper"), wrap=svg.closest(".cal-wrap"), card=paper.closest(".qcard")||paper, meta=paper.nextElementSibling;
   var bar=document.querySelector(".bar").getBoundingClientRect().height;
   var top=function(el){ return el.getBoundingClientRect().top+window.scrollY; };
   var band=wrap && wrap.classList.contains("cal-on") ? 80 : 0, metaH=meta ? meta.getBoundingClientRect().height+10 : 0;
   var availH=window.innerHeight-bar-20-(top(paper)-top(card))-band-metaH-4, availW=paper.clientWidth;
-  var w=Math.floor(Math.max(300, Math.min(availW, availH*10000/4800)));
+  var w=Math.floor(Math.max(Math.min(300, availW), Math.min(availW, availH*aspect)));
   if(wrap){ svg.style.width=""; svg.style.minWidth=""; wrap.style.width=w+"px"; wrap.style.minWidth="0"; wrap.style.margin="0 auto"; }
   else { svg.style.width=w+"px"; svg.style.minWidth="0"; svg.style.margin="0 auto"; }
   if(window.__calUpdate) window.__calUpdate();  // the calipers redraw for the new size
   if(scroll) window.scrollTo({top:Math.max(0, top(card)-bar-10), behavior:"auto"});
 }
-window.addEventListener("resize", function(){ if(location.hash==="#area-twelve") fit12(false); });
+window.addEventListener("resize", function(){ if(location.hash.indexOf("#area-")===0) fit12(false); });
 window.fit12 = fit12;  // the calipers call this when they open or close the band above the ECG
 function areaSummaryHTML(key){
   var data=AREAS[key], st=areaState(key), sc=areaScore(key), byCat={};
@@ -2102,7 +2103,7 @@ updateTally(); route(); initShared();
       attach(wrap, ms);
     });
     document.querySelectorAll("[data-cal-ms]:not(.cal-host)").forEach(function(h){ attach(h, +h.getAttribute("data-cal-ms")); });
-    if(window.fit12 && document.querySelector("#v-area svg.ecg12")) fit12(false);
+    if(window.fit12 && location.hash.indexOf("#area-")===0) fit12(false);
   }
   function render(host){
     var ov=host.querySelector(".cal-ov"); if(ov) ov.remove();
