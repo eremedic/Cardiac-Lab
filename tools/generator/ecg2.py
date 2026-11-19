@@ -24,6 +24,7 @@ class S:
         self.r = np.random.default_rng(seed)
         self.y = wander * np.sin(2 * np.pi * 0.23 * t + self.r.uniform(0, 6)) + self.r.normal(0, noise, t.size)
         self.q, self.p, self.spk = [], [], []
+        self.wq = []  # wide QRS times (teaching marks)
 
     def P(self, c, a=0.2, w=0.022):
         if c < DUR + 0.1:
@@ -58,6 +59,8 @@ class S:
             y += g(c, 0.45, 0.06) + g(c + 0.12, -0.25, 0.06) + g(c + 0.5, -0.15, 0.09)
         if c < DUR:
             self.q.append(c)
+            if kind in ("w", "p", "v", "v2", "tcp", "agonal"):
+                self.wq.append(c)
 
 
 # ---------- rate helpers ----------

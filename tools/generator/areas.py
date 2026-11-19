@@ -40,6 +40,7 @@ class Strip:
         self.q, self.p, self.spk = [], [], []
         self.pairs = []          # (p_time, qrs_time) for conducted beats
         self.blocked = []        # P waves not followed by a QRS
+        self.wq = []             # wide (ventricular-origin) QRS times, for the on-strip teaching marks
         # sinus P
         self.pa = rng.uniform(0.11, 0.24)
         self.pw = rng.uniform(0.018, 0.027)
@@ -106,6 +107,7 @@ class Strip:
         self.y += g(c + d / 2 + tm["tg"], -pol * tm["ta"] * t_scale, tm["tw"])
         if record and 0 <= c < DUR:
             self.q.append(c)
+            self.wq.append(c)
 
     def spike(self, c, a):
         if 0 <= c < DUR:

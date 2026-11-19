@@ -29,7 +29,22 @@ def encode(st):
         else:
             out.append(chr(int(x - prev) + 80))
         prev = x
-    return {"d": "".join(out), "s": [[int(round(c * 1000)), int(round(a * 100))] for c, a in st.spk]}
+    return {"d": "".join(out), "s": [[int(round(c * 1000)), int(round(a * 100))] for c, a in st.spk], "m": marks(st)}
+
+
+def marks(st):
+    """Beat timings (ms) the app uses to mark up a strip after a wrong answer: P waves, QRS complexes,
+    which QRS are wide, and, when the generator knows them, the conducted P-QRS pairs with their true PR
+    and the P waves that weren't conducted."""
+    ms = lambda x: int(round(x * 1000))
+    ok = lambda x: 0 <= x < 6.0
+    m = {"p": [ms(x) for x in sorted(st.p) if ok(x)], "q": [ms(x) for x in sorted(st.q) if ok(x)],
+         "w": [ms(x) for x in sorted(getattr(st, "wq", [])) if ok(x)]}
+    if hasattr(st, "pairs"):
+        k, pw = getattr(st, "k", 1.0), getattr(st, "pw", 0.022)
+        m["pr"] = [[ms(p), ms(q), ms((q - 0.038 * k) - (p - 2 * pw))] for p, q in sorted(st.pairs) if ok(p) and ok(q)]
+        m["b"] = [ms(x) for x in sorted(st.blocked) if ok(x)]
+    return m
 
 
 def add_strip(key, st):

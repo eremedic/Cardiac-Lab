@@ -804,6 +804,34 @@ body.df-focus .bar{position:relative}
 .cal-read .cal-march.on{background:var(--cal-ink);color:var(--cal)}
 .cal-ticks i{position:absolute;top:30px;bottom:0;border-left:2px dashed color-mix(in srgb,var(--cal) 70%,transparent)}
 @media (max-width:560px){.cal-read{font-size:10.5px;padding:2px 2px 2px 6px}.cal-read button{padding:1px 4px}.cal-toggle span{display:none}.cal-toggle{padding:4px}}
+/* ---------- on-strip teaching marks ---------- */
+.mk-ov{position:absolute;left:0;right:0;top:0;bottom:0;z-index:2;pointer-events:none;animation:mkIn .35s ease-out}
+.cal-wrap.cal-on>.mk-ov{top:80px}
+@keyframes mkIn{from{opacity:0}to{opacity:1}}
+.mk{position:absolute;transform:translate(-50%,calc(-100% - 5px));font:700 10.5px/1.25 var(--f-mono);padding:1px 5px;border-radius:5px;background:#0A738B;color:#FFFFFF;white-space:nowrap;box-shadow:0 1px 3px rgba(0,0,0,.25)}
+.mk::after{content:"";position:absolute;left:50%;bottom:-4px;margin-left:-4px;border:4px solid transparent;border-bottom:0;border-top-color:inherit}
+.mk-p{background:#0A738B;border-color:#0A738B}
+.mk.bad{background:#D9121A;border-color:#D9121A}
+.mk-w{background:#7A1FA2;border-color:#7A1FA2}
+.mk-s{top:14%;background:#C25400;border-color:#C25400;transform:translate(-50%,0)}
+.mk-s::after{display:none}
+.mk.under{transform:translate(-50%,6px)}
+.mk.under::after{bottom:auto;top:-4px;border-bottom:4px solid;border-top:0;border-bottom-color:inherit;border-left-color:transparent;border-right-color:transparent}
+.mk.L{transform:translate(-6px,calc(-100% - 5px))}.mk.Rt{transform:translate(calc(-100% + 6px),calc(-100% - 5px))}
+.mk.L::after{left:6px}.mk.Rt::after{left:auto;right:2px}
+.mk-s.L{transform:translate(-4px,0)}.mk-s.Rt{transform:translate(calc(-100% + 4px),0)}
+.mk.under.L{transform:translate(-6px,6px)}.mk.under.Rt{transform:translate(calc(-100% + 6px),6px)}
+.mk-br{position:absolute;height:9px;border:1.5px solid;pointer-events:none}
+.mk-br b{position:absolute;left:50%;transform:translateX(-50%);font:700 10px var(--f-mono);white-space:nowrap;padding:0 3px;border-radius:4px;background:var(--surface)}
+.mk-br.rr{top:3px;border-top:0;border-color:#02245D;color:#02245D}
+.mk-br.rr b{top:-2px}
+.mk-br.pr{bottom:24%;border-bottom:0;border-color:#0A738B;color:#0A738B}
+.mk-br.pr b{top:8px}
+.mk-note{position:absolute;right:8px;bottom:8px;max-width:60%;font:600 12px/1.3 var(--f-sans,inherit);background:#02245D;color:#FFFFFF;padding:4px 9px;border-radius:7px;box-shadow:0 2px 6px rgba(0,0,0,.25)}
+.mk-hint{display:flex;gap:8px;align-items:flex-start;background:var(--navy-soft);border-radius:10px;padding:8px 10px}
+.mk-hint svg{width:18px;height:18px;flex:none;color:var(--navy)}
+@media (max-width:600px){.mk{font-size:9px;padding:0 3px}.mk-br b{font-size:8.5px}.mk-note{font-size:10.5px;max-width:80%}}
+@media (prefers-reduced-motion:reduce){.mk-ov{animation:none}}
 </style>
 </head>
 <body>
@@ -1105,16 +1133,101 @@ function renderStrip(){
     return '<button class="opt '+cls+'" data-o="'+esc(o)+'" '+(done?"disabled":"")+'><span class="k">'+letters[i]+'</span><span>'+esc(o)+'</span></button>';
   }).join("");
   $("sFb").innerHTML = done ? stripFeedback(q, chosen) : "";
+  if(done && chosen!==q.cat) markStrip($("sPaper"), q.strip, q.cat);
   $("sPrev").disabled = S.pi===1;
   $("sNext").textContent = S.pi===N ? "See results →" : (done ? "Next strip →" : "Skip →");
   renderDots();
   updateTally();
 }
 var REVEALED = "Revealed by the cardiologist";
+
+/* ================= ON-STRIP TEACHING MARKS (shown after a wrong answer) =================
+   Uses the beat timings saved with each strip (D.strips[key].m) to label what makes the correct rhythm what it is:
+   P waves (red when not conducted), PR intervals, R–R intervals, wide QRS complexes, pacer spikes and capture,
+   plus a short note for rhythms with no discrete beats.                                                           */
+var MARK_NOTES = {
+  "Atrial fibrillation":"No P waves: wavy baseline, and every R–R interval is different",
+  "Atrial flutter":"Sawtooth flutter waves instead of P waves",
+  "Supraventricular tachycardia (SVT)":"No visible P waves; fast and regular",
+  "Multifocal atrial tachycardia (MAT)":"P waves change shape from beat to beat; rate over 100",
+  "Wandering atrial pacemaker":"P waves change shape from beat to beat; rate under 100",
+  "Ventricular fibrillation (coarse)":"Chaotic: no P, QRS or T anywhere",
+  "Ventricular fibrillation (fine)":"Small chaotic waves, not a flat line: no P, QRS or T",
+  "Polymorphic VT (torsades de pointes)":"QRS height twists up and down around the baseline",
+  "Asystole":"Flat line: no electrical activity (confirm in a second lead)",
+  "Agonal rhythm":"Rare, wide, slow complexes",
+  "3rd-degree (complete) AV block":"P waves march through on their own; no fixed PR",
+  "Junctional rhythm":"No upright P before the QRS", "Junctional bradycardia":"No upright P before the QRS",
+  "Accelerated junctional rhythm":"No upright P before the QRS", "Junctional tachycardia":"No upright P before the QRS",
+  "Idioventricular rhythm":"Wide QRS, no P waves, rate 20–40", "Accelerated idioventricular rhythm (AIVR)":"Wide QRS, no P waves, rate 40–100",
+  "Monomorphic ventricular tachycardia":"Wide, fast, regular, all the same shape",
+  "Pacer spikes without capture (asystole)":"Spikes with nothing after them"
+};
+var NO_RR = {"Ventricular fibrillation (coarse)":1, "Ventricular fibrillation (fine)":1, "Polymorphic VT (torsades de pointes)":1, "Asystole":1};
+function markStrip(host, key, cat){
+  var st=D.strips[key], m=st && st.m, svg=host && host.querySelector("svg:not(.cal-svg)");
+  if(!m || !svg) return;
+  var box=svg.parentNode; Array.prototype.slice.call(box.querySelectorAll(":scope > .mk-ov")).forEach(function(o){ o.remove(); });
+  var VW=+(svg.getAttribute("viewBox")||"0 0 6000").split(/\s+/)[2]||6000, v=decode(key), grp=(CATS[cat]||{}).group, chb=/complete/.test(cat);
+  var X=function(ms){ return (ms/VW*100).toFixed(2)+"%"; };
+  var edge=function(ms){ var f=ms/VW; return f<0.06 ? " L" : (f>0.94 ? " Rt" : ""); };  // keep labels inside the strip
+  var low=function(ms, win){ var a=Math.max(0, Math.round((ms-win)/2)), b=Math.min(v.length-1, Math.round((ms+win)/2)), lo=999; for(var i=a;i<=b;i++) if(v[i]<lo) lo=v[i]; return Y(lo)/H*100; };
+  var top=function(ms, win){ var a=Math.max(0, Math.round((ms-(win||0))/2)), b=Math.min(v.length-1, Math.round((ms+(win||0))/2)), hi=-999; for(var i=a;i<=b;i++) if(v[i]>hi) hi=v[i]; return (Y(hi)/H*100).toFixed(1)+"%"; };
+  var h="", near=function(list, x, tol){ return list.some(function(y){ return Math.abs(y-x)<=tol; }); };
+  var wide=m.w||[], spikes=(st.s||[]).map(function(x){ return x[0]; });
+  // pairs: exact from the generator when known, else inferred (a QRS 60–450 ms after the P with no other P between)
+  var pairs=m.pr, blocked=m.b;
+  if(!pairs){
+    pairs=[]; blocked=[];
+    m.p.forEach(function(p, i){ var nx=m.p[i+1]==null?1e9:m.p[i+1], q=m.q.filter(function(x){ return x>p+60 && x<p+450 && x<nx; })[0];
+      if(q!=null && !near(wide, q, 5)) pairs.push([p, q, q-p]); else if(grp==="block") blocked.push(p); });
+  }
+  if(chb){ pairs=[]; blocked=[]; }
+  // P waves
+  m.p.forEach(function(p){ var bad=near(blocked, p, 6);
+    h+='<span class="mk mk-p'+(bad?' bad':'')+edge(p)+'" style="left:'+X(p)+';top:'+top(p, 30)+'">'+(bad?'P · not conducted':'P')+'</span>'; });
+  // PR intervals (sinus, blocks, atrial ectopy)
+  if((grp==="sinus" || grp==="block" || /PAC|atrial contractions/.test(cat)) && pairs.length){
+    pairs.forEach(function(x){ var q0=x[1]-38, p0=q0-x[2];
+      h+='<span class="mk-br pr" style="left:'+X(p0)+';width:'+(x[2]/VW*100).toFixed(2)+'%"><b>PR '+(x[2]/1000).toFixed(2)+'</b></span>'; });
+  }
+  // R–R intervals
+  if(m.q.length>=2 && !NO_RR[cat]){
+    for(var i=1;i<m.q.length;i++){ var a=m.q[i-1], d=m.q[i]-a;
+      h+='<span class="mk-br rr" style="left:'+X(a)+';width:'+(d/VW*100).toFixed(2)+'%"><b>'+(d/1000).toFixed(2)+'</b></span>'; }
+  }
+  // wide QRS
+  var narrowToo=m.q.length>wide.length;
+  var paced = grp==="paced" || spikes.length>0;
+  wide.forEach(function(q){ var lbl = paced && spikes.some(function(c){ return q>=c-5 && q-c<=140; }) ? 'paced QRS' : (narrowToo && grp==="ventricular" ? 'PVC · wide' : 'wide QRS');
+    var t=parseFloat(top(q+40, 90));
+    if(t>26) h+='<span class="mk mk-w'+edge(q)+'" style="left:'+X(q)+';top:'+t.toFixed(1)+'%">'+lbl+'</span>';
+    else h+='<span class="mk mk-w under'+edge(q)+'" style="left:'+X(q)+';top:'+Math.min(low(q+40, 120), 84).toFixed(1)+'%">'+lbl+'</span>'; });
+  // pacer spikes and capture
+  if(grp==="paced" || spikes.length){
+    spikes.forEach(function(c){ var cap=m.q.some(function(q){ return q>=c-5 && q-c<=140; });
+      h+='<span class="mk mk-s'+(cap?'':' bad')+edge(c)+'" style="left:'+X(c)+'">'+(cap?'✓ capture':'✗ no capture')+'</span>'; });
+  }
+  var note=MARK_NOTES[cat];
+  if(note) h+='<span class="mk-note">'+esc(note)+'</span>';
+  var ov=document.createElement("div"); ov.className="mk-ov"; ov.setAttribute("aria-hidden","true"); ov.innerHTML=h;
+  box.appendChild(ov);
+  // say exactly what was marked
+  var said=[], c=function(sel){ return ov.querySelectorAll(sel).length; };
+  if(c(".mk-p")) said.push("P waves"+(c(".mk-p.bad")?" (red: not conducted)":""));
+  if(c(".mk-br.pr")) said.push("PR intervals");
+  if(c(".mk-br.rr")) said.push("R–R intervals (seconds, across the top)");
+  if(c(".mk-w")) said.push("wide QRS complexes");
+  if(c(".mk-s")) said.push("pacer spikes and whether they capture");
+  var hint=document.querySelector(".mk-hint span");
+  if(hint){ var nm=cat.replace(/\s*\(.*\)$/,"");
+    hint.textContent = "Look back at the strip: it's now marked up to show what makes this "+nm+"."+(said.length?" Labeled: "+said.join(", ")+".":"")+(note?" "+note+".":""); }
+}
 function stripFeedback(q, chosen){
   var ok = chosen===q.cat, C = CATS[q.cat], X = CATS[chosen], revealed = chosen===REVEALED;
   var h = '<div class="fb '+(ok?"ok":"no")+'"><div class="verdict">'+(ok?IC.ok+"Correct":IC.no+(revealed?"Answer revealed · counted as wrong":"Not quite"))+'</div>';
   h += '<div class="answer-name">'+esc(q.name)+'</div>';
+  if(!ok && !q.leads) h += '<p class="fb-note mk-hint">'+IC.bulb+'<span>Look back at the strip: it\'s now marked up to show what makes this '+esc(q.cat.replace(/\s*\(.*\)$/,""))+'. P waves'+(' (red if not conducted)')+', PR and R–R intervals in seconds'+', wide QRS complexes and pacer spikes are labeled where they apply.</span></p>';
   if(revealed){
     h += '<p class="fb-note">The cardiologist talked you through this one, so it counts as wrong. Here\'s the full explanation.</p>';
   } else if(!ok){
@@ -1691,6 +1804,7 @@ function renderArea(key){
   $("arNext").onclick=function(){ st.pi++; save(); renderArea(key); scrollTop(); };
   $("arDots").onclick=function(e){ var b=e.target.closest(".dot"); if(!b) return; st.pi=+b.getAttribute("data-n"); save(); renderArea(key); scrollTop(); };
   updateTally();
+  if(q && done && chosen!==q.cat && !q.leads) markStrip(document.querySelector("#v-area .paper"), q.strip, q.cat);
   if(q){ var fk=key+":"+q.n, fresh=FIT12_LAST!==fk; FIT12_LAST=fk; fit12(false); setTimeout(function(){ fit12(fresh); }, 0); } else FIT12_LAST=null;
 }
 /* Practice areas (rhythm strips and 12-leads): scale the whole ECG to the screen and line it up at the top, so no scrolling is needed to see it */
@@ -2114,6 +2228,7 @@ updateTally(); route(); initShared();
       var vb=(svg.getAttribute("viewBox")||"0 0 6000 1").split(/\s+/), ms=+vb[2]||6000;
       var wrap=document.createElement("div"); wrap.className="cal-wrap"+(svg.classList.contains("ecg12")?" wide":"");
       svg.parentNode.insertBefore(wrap, svg); wrap.appendChild(svg);
+      Array.prototype.slice.call(wrap.parentNode.querySelectorAll(":scope > .mk-ov")).forEach(function(o){ wrap.appendChild(o); });
       attach(wrap, ms);
     });
     document.querySelectorAll("[data-cal-ms]:not(.cal-host)").forEach(function(h){ attach(h, +h.getAttribute("data-cal-ms")); });
