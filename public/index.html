@@ -1051,6 +1051,11 @@ var TOTAL_Q = CASES.reduce(function(a,c){return a+c.stages.length},0);
 var KEY = "cardiac-lab-v1";
 var S = {p:{}, m:{}, pi:1, ci:null};
 try{ var raw = localStorage.getItem(KEY); if(raw){ var o = JSON.parse(raw); if(o && o.p) S = Object.assign(S,o); if(S.pi>N) S.pi=1; } }catch(e){}
+/* Ectopy answer names now include the underlying rhythm ("Sinus rhythm with PACs"). Answers saved under the old names are carried over. */
+var RENAMED = {"Premature atrial contractions (PACs)": "Sinus rhythm with PACs", "Premature junctional contractions (PJCs)": "Sinus rhythm with PJCs", "Junctional escape beat": "Sinus rhythm with a junctional escape beat", "Ventricular bigeminy": "Sinus rhythm with ventricular bigeminy", "Ventricular trigeminy": "Sinus rhythm with ventricular trigeminy", "PVC couplet": "Sinus rhythm with a PVC couplet", "Multifocal PVCs": "Sinus rhythm with multifocal PVCs", "Non-sustained VT (run of VT)": "Sinus rhythm with a run of VT (non-sustained VT)"};
+function canon(x){ return (x!=null && RENAMED[x]) || x; }
+(function(){ var fix=function(p){ if(p) Object.keys(p).forEach(function(n){ if(RENAMED[p[n]]) p[n]=RENAMED[p[n]]; }); };
+  fix(S.p); if(S.ar) Object.keys(S.ar).forEach(function(k){ fix(S.ar[k] && S.ar[k].p); }); })();
 function save(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} if(window.__push) window.__push(); }
 var $ = function(id){return document.getElementById(id)};
 function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
@@ -1187,7 +1192,7 @@ function markStrip(host, key, cat){
   m.p.forEach(function(p){ var bad=near(blocked, p, 6);
     h+='<span class="mk mk-p'+(bad?' bad':'')+edge(p)+'" style="left:'+X(p)+';top:'+top(p, 30)+'">'+(bad?'P · not conducted':'P')+'</span>'; });
   // PR intervals (sinus, blocks, atrial ectopy)
-  if((grp==="sinus" || grp==="block" || /PAC|atrial contractions/.test(cat)) && pairs.length){
+  if((grp==="sinus" || grp==="block" || /PACs/.test(cat)) && pairs.length){
     pairs.forEach(function(x){ var q0=x[1]-38, p0=q0-x[2];
       h+='<span class="mk-br pr" style="left:'+X(p0)+';width:'+(x[2]/VW*100).toFixed(2)+'%"><b>PR '+(x[2]/1000).toFixed(2)+'</b></span>'; });
   }
@@ -1607,7 +1612,7 @@ function renderBoard(){
 }
 function detailHTML(r){
   var g=GROUPS.map(function(x){ var v=(r.groups||{})[x[0]]||[0,0,0]; return '<div class="barrow"><span>'+esc(x[1])+'</span><span class="track"><i style="width:'+pct(v[0],v[1])+'%"></i></span><b>'+(v[1]?v[0]+'/'+v[1]:'—')+'</b></div>'; }).join("");
-  var missed=P.filter(function(q){ var x=(r.p||{})[q.n]; return x!=null && x!==q.cat; });
+  var missed=P.filter(function(q){ var x=canon((r.p||{})[q.n]); return x!=null && x!==q.cat; });
   var ml=missed.length? missed.slice(0,40).map(function(q){ return '<span>#'+q.n+' '+esc(q.name)+'</span>'; }).join("")+(missed.length>40?'<span>+'+(missed.length-40)+' more</span>':'') : '<span>None missed</span>';
   var cs=(r.cases||[]).map(function(k,ci){ return k&&k[1]? '<span>Case '+(ci+1)+': '+k[0]+'/'+k[1]+'</span>' : ''; }).join("") || '<span>No cases started</span>';
   var del = SB.confirmDel===r.id
@@ -1617,7 +1622,7 @@ function detailHTML(r){
   return '<div class="inner"><div><h4>Strips by rhythm family · correct / answered</h4><div class="bars">'+g+'</div><h4 style="margin-top:14px">Practice areas · correct / answered</h4><div class="bars">'+ap+'</div><div style="margin-top:14px">'+del+'</div></div><div><h4>Missed strips ('+missed.length+')</h4><div class="tags">'+ml+'</div><h4 style="margin-top:14px">Megacode cases</h4><div class="tags">'+cs+'</div>'+defibDetailHTML(r)+surveyDetailHTML(r)+'</div></div>';
 }
 function hardHTML(rows){
-  var stat={}; rows.forEach(function(r){ var p=r.p||{}; Object.keys(p).forEach(function(n){ var q=P[n-1]; if(!q) return; stat[n]=stat[n]||[0,0]; stat[n][1]++; if(p[n]!==q.cat) stat[n][0]++; }); });
+  var stat={}; rows.forEach(function(r){ var p=r.p||{}; Object.keys(p).forEach(function(n){ var q=P[n-1]; if(!q) return; p[n]=canon(p[n]); stat[n]=stat[n]||[0,0]; stat[n][1]++; if(p[n]!==q.cat) stat[n][0]++; }); });
   var list=Object.keys(stat).filter(function(n){return stat[n][0]>0}).sort(function(a,b){ return (stat[b][0]/stat[b][1])-(stat[a][0]/stat[a][1]) || stat[b][0]-stat[a][0]; }).slice(0,12);
   if(!list.length) return '<p class="empty">No missed strips yet.</p>';
   return list.map(function(n){ var q=P[n-1], s=stat[n]; return '<button data-n="'+n+'"><b>#'+n+'</b><span>'+esc(q.name)+'</span><em>'+s[0]+'/'+s[1]+'</em></button>'; }).join("");

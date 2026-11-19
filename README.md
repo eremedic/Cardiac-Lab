@@ -75,6 +75,10 @@ Progress is kept in the student's browser. Using a different device or browser s
 - Every score is **correct ÷ answered**: strips, megacode, practice areas, 12-lead, the Results page and the scoreboard. Unanswered items don't lower a score. Progress (how much has been answered) is shown separately, including the rings on the home page.
 - The scoreboard works this out from each student's saved counts, so older rows follow the same rule.
 
+**Ectopic beats are named with the underlying rhythm**
+- Answer choices for premature and escape beats always include the rhythm underneath: "Sinus rhythm with PACs", "Sinus rhythm with PJCs", "Sinus rhythm with a junctional escape beat", "Sinus rhythm with unifocal / multifocal PVCs", "Sinus rhythm with ventricular bigeminy / trigeminy", "Sinus rhythm with a PVC couplet" and "Sinus rhythm with a run of VT (non-sustained VT)". Every one of these strips has a sinus rhythm at 60–100 underneath.
+- Answers students saved under the old names are carried over automatically, and the scoreboard reads them the same way.
+
 **Wrong answers are marked up on the strip**
 - When a student picks the wrong rhythm (or the cardiologist reveals it), the strip itself is labeled to show what makes the correct rhythm what it is: each P wave (red when it isn't conducted), PR intervals, R–R intervals in seconds across the top, wide QRS complexes (PVC or paced), pacer spikes with ✓ capture / ✗ no capture, and a short note for rhythms without discrete beats (atrial fibrillation, flutter, VF, asystole, complete heart block, junctional). The feedback says exactly what was labeled.
 - This works in the Strips module, every practice area and the field strips (not the 12-lead). The beat timings come from the generators and are saved with each strip.

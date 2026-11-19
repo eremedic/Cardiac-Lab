@@ -16,7 +16,7 @@ CAT = {
  "Sinoatrial (SA) exit block": ("sinus", "A dropped P–QRS–T where the pause is exactly two normal P–P intervals.", "March out the P waves: the missing beat lands exactly where one was due."),
  "Pulseless electrical activity (PEA)": ("sinus", "An organized rhythm with no palpable pulse.", "The strip looks organized, but the scenario says there is no pulse."),
  # ---- atrial ----
- "Premature atrial contractions (PACs)": ("atrial", "Sinus rhythm with an early beat whose P wave looks different; narrow QRS; non-compensatory pause.", "Find the early beat and check that it has its own odd-shaped P wave."),
+ "Sinus rhythm with PACs": ("atrial", "Sinus rhythm with an early beat whose P wave looks different; narrow QRS; non-compensatory pause.", "Find the early beat and check that it has its own odd-shaped P wave."),
  "Wandering atrial pacemaker": ("atrial", "Rate under 100 with at least 3 different P-wave shapes and a varying PR.", "The P waves keep changing shape, but the rate stays below 100."),
  "Multifocal atrial tachycardia (MAT)": ("atrial", "Rate over 100, irregular, with at least 3 different P-wave shapes and a varying PR.", "It's irregular like AF but has distinct P waves of changing shapes."),
  "Supraventricular tachycardia (SVT)": ("atrial", "Regular narrow-complex tachycardia at 150–250 with no visible P waves.", "Narrow, regular and fast, with the P waves hidden."),
@@ -27,15 +27,15 @@ CAT = {
  "Junctional bradycardia": ("junctional", "Junctional rhythm (no normal P waves, narrow QRS) at a rate below 40.", "It looks junctional but is slower than the 40–60 escape rate."),
  "Accelerated junctional rhythm": ("junctional", "Junctional rhythm at 60–100: narrow QRS, no normal P waves.", "It's narrow and regular with no upright P, at a normal rate."),
  "Junctional tachycardia": ("junctional", "Junctional rhythm over 100; inverted P waves with a short PR (or none).", "Inverted P waves sit just before each QRS at a rate over 100."),
- "Premature junctional contractions (PJCs)": ("junctional", "Sinus rhythm with an early narrow beat that has an inverted P (short PR) or no P.", "The early beat is narrow, and its P wave is inverted or missing."),
- "Junctional escape beat": ("junctional", "After a sinus pause, a late narrow beat appears with no normal P wave.", "The odd beat comes LATE, after a pause, not early."),
+ "Sinus rhythm with PJCs": ("junctional", "Sinus rhythm with an early narrow beat that has an inverted P (short PR) or no P.", "The early beat is narrow, and its P wave is inverted or missing."),
+ "Sinus rhythm with a junctional escape beat": ("junctional", "After a sinus pause, a late narrow beat appears with no normal P wave.", "The odd beat comes LATE, after a pause, not early."),
  # ---- ventricular ----
  "Sinus rhythm with unifocal PVCs": ("ventricular", "Sinus rhythm with early, wide, bizarre beats of one shape and no P wave.", "The early wide beats all look the same."),
- "Ventricular bigeminy": ("ventricular", "Every other beat is a PVC: sinus, PVC, sinus, PVC.", "Normal and wide beats alternate."),
- "Ventricular trigeminy": ("ventricular", "Every third beat is a PVC: sinus, sinus, PVC.", "Two normal beats, then one wide, repeating."),
- "PVC couplet": ("ventricular", "Two PVCs in a row within a sinus rhythm.", "Two consecutive wide beats. Three or more in a row is VT."),
- "Multifocal PVCs": ("ventricular", "PVCs of two or more different shapes.", "Compare the wide beats: they look different from each other."),
- "Non-sustained VT (run of VT)": ("ventricular", "Three or more consecutive PVCs at > 100/min, lasting under 30 seconds, then sinus resumes.", "A burst of wide beats starts and stops within the strip."),
+ "Sinus rhythm with ventricular bigeminy": ("ventricular", "Every other beat is a PVC: sinus, PVC, sinus, PVC.", "Normal and wide beats alternate."),
+ "Sinus rhythm with ventricular trigeminy": ("ventricular", "Every third beat is a PVC: sinus, sinus, PVC.", "Two normal beats, then one wide, repeating."),
+ "Sinus rhythm with a PVC couplet": ("ventricular", "Two PVCs in a row within a sinus rhythm.", "Two consecutive wide beats. Three or more in a row is VT."),
+ "Sinus rhythm with multifocal PVCs": ("ventricular", "PVCs of two or more different shapes.", "Compare the wide beats: they look different from each other."),
+ "Sinus rhythm with a run of VT (non-sustained VT)": ("ventricular", "Three or more consecutive PVCs at > 100/min, lasting under 30 seconds, then sinus resumes.", "A burst of wide beats starts and stops within the strip."),
  "Idioventricular rhythm": ("ventricular", "Regular wide QRS at 20–40, no P waves.", "Wide and very slow with no P waves means the ventricles are pacing themselves."),
  "Accelerated idioventricular rhythm (AIVR)": ("ventricular", "Wide-QRS ventricular rhythm at 40–100 with no P waves.", "It looks like idioventricular rhythm but faster. It's common after reperfusion."),
  "Monomorphic ventricular tachycardia": ("ventricular", "Regular, wide, identical complexes over 100 (often 150–250); no P waves.", "Wide, fast and every complex the same."),
@@ -69,7 +69,7 @@ CAT = {
 GROUP_EXTRA = {
  "sinus": ["1st-degree AV block", "Junctional rhythm", "Atrial fibrillation"],
  "atrial": ["Sinus tachycardia", "Junctional tachycardia", "Normal sinus rhythm"],
- "junctional": ["Sinus bradycardia", "Supraventricular tachycardia (SVT)", "Premature atrial contractions (PACs)"],
+ "junctional": ["Sinus bradycardia", "Supraventricular tachycardia (SVT)", "Sinus rhythm with PACs"],
  "ventricular": ["Atrial fibrillation", "Pulseless electrical activity (PEA)"],
  "block": ["Sinus bradycardia", "Junctional rhythm", "Atrial flutter"],
  "paced": ["Idioventricular rhythm", "3rd-degree (complete) AV block"],
@@ -251,7 +251,7 @@ def build():
         T("Pulseless electrical activity (PEA)", E.sinus(r, pr=0.14, kind=kind, seed=sd), stem, "Regular", UP, "0.14 s", NARROW, ["Organized rhythm + no pulse = PEA", "CPR, epinephrine ASAP, hunt the H's and T's"])
     # ===== ATRIAL (17) =====
     for r, at, sd, stem in ((75, 3, 118, "Smoker with occasional 'flutters' in the chest."), (68, 4, 119, "Anxious patient after three coffees.")):
-        T("Premature atrial contractions (PACs)", pac(r, at, sd), stem, "Irregular at the early beat", "Early beat has an abnormal P", "Normal; may differ on the PAC", NARROW, ["Usually benign: reduce triggers", "Frequent PACs can precede AF or SVT"])
+        T("Sinus rhythm with PACs", pac(r, at, sd), stem, "Irregular at the early beat", "Early beat has an abnormal P", "Normal; may differ on the PAC", NARROW, ["Usually benign: reduce triggers", "Frequent PACs can precede AF or SVT"])
     for iv, sd, stem in (([0.86, 0.9, 0.82, 0.95, 0.88], 120, "Sleeping athlete, no complaints."), ([0.76, 0.8, 0.72, 0.84, 0.78], 121, "Elderly patient, routine check.")):
         st = multi_p(iv, sd)
         T("Wandering atrial pacemaker", st, stem, "Slightly irregular", "≥ 3 shapes, changing beat to beat", "Varies", NARROW, ["Usually benign; no treatment", "If the rate is over 100, it's MAT"])
@@ -277,16 +277,16 @@ def build():
     for r, sd, stem in ((110, 143, "Digoxin toxicity suspected, BP 108/70."), (125, 144, "Post-cardiac surgery, BP 100/62."), (145, 145, "Theophylline overdose, anxious.")):
         T("Junctional tachycardia", junct(r, "before", sd), stem, "Regular", "Inverted, just before the QRS", "Short (< 0.12 s)", NARROW, ["Treat the cause (digoxin, ischemia, stimulants)", "Unstable: treat per the tachycardia algorithm"])
     for r, at, sd, pm, stem in ((75, 3, 146, "before", "Healthy adult, feels a 'skip'."), (68, 4, 147, "none", "Patient on digoxin, mild nausea."), (82, 2, 148, "before", "Caffeine and energy drinks before a night shift.")):
-        T("Premature junctional contractions (PJCs)", pjc(r, at, sd, pm), stem, "Irregular at the early beat", "Early beat: inverted P" if pm == "before" else "Early beat: no P wave", "Short on the PJC", NARROW, ["Usually benign", "Treat the cause; check digoxin level"])
-    for r, pa, gap, sd, stem in ((70, 2, 1.55, 149, "Elderly patient with a brief dizzy spell."), (56, 2, 1.8, 150, "Sleeping patient on a beta-blocker."), (78, 1, 1.45, 151, "Vagal episode during vomiting.")):
-        T("Junctional escape beat", junct_escape(r, pa, gap, sd), stem, "Irregular at the pause", "Normal, except none on the late beat", "0.16 s on sinus beats", NARROW, ["A protective escape: never suppress it", "Find the cause of the sinus pause"])
+        T("Sinus rhythm with PJCs", pjc(r, at, sd, pm), stem, "Irregular at the early beat", "Early beat: inverted P" if pm == "before" else "Early beat: no P wave", "Short on the PJC", NARROW, ["Usually benign", "Treat the cause; check digoxin level"])
+    for r, pa, gap, sd, stem in ((70, 2, 1.55, 149, "Elderly patient with a brief dizzy spell."), (62, 2, 1.8, 150, "Sleeping patient on a beta-blocker."), (78, 1, 1.45, 151, "Vagal episode during vomiting.")):
+        T("Sinus rhythm with a junctional escape beat", junct_escape(r, pa, gap, sd), stem, "Irregular at the pause", "Normal, except none on the late beat", "0.16 s on sinus beats", NARROW, ["A protective escape: never suppress it", "Find the cause of the sinus pause"])
     # ===== VENTRICULAR (17) =====
     T("Sinus rhythm with unifocal PVCs", E.with_pvcs("NNNVNNN", seed=152), "62-year-old with palpitations.", "Regular except the early beat", "Absent before the PVC", "0.16 s on sinus beats", "Narrow; the PVC is wide and bizarre", ["Treat the patient, not the ectopy", "Check for hypoxia, ischemia, electrolytes"])
-    T("Ventricular bigeminy", E.with_pvcs("NV", rr=0.84, couple=0.46, seed=153), "74-year-old with chest tightness.", "Regularly irregular", "Before sinus beats only", "0.16 s on sinus beats", "Alternating narrow and wide", ["Consider ischemia, electrolytes, digoxin", "12-lead; watch for runs of VT"])
-    T("Ventricular trigeminy", E.with_pvcs("NNV", rr=0.85, couple=0.48, seed=154), "COPD patient with low potassium.", "Regularly irregular", "Before sinus beats only", "0.16 s on sinus beats", "Two narrow, then one wide", ["Correct K⁺, hypoxia, ischemia", "Monitor"])
-    T("PVC couplet", E.with_pvcs("NNNVVNN", seed=155), "55-year-old post-MI, 'skipped beats'.", "Irregular at the couplet", "Before sinus beats only", "0.16 s on sinus beats", "Two consecutive wide PVCs", ["Irritable ventricle: monitor closely", "12-lead; pads ready"])
-    T("Multifocal PVCs", E.with_pvcs("NNVNNNWN", rr=0.78, couple=0.46, seed=156), "Septic patient, SpO₂ 86%.", "Irregular", "Before sinus beats only", "0.16 s on sinus beats", "PVCs of different shapes", ["Fix hypoxia; check electrolytes", "12-lead"])
-    T("Non-sustained VT (run of VT)", nsvt(157), "Post-MI patient, felt a 'flutter' and lightheadedness.", "Irregular: a 5-beat run", "Before sinus beats only", "0.16 s on sinus beats", "Wide during the run", ["Pads on; 12-lead; check electrolytes", "Treat ischemia; expert consult"])
+    T("Sinus rhythm with ventricular bigeminy", E.with_pvcs("NV", rr=0.84, couple=0.46, seed=153), "74-year-old with chest tightness.", "Regularly irregular", "Before sinus beats only", "0.16 s on sinus beats", "Alternating narrow and wide", ["Consider ischemia, electrolytes, digoxin", "12-lead; watch for runs of VT"])
+    T("Sinus rhythm with ventricular trigeminy", E.with_pvcs("NNV", rr=0.85, couple=0.48, seed=154), "COPD patient with low potassium.", "Regularly irregular", "Before sinus beats only", "0.16 s on sinus beats", "Two narrow, then one wide", ["Correct K⁺, hypoxia, ischemia", "Monitor"])
+    T("Sinus rhythm with a PVC couplet", E.with_pvcs("NNNVVNN", seed=155), "55-year-old post-MI, 'skipped beats'.", "Irregular at the couplet", "Before sinus beats only", "0.16 s on sinus beats", "Two consecutive wide PVCs", ["Irritable ventricle: monitor closely", "12-lead; pads ready"])
+    T("Sinus rhythm with multifocal PVCs", E.with_pvcs("NNVNNNWN", rr=0.78, couple=0.46, seed=156), "Septic patient, SpO₂ 86%.", "Irregular", "Before sinus beats only", "0.16 s on sinus beats", "PVCs of different shapes", ["Fix hypoxia; check electrolytes", "12-lead"])
+    T("Sinus rhythm with a run of VT (non-sustained VT)", nsvt(157), "Post-MI patient, felt a 'flutter' and lightheadedness.", "Irregular: a 5-beat run", "Before sinus beats only", "0.16 s on sinus beats", "Wide during the run", ["Pads on; 12-lead; check electrolytes", "Treat ischemia; expert consult"])
     T("Idioventricular rhythm", E.idio(34, 158), "Unresponsive 82-year-old; weak pulse, BP 70/40.", "Regular", "None", "None", WIDE, ["Ventricular escape: never suppress it", "Pacing and perfusion support; if pulseless, treat as PEA"])
     T("Accelerated idioventricular rhythm (AIVR)", E.idio(66, 159), "10 minutes after STEMI reperfusion.", "Regular", "None", "None", WIDE, ["Reperfusion rhythm, usually transient", "No antiarrhythmics if the patient is perfusing"])
     T("Monomorphic ventricular tachycardia", vt_mono(170, 160), "Pulseless 59-year-old, bystander CPR.", "Regular", "Not seen", "None", "Wide, uniform", ["Pulseless VT: defibrillate", "Then CPR and the VF/pVT algorithm"])

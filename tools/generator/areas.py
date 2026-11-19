@@ -268,7 +268,7 @@ def b_pac(r):
             q += step; rr_prev = step
         i += 1
     need(pac_q is not None and pac_q < DUR - 0.8, "pac visible")
-    return s, dict(cat="Premature atrial contractions (PACs)", rhythm="Regular except the early beat", p=f"Early beat has a different ({P_SHAPES[shape_i][0]}) P wave",
+    return s, dict(cat="Sinus rhythm with PACs", rhythm="Regular except the early beat", p=f"Early beat has a different ({P_SHAPES[shape_i][0]}) P wave",
                    pr=sec(pr) + " on sinus beats", qrs=qrs_txt(s.qrs_d), rate_note=f"Underlying {round(rate)}/min",
                    action=["Usually benign: reduce triggers (caffeine, nicotine, stress)", "Frequent PACs can precede AF or SVT"])
 
@@ -385,7 +385,7 @@ def b_pjc(r):
         i += 1
     need(hit is not None and hit < DUR - 0.8, "visible")
     ptxt = {"before": "Early beat: inverted P with a short PR", "none": "Early beat: no P wave", "after": "Early beat: inverted P after the QRS"}[mode]
-    return s, dict(cat="Premature junctional contractions (PJCs)", rhythm="Regular except the early beat", p=ptxt, pr=sec(pr) + " on sinus beats",
+    return s, dict(cat="Sinus rhythm with PJCs", rhythm="Regular except the early beat", p=ptxt, pr=sec(pr) + " on sinus beats",
                    qrs=qrs_txt(s.qrs_d), rate_note=f"Underlying {round(rate)}/min", action=["Usually benign", "Treat the cause; check for digoxin toxicity"])
 
 
@@ -401,7 +401,7 @@ def b_junc_escape(r):
             q += pp; rr_prev = pp
         i += 1
     need(esc is not None and esc < DUR - 0.6 and gap > pp * 1.3, "visible late")
-    return s, dict(cat="Junctional escape beat", rhythm="Irregular at the pause", p="Upright on sinus beats; none on the late beat",
+    return s, dict(cat="Sinus rhythm with a junctional escape beat", rhythm="Irregular at the pause", p="Upright on sinus beats; none on the late beat",
                    pr=sec(pr) + " on sinus beats", qrs=qrs_txt(s.qrs_d), rate_note=f"Underlying {round(rate)}/min",
                    action=["A protective escape after a pause: never suppress it", "Find the cause of the sinus pause"])
 
@@ -437,10 +437,10 @@ def b_pvc(r, kind):
     need(vs >= {"unifocal": 1, "bigeminy": 3, "trigeminy": 2, "couplet": 2, "multifocal": 2}[kind], "enough PVCs")
     info = {
         "unifocal": ("Sinus rhythm with unifocal PVCs", "Regular except the early wide beat", "Two narrow, then one wide"),
-        "bigeminy": ("Ventricular bigeminy", "Regularly irregular: every other beat early", "Alternating narrow and wide"),
-        "trigeminy": ("Ventricular trigeminy", "Regularly irregular: every 3rd beat early", "Two narrow, then one wide"),
-        "couplet": ("PVC couplet", "Irregular at the two early beats", "Narrow; two consecutive wide PVCs"),
-        "multifocal": ("Multifocal PVCs", "Irregular", "Narrow; PVCs of two different shapes"),
+        "bigeminy": ("Sinus rhythm with ventricular bigeminy", "Regularly irregular: every other beat early", "Alternating narrow and wide"),
+        "trigeminy": ("Sinus rhythm with ventricular trigeminy", "Regularly irregular: every 3rd beat early", "Two narrow, then one wide"),
+        "couplet": ("Sinus rhythm with a PVC couplet", "Irregular at the two early beats", "Narrow; two consecutive wide PVCs"),
+        "multifocal": ("Sinus rhythm with multifocal PVCs", "Irregular", "Narrow; PVCs of two different shapes"),
     }[kind]
     qrs = "Narrow on sinus beats; the PVC is wide and bizarre" if kind == "unifocal" else info[2]
     act = {"unifocal": ["Treat the patient, not the ectopy", "Check for hypoxia, ischemia, electrolytes"], "bigeminy": ["Consider ischemia, electrolytes, digoxin", "12-lead; watch for runs of VT"],
@@ -462,7 +462,7 @@ def b_nsvt(r):
     while q < DUR + 0.6:
         pc = s.p_for_pr(q, pr); s.P(pc); s.N(q, pp); s.conducted(pc, q); q += pp
     need(q > DUR and len(inside(s.q)) >= n_before + run + 1, "run visible")
-    return s, dict(cat="Non-sustained VT (run of VT)", rhythm=f"A {run}-beat run of wide beats, then sinus resumes", p="Before sinus beats only",
+    return s, dict(cat="Sinus rhythm with a run of VT (non-sustained VT)", rhythm=f"A {run}-beat run of wide beats, then sinus resumes", p="Before sinus beats only",
                    pr=sec(pr) + " on sinus beats", qrs=f"Wide during the run (≈ {round(60 / vr)}/min)", action=["Pads on; 12-lead; check electrolytes", "Treat ischemia; expert consult"])
 
 
@@ -850,7 +850,7 @@ def verify(cat, s):
         "Sinus arrhythmia": lambda: st["max"] - st["min"] >= 0.16 and len(vis_p) >= len(qs) - 1,
         "Sinus arrest (pause)": lambda: st["max"] >= 1.8 and abs(st["max"] / st["min"] - round(st["max"] / st["min"])) > 0.2,
         "Sinoatrial (SA) exit block": lambda: abs(st["max"] - 2 * st["min"]) < 0.02,
-        "Premature atrial contractions (PACs)": lambda: st["min"] < 0.8 * med and len(vis_p) >= len(qs) - 1,
+        "Sinus rhythm with PACs": lambda: st["min"] < 0.8 * med and len(vis_p) >= len(qs) - 1,
         "Wandering atrial pacemaker": lambda: hr < 100 and len(vis_p) >= len(qs) - 1,
         "Multifocal atrial tachycardia (MAT)": lambda: hr > 100 and not reg and len(vis_p) >= len(qs) - 1,
         "Supraventricular tachycardia (SVT)": lambda: reg and 150 <= hr <= 250 and not vis_p,
@@ -860,9 +860,9 @@ def verify(cat, s):
         "Junctional bradycardia": lambda: reg and hr < 40,
         "Accelerated junctional rhythm": lambda: reg and 60 < hr <= 100,
         "Junctional tachycardia": lambda: reg and hr > 100,
-        "Premature junctional contractions (PJCs)": lambda: st["min"] < 0.8 * med,
-        "Junctional escape beat": lambda: st["max"] > 1.25 * med,
-        "Non-sustained VT (run of VT)": lambda: st["min"] < 0.5,
+        "Sinus rhythm with PJCs": lambda: st["min"] < 0.8 * med,
+        "Sinus rhythm with a junctional escape beat": lambda: st["max"] > 1.25 * med,
+        "Sinus rhythm with a run of VT (non-sustained VT)": lambda: st["min"] < 0.5,
         "Idioventricular rhythm": lambda: reg and 20 <= hr <= 40 and not vis_p,
         "Accelerated idioventricular rhythm (AIVR)": lambda: reg and 40 < hr <= 100 and not vis_p,
         "Monomorphic ventricular tachycardia": lambda: reg and hr >= 120 and not vis_p,

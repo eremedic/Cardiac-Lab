@@ -17,7 +17,7 @@
   "title": "Atrial rhythms",
   "count": 50,
   "categories": [
-   "Premature atrial contractions (PACs)",
+   "Sinus rhythm with PACs",
    "Wandering atrial pacemaker",
    "Multifocal atrial tachycardia (MAT)",
    "Supraventricular tachycardia (SVT)",
@@ -34,8 +34,8 @@
    "Junctional bradycardia",
    "Accelerated junctional rhythm",
    "Junctional tachycardia",
-   "Premature junctional contractions (PJCs)",
-   "Junctional escape beat"
+   "Sinus rhythm with PJCs",
+   "Sinus rhythm with a junctional escape beat"
   ]
  },
  {
@@ -44,11 +44,11 @@
   "count": 50,
   "categories": [
    "Sinus rhythm with unifocal PVCs",
-   "Ventricular bigeminy",
-   "Ventricular trigeminy",
-   "PVC couplet",
-   "Multifocal PVCs",
-   "Non-sustained VT (run of VT)",
+   "Sinus rhythm with ventricular bigeminy",
+   "Sinus rhythm with ventricular trigeminy",
+   "Sinus rhythm with a PVC couplet",
+   "Sinus rhythm with multifocal PVCs",
+   "Sinus rhythm with a run of VT (non-sustained VT)",
    "Idioventricular rhythm",
    "Accelerated idioventricular rhythm (AIVR)",
    "Monomorphic ventricular tachycardia",
