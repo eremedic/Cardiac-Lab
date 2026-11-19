@@ -22,7 +22,7 @@ const req = (method, path, { body, auth } = {}) => new Request('http://x' + path
 
 test('config reports scoring and class-code settings', async () => {
   const r = await make({ CLASS_CODE: 'ACLS1' })(req('GET', '/api/config'));
-  assert.deepEqual(await r.json(), { scoring: true, requireCode: true, instructor: false, features: { twelveLead: false, defibLab: false } });
+  assert.deepEqual(await r.json(), { scoring: true, requireCode: true, instructor: false, features: { twelveLead: false, defibLab: false, fieldStrips: false } });
 });
 
 test('scores routes say so when no database is configured', async () => {
@@ -228,7 +228,7 @@ test('12-lead area stays closed until the instructor opens it', async () => {
   assert.equal((await api(req('PUT', '/api/settings', { auth: 'secret', body: { twelveLead: 'yes' } }))).status, 400);
   assert.equal((await api(req('PUT', '/api/settings', { auth: 'secret', body: { other: true } }))).status, 400);
   const on = await api(req('PUT', '/api/settings', { auth: 'secret', body: { twelveLead: true } }));
-  assert.deepEqual((await on.json()).settings, { twelveLead: true, defibLab: false });
+  assert.deepEqual((await on.json()).settings, { twelveLead: true, defibLab: false, fieldStrips: false });
   assert.equal((await (await api(req('GET', '/api/config'))).json()).features.twelveLead, true);
   assert.equal((await api(req('GET', '/api/areas/twelve'))).status, 200);
   // and close it again
@@ -249,4 +249,22 @@ test('defib lab: switch defaults off and scenario results are validated and stor
   assert.equal((await api(req('PUT', '/api/scores/' + ID2, { body: { name: 'Dee', doc: { ...doc(), defib: { vf: [7, 7, 1] } } } }))).status, 200);
   const rows = (await (await api(req('GET', '/api/scores', { auth: 'secret' }))).json()).rows;
   assert.deepEqual(rows.find((r) => r.id === ID2).defib, { vf: [7, 7, 1] });
+});
+
+test('field strips stay closed until the instructor opens them', async () => {
+  const api = make({ INSTRUCTOR_PASSWORD: 'secret' });
+  assert.equal((await (await api(req('GET', '/api/config'))).json()).features.fieldStrips, false);
+  assert.equal((await api(req('GET', '/api/areas/field'))).status, 403);
+  const preview = await api(req('GET', '/api/areas/field', { auth: 'secret' }));
+  assert.equal(preview.status, 200);
+  const data = await preview.json();
+  assert.equal(data.items.length, 100);
+  assert.equal(Object.keys(data.strips).length, 100);
+  assert.ok(data.items.every((it) => data.strips[it.strip] && it.hints.length === 3 && it.options.length === 4 && it.options.includes(it.cat)));
+  assert.ok(data.items.every((it) => it.rows.some(([k]) => k === 'Artifact')));
+  assert.equal((await api(req('GET', '/api/areas/nope', { auth: 'secret' }))).status, 404);
+  await api(req('PUT', '/api/settings', { auth: 'secret', body: { fieldStrips: true } }));
+  assert.equal((await api(req('GET', '/api/areas/field'))).status, 200);
+  await api(req('PUT', '/api/settings', { auth: 'secret', body: { fieldStrips: false } }));
+  assert.equal((await api(req('GET', '/api/areas/field'))).status, 403);
 });

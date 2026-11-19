@@ -102,6 +102,13 @@ Progress is kept in the student's browser. Using a different device or browser s
 - **Done: get feedback** grades the run step by step: modality, sync, energy, clearing the patient, sedation, drugs and their order, pacing rate, capture and pulse check, CPR and epinephrine. Critical steps decide pass or fail.
 - **It starts off.** The scoreboard has a **Defib lab** card with **Open to students** / **Close to students** and **Preview**, just like the 12-lead card. The scoreboard's **Defib lab** panel shows the pass rate for each scenario, each student's detail lists their scenarios, and the scores CSV includes scenarios passed and attempted plus a column per scenario.
 
+**Field strips: the back of the ambulance (opened by the instructor)**
+- An 8th practice area with 100 randomized strips, 16–17 from each rhythm family (43 rhythm types), that look like they came off a monitor in a moving rig: breathing baseline wander and irregular drift, road vibration, bumps and potholes, shivering (muscle tremor), patient movement, loose-electrode pops and occasional 60-cycle interference.
+- Every strip is rule-checked on the clean tracing before the artifact is added, and bumps, movement and pops are placed away from P waves and QRS complexes (with extra room around P waves on AV blocks), so the rhythm is always readable. Flat-line and fine-VF strips only get light wander and vibration.
+- The interpretation for each strip includes an **Artifact** line naming what's on it, and the cardiologist's first hint reminds students to find a steady stretch of baseline first.
+- **It starts closed.** Open it from the **Field strips** card on the scoreboard (with **Preview**). Until then students don't see the tile and the server won't send the strips to anyone but the instructor. Results show in the scoreboard's practice-areas panel and CSV like the other areas.
+- Rebuild with `python3 tools/generator/build_field.py` (writes `lib/field-data.mjs`).
+
 **Course survey**
 - The survey unlocks once a student has answered 10% of the strips and megacode decisions (17 of 168), on the Overview, Results and **Survey** tab. Students can update their answers later. The server checks the saved results before accepting it. The threshold is `SURVEY_UNLOCK_PCT` in `lib/api.mjs` (and the matching line in `public/index.html`).
 - Students can choose **Hide my name next to my answers**: the scoreboard then shows that they completed the survey, but lists their answers and comments as "Anonymous".
