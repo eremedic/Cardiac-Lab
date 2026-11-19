@@ -220,8 +220,10 @@ test('12-lead area stays closed until the instructor opens it', async () => {
   const preview = await api(req('GET', '/api/areas/twelve', { auth: 'secret' }));
   assert.equal(preview.status, 200);
   const data = await preview.json();
-  assert.equal(data.items.length, 100);
+  assert.equal(data.items.length, 150);
   assert.ok(data.items.every((it) => it.hints.length === 3));
+  assert.ok(data.items.every((it) => it.mk && it.mk.b.length && Array.isArray(it.mk.f)));
+  assert.equal(data.items.filter((it) => it.field).length, 50);
   assert.ok(data.items.every((it) => Object.keys(it.leads).length === 13));
   // only the instructor can change settings, and only known ones
   assert.equal((await api(req('PUT', '/api/settings', { body: { twelveLead: true } }))).status, 401);

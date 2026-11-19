@@ -815,6 +815,9 @@ body.df-focus .bar{position:relative}
 .mk-w{background:#7A1FA2;border-color:#7A1FA2}
 .mk-s{top:14%;background:#C25400;border-color:#C25400;transform:translate(-50%,0)}
 .mk-s::after{display:none}
+.mk-w.ront{background:#D9121A;border-color:#D9121A}
+.mk-d{background:#0A738B;border-color:#0A738B;font-size:9.5px}
+.mk-band{position:absolute;top:30%;height:40%;background:rgba(10,111,221,.16);border:1.5px solid #0A6FDD;border-radius:4px}
 .mk.under{transform:translate(-50%,6px)}
 .mk.under::after{bottom:auto;top:-4px;border-bottom:4px solid;border-top:0;border-bottom-color:inherit;border-left-color:transparent;border-right-color:transparent}
 .mk.L{transform:translate(-6px,calc(-100% - 5px))}.mk.Rt{transform:translate(calc(-100% + 6px),calc(-100% - 5px))}
@@ -832,6 +835,11 @@ body.df-focus .bar{position:relative}
 .mk-hint svg{width:18px;height:18px;flex:none;color:var(--navy)}
 @media (max-width:600px){.mk{font-size:9px;padding:0 3px}.mk-br b{font-size:8.5px}.mk-note{font-size:10.5px;max-width:80%}}
 @media (prefers-reduced-motion:reduce){.mk-ov{animation:none}}
+.mk12-t{font:700 100px var(--f-mono);paint-order:stroke;stroke:#FFFFFF;stroke-width:26px;stroke-linejoin:round}
+.mk-legend{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;margin-top:8px;font-size:13px;color:var(--ink-2)}
+.mk-legend b{font-weight:700;color:var(--ink)}
+.mk-legend span{display:inline-flex;align-items:center;gap:6px}
+.mk-legend i{width:12px;height:12px;border-radius:3px;flex:none}
 </style>
 </head>
 <body>
@@ -1127,6 +1135,7 @@ function renderStrip(){
   var q = P[S.pi-1], chosen = S.p[q.n], done = chosen != null;
   $("sNum").textContent = q.n;
   $("sStem").textContent = q.stem;
+  Array.prototype.slice.call(document.querySelectorAll("#v-strips .mk-legend")).forEach(function(x){ x.remove(); });
   $("sPaper").innerHTML = stripSVG(q.strip, "paper", false);
   var sc = stripScore();
   $("sAns").textContent = sc.a; $("sCor").textContent = sc.c; $("sPct").textContent = sc.a? pct(sc.c,sc.a)+"%" : "–";
@@ -1169,7 +1178,7 @@ var MARK_NOTES = {
   "Pacer spikes without capture (asystole)":"Spikes with nothing after them"
 };
 var NO_RR = {"Ventricular fibrillation (coarse)":1, "Ventricular fibrillation (fine)":1, "Polymorphic VT (torsades de pointes)":1, "Asystole":1};
-function markStrip(host, key, cat){
+function markStrip(host, key, cat, item){
   var st=D.strips[key], m=st && st.m, svg=host && host.querySelector("svg:not(.cal-svg)");
   if(!m || !svg) return;
   var box=svg.parentNode; Array.prototype.slice.call(box.querySelectorAll(":scope > .mk-ov")).forEach(function(o){ o.remove(); });
@@ -1204,15 +1213,22 @@ function markStrip(host, key, cat){
   // wide QRS
   var narrowToo=m.q.length>wide.length;
   var paced = grp==="paced" || spikes.length>0;
-  wide.forEach(function(q){ var lbl = paced && spikes.some(function(c){ return q>=c-5 && q-c<=140; }) ? 'paced QRS' : (narrowToo && grp==="ventricular" ? 'PVC · wide' : 'wide QRS');
+  var ront = item && /R-on-T/.test(item.name||""), noted = item && (item.rows||[]).filter(function(r){ return r[0]==="Also noted"; })[0];
+  noted = noted ? noted[1] : "";
+  wide.forEach(function(q){ var lbl = paced && spikes.some(function(c){ return q>=c-5 && q-c<=140; }) ? 'paced QRS' : (ront ? 'R on T · PVC' : (narrowToo && grp==="ventricular" ? 'PVC · wide' : 'wide QRS'));
     var t=parseFloat(top(q+40, 90));
-    if(t>26) h+='<span class="mk mk-w'+edge(q)+'" style="left:'+X(q)+';top:'+t.toFixed(1)+'%">'+lbl+'</span>';
-    else h+='<span class="mk mk-w under'+edge(q)+'" style="left:'+X(q)+';top:'+Math.min(low(q+40, 120), 84).toFixed(1)+'%">'+lbl+'</span>'; });
+    var rc = lbl.indexOf("R on T")===0 ? " ront" : "";
+    if(t>26) h+='<span class="mk mk-w'+rc+edge(q)+'" style="left:'+X(q)+';top:'+t.toFixed(1)+'%">'+lbl+'</span>';
+    else h+='<span class="mk mk-w under'+rc+edge(q)+'" style="left:'+X(q)+';top:'+Math.min(low(q+40, 120), 84).toFixed(1)+'%">'+lbl+'</span>'; });
   // pacer spikes and capture
   if(grp==="paced" || spikes.length){
     spikes.forEach(function(c){ var cap=m.q.some(function(q){ return q>=c-5 && q-c<=140; });
       h+='<span class="mk mk-s'+(cap?'':' bad')+edge(c)+'" style="left:'+X(c)+'">'+(cap?'✓ capture':'✗ no capture')+'</span>'; });
   }
+  // field strips: extra findings listed under "Also noted"
+  var narrow=m.q.filter(function(q){ return !near(wide, q, 5); });
+  if(item && /pre-excitation/.test(item.name||"")) narrow.forEach(function(q){ h+='<span class="mk mk-d'+edge(q)+'" style="left:'+X(q-55)+';top:'+top(q-55, 15)+'">delta</span>'; });
+  if(/ST depression/.test(noted)) narrow.forEach(function(q){ h+='<span class="mk-band" style="left:'+X(q+60)+';width:'+(90/VW*100).toFixed(2)+'%"></span>'; });
   var note=MARK_NOTES[cat];
   if(note) h+='<span class="mk-note">'+esc(note)+'</span>';
   var ov=document.createElement("div"); ov.className="mk-ov"; ov.setAttribute("aria-hidden","true"); ov.innerHTML=h;
@@ -1222,17 +1238,79 @@ function markStrip(host, key, cat){
   if(c(".mk-p")) said.push("P waves"+(c(".mk-p.bad")?" (red: not conducted)":""));
   if(c(".mk-br.pr")) said.push("PR intervals");
   if(c(".mk-br.rr")) said.push("R–R intervals (seconds, across the top)");
-  if(c(".mk-w")) said.push("wide QRS complexes");
+  if(c(".mk-w.ront")) said.push("R-on-T PVCs landing on the T wave before them (red)");
+  if(c(".mk-w:not(.ront)")) said.push("wide QRS complexes");
   if(c(".mk-s")) said.push("pacer spikes and whether they capture");
+  if(c(".mk-d")) said.push("delta waves (slurred QRS start)");
+  if(c(".mk-band")) said.push("ST depression (blue)");
+  // color key under the strip
+  var KEY=[[".mk-p:not(.bad)","#0A738B","P waves"],[".mk-p.bad","#D9121A","P not conducted"],[".mk-br.pr","#0A738B","PR interval"],[".mk-br.rr","#02245D","R–R interval (s)"],
+    [".mk-w:not(.ront)","#7A1FA2","wide QRS"],[".mk-w.ront","#D9121A","R on T: PVC lands on the T wave"],[".mk-s:not(.bad)","#C25400","pacer spike that captures"],[".mk-s.bad","#D9121A","pacer spike that doesn't"],[".mk-d","#0A738B","delta wave"],[".mk-band","#0A6FDD","ST depression"]];
+  var paper=box.closest(".paper"), keyEl=paper && paper.parentNode.querySelector(".mk-legend"); if(keyEl) keyEl.remove();
+  if(paper){ var leg=document.createElement("div"); leg.className="mk-legend";
+    leg.innerHTML='<b>Why it\'s '+esc(cat)+':</b>'+KEY.filter(function(k){ return c(k[0]); }).map(function(k){ return '<span><i style="background:'+k[1]+'"></i>'+k[2]+'</span>'; }).join("")+(note?'<span>'+esc(note)+'</span>':'');
+    paper.parentNode.insertBefore(leg, paper.nextSibling); }
   var hint=document.querySelector(".mk-hint span");
   if(hint){ var nm=cat.replace(/\s*\(.*\)$/,"");
     hint.textContent = "Look back at the strip: it's now marked up to show what makes this "+nm+"."+(said.length?" Labeled: "+said.join(", ")+".":"")+(note?" "+note+".":""); }
+}
+
+/* ----- 12-lead teaching marks (after a wrong answer): colored by what they show ----- */
+var MK12_COLOR = {stu:"#D9121A", j:"#D9121A", brug:"#D9121A", rec:"#0A6FDD", dw:"#0A6FDD", q:"#E05F00", tpk:"#7A1FA2", tinv:"#7A1FA2", tbi:"#7A1FA2",
+  u:"#B07A00", qt:"#B07A00", rsr:"#0A738B", sw:"#0A738B", qs:"#0A738B", notch:"#0A738B", delta:"#0A738B", volt:"#0A738B", tallr:"#0A738B", pr:"#2E9A00"};
+var MK12_KEY = [["#D9121A","ST elevation (and its shape)",["stu","j","brug"]], ["#0A6FDD","ST depression: reciprocal, diffuse or upsloping",["rec","dw"]],
+  ["#E05F00","Q waves",["q"]], ["#7A1FA2","T-wave changes: peaked, inverted, biphasic",["tpk","tinv","tbi"]],
+  ["#0A738B","QRS and conduction: rSR′, QS, notched R, delta wave, voltage",["rsr","sw","qs","notch","delta","volt","tallr"]],
+  ["#2E9A00","PR segment",["pr"]], ["#B07A00","QT interval and U waves",["u","qt"]]];
+function svgEl(tag, at){ var e=document.createElementNS("http://www.w3.org/2000/svg", tag); for(var k in at) e.setAttribute(k, at[k]); return e; }
+function markECG12(host, q){
+  var svg=host && host.querySelector("svg.ecg12"), m=q.mk; if(!svg || !m) return;
+  var old=svg.querySelector("g.mk12"); if(old) old.remove();
+  var g=svgEl("g", {"class":"mk12"}), per={}, used={}, sum={};
+  var cell=function(ld){ for(var ci=0;ci<LEAD_COLS.length;ci++){ var ri=LEAD_COLS[ci].indexOf(ld); if(ri>=0) return [ri, ci]; } return [3, 0]; };
+  m.f.forEach(function(x){
+    var ld=x[0], kind=x[1], label=x[2], v=x[3], col=MK12_COLOR[kind]||"#02245D", rc=cell(ld), ri=rc[0], ci=rc[1], y0=ri*1200+760;
+    var d=(m.ld && m.ld[ld]) || m.d, lo=ci*2500+120, hi=ci*2500+2380;
+    used[kind]=1; var base=label.replace(/\s*[\d.]+\s*mm/g,"").replace(/\s+\(.*\)$/,"").trim(); (sum[base]=sum[base]||[]).indexOf(ld)<0 && sum[base].push(ld);
+    m.b.forEach(function(bt){ var c=bt[0], tp=bt[1]; if(c<lo || c>hi) return;
+      var sh;
+      if(kind==="stu"||kind==="rec"||kind==="j"||kind==="brug"||kind==="dw"){
+        var x1=c+d/2, w=kind==="dw"?75:115, h=Math.max(Math.abs(v*400), 16), yy=v>=0 ? y0-h : y0;
+        sh=svgEl("rect", {x:x1, y:yy, width:w, height:h, rx:8, fill:col, "fill-opacity":.3, stroke:col, "stroke-width":9});
+      } else if(kind==="tpk"||kind==="tinv"||kind==="tbi"||kind==="u"){
+        var cx= kind==="u" ? tp+170 : tp, ry=Math.max(Math.abs(v*400)/2+45, 70);
+        sh=svgEl("ellipse", {cx:cx, cy:y0-v*200, rx:kind==="u"?85:120, ry:ry, fill:col, "fill-opacity":.14, stroke:col, "stroke-width":9});
+      } else if(kind==="pr"){
+        sh=svgEl("rect", {x:c-d/2-95, y:y0-55, width:85, height:110, rx:10, fill:col, "fill-opacity":.2, stroke:col, "stroke-width":8});
+      } else {
+        var a= kind==="delta" ? c-d/2-55 : (kind==="q" ? c-d/2-18 : c-d/2-22), b2= kind==="delta" ? c-d/2+25 : (kind==="q" ? c-d/2+40 : c+d/2+22);
+        var top=y0-Math.max(v,0)*400-45, bot=y0-Math.min(v,0)*400+45;
+        sh=svgEl("rect", {x:a, y:top, width:b2-a, height:bot-top, rx:12, fill:col, "fill-opacity":.13, stroke:col, "stroke-width":9, "stroke-dasharray":"28 16"});
+      }
+      g.appendChild(sh); });
+    var k=per[ld]=(per[ld]||0)+1;
+    var tx=svgEl("text", {x:ci*2500+330, y:ri*1200+175+(k-1)*125, fill:col, "class":"mk12-t"}); tx.textContent=label; g.appendChild(tx);
+  });
+  if(m.qt){ var yq=3*1200+330, col=MK12_COLOR.qt; used.qt=1;
+    g.appendChild(svgEl("path", {d:"M"+m.qt[0]+" "+(yq+60)+"V"+yq+"H"+m.qt[1]+"V"+(yq+60), fill:"none", stroke:col, "stroke-width":14}));
+    var tq=svgEl("text", {x:(m.qt[0]+m.qt[1])/2, y:yq-30, fill:col, "class":"mk12-t", "text-anchor":"middle"}); tq.textContent=m.qt[2]; g.appendChild(tq); sum[m.qt[2]]=["II"]; }
+  if(m.spr){ var ts=svgEl("text", {x:330, y:3*1200+175, fill:"#0A738B", "class":"mk12-t"}); ts.textContent=m.spr; g.appendChild(ts); used.delta=1; sum[m.spr]=["II"]; }
+  svg.appendChild(g);
+  // color key under the ECG, then a plain-language summary in the feedback
+  var keyEl=host.parentNode.querySelector(".mk-legend"); if(keyEl) keyEl.remove();
+  var chips=MK12_KEY.filter(function(k){ return k[2].some(function(x){ return used[x]; }); }).map(function(k){ return '<span><i style="background:'+k[0]+'"></i>'+esc(k[1])+'</span>'; }).join("");
+  var leg=document.createElement("div"); leg.className="mk-legend";
+  leg.innerHTML='<b>Why it\'s '+esc(q.cat)+':</b>'+(chips || '<span>No ST elevation or depression, normal QRS and intervals: nothing abnormal to mark.</span>');
+  host.parentNode.insertBefore(leg, host.nextSibling);
+  var hint=document.querySelector(".mk-hint span");
+  if(hint){ var parts=Object.keys(sum).map(function(b){ return sum[b][0]==="II" && /QT|PR/.test(b) ? b+" (rhythm strip)" : b+" in "+sum[b].join(", "); });
+    hint.textContent="Look back at the ECG: the colored marks show why this is "+q.cat+". "+(parts.length ? parts.join(" · ")+"." : "Nothing abnormal: no ST elevation or depression, normal QRS width and intervals."); }
 }
 function stripFeedback(q, chosen){
   var ok = chosen===q.cat, C = CATS[q.cat], X = CATS[chosen], revealed = chosen===REVEALED;
   var h = '<div class="fb '+(ok?"ok":"no")+'"><div class="verdict">'+(ok?IC.ok+"Correct":IC.no+(revealed?"Answer revealed · counted as wrong":"Not quite"))+'</div>';
   h += '<div class="answer-name">'+esc(q.name)+'</div>';
-  if(!ok && !q.leads) h += '<p class="fb-note mk-hint">'+IC.bulb+'<span>Look back at the strip: it\'s now marked up to show what makes this '+esc(q.cat.replace(/\s*\(.*\)$/,""))+'. P waves'+(' (red if not conducted)')+', PR and R–R intervals in seconds'+', wide QRS complexes and pacer spikes are labeled where they apply.</span></p>';
+  if(!ok) h += '<p class="fb-note mk-hint">'+IC.bulb+'<span>Look back at the strip: it\'s now marked up to show what makes this '+esc(q.cat.replace(/\s*\(.*\)$/,""))+'. P waves'+(' (red if not conducted)')+', PR and R–R intervals in seconds'+', wide QRS complexes and pacer spikes are labeled where they apply.</span></p>';
   if(revealed){
     h += '<p class="fb-note">The cardiologist talked you through this one, so it counts as wrong. Here\'s the full explanation.</p>';
   } else if(!ok){
@@ -1484,7 +1562,7 @@ function loadSettings(){
 }
 var SWITCHES = [
   {key:"twelveLead", eyebrow:"Practice area control", title:"12-lead ECG practice area", icon:function(){ return MINI_ECG; }, preview:"#area-twelve",
-   on:"Students see a 12-lead tile on the Overview and Practice pages and can work through all 100 ECGs.", off:"Students can't see or open it. Preview it yourself, then open it when the class is ready."},
+   on:"Students see a 12-lead tile on the Overview and Practice pages and can work through all 150 ECGs.", off:"Students can't see or open it. Preview it yourself, then open it when the class is ready."},
   {key:"fieldStrips", eyebrow:"Practice area control", title:"Field strips: real-world artifact", icon:function(){ return MINI_ECG; }, preview:"#area-field",
    on:"Students see a Field strips tile on the Overview and Practice pages and work through 100 strips with ambulance artifact.", off:"Students can't see or open it. Preview it yourself, then open it when the class is ready."},
   {key:"defibLab", eyebrow:"Module control", title:"Defib lab: monitor, defibrillator and pacer", icon:function(){ return IC_BOLT; }, preview:"#defib",
@@ -1727,7 +1805,7 @@ var AREA_META = [
   {key:"block", title:"AV blocks", short:"AV blocks", color:"var(--band-orange)", soft:"var(--orange-soft)", ink:"var(--orange)", blurb:"1st degree, Wenckebach, Mobitz II, 2:1, high-grade and complete heart block."},
   {key:"paced", title:"Paced rhythms", short:"Paced", color:"var(--band-navy)", soft:"var(--navy-soft)", ink:"var(--navy)", blurb:"Atrial, ventricular and dual-chamber pacing, demand pacing, pacer malfunction and transcutaneous pacing."},
   {key:"field", title:"Field strips: the back of the ambulance", lockName:"The field strips", short:"Field", gated:"fieldStrips", size:100, unit:"strips", color:"linear-gradient(120deg,#3A4148,var(--band-orange) 60%,var(--band-red))", soft:"var(--orange-soft)", ink:"var(--orange)", blurb:"100 randomized strips from every rhythm family, the way they really look on a moving rig: breathing wander, road vibration, bumps, shivering, a patient who won\u2019t lie still and the odd loose electrode. Read the rhythm through the mess."},
-  {key:"twelve", title:"12-lead ECGs", short:"12-lead", gated:"twelveLead", size:100, color:"linear-gradient(120deg,var(--band-navy),var(--band-teal) 55%,var(--band-red))", soft:"var(--navy-soft)", ink:"var(--navy)", blurb:"STEMI territories and equivalents (Wellens, de Winter, aVR), bundle branch blocks, WPW, LVH, Brugada, long QT, potassium problems, pericarditis and early repolarization, on full 12-lead printouts. Stuck? Call the cardiologist."}
+  {key:"twelve", title:"12-lead ECGs", short:"12-lead", gated:"twelveLead", size:150, color:"linear-gradient(120deg,var(--band-navy),var(--band-teal) 55%,var(--band-red))", soft:"var(--navy-soft)", ink:"var(--navy)", blurb:"STEMI territories and equivalents (Wellens, de Winter, aVR), bundle branch blocks, WPW, LVH, Brugada, long QT, potassium problems, pericarditis and early repolarization, on full 12-lead printouts, including 50 recorded on scene from real-looking patients. Stuck? Call the cardiologist."}
 ];
 function areaOpen(m){ return !m.gated || (SB.features||{})[m.gated]===true; }
 var AREA_SIZE = 50;
@@ -1796,7 +1874,7 @@ function renderArea(key){
   }).join("");
   var dots=data.items.map(function(it){ var x=st.p[it.n], c = x==null ? "" : (x===it.cat?"r":"w"); return '<button class="dot '+c+(it.n===st.pi?" cur":"")+'" data-n="'+it.n+'" aria-label="Strip '+it.n+'">'+it.n+'</button>'; }).join("");
   body.innerHTML=head+'<div class="card qcard"><div class="strip-top"><div class="stem"><span class="tag">'+esc(m.short)+'</span><p>'+(q.leads?'Interpret this 12-lead ECG.':'Identify this rhythm.')+'</p></div>'+(q.hints?cardioBtnHTML(q, st, done):'')+'</div>'+
-    '<div><div class="paper">'+(q.leads?ecg12SVG(q):stripSVG(q.strip,"paper",false))+'</div><div class="paper-meta"><span>'+(q.leads?'12-lead · 25 mm/s · 10 mm/mV · bottom row: lead II rhythm strip':'Lead II · 25 mm/s · 6-second strip'+(key==="field"?' · recorded in a moving ambulance':''))+'</span><span class="scroll-hint"></span></div></div>'+
+    '<div><div class="paper">'+(q.leads?ecg12SVG(q):stripSVG(q.strip,"paper",false))+'</div><div class="paper-meta"><span>'+(q.leads?'12-lead · 25 mm/s · 10 mm/mV · bottom row: lead II rhythm strip'+(q.field?' · recorded on scene, real patient':''):'Lead II · 25 mm/s · 6-second strip'+(key==="field"?' · recorded in a moving ambulance':''))+'</span><span class="scroll-hint"></span></div></div>'+
     '<div><div class="eyebrow" style="margin-bottom:10px">'+(q.leads?'What does it show?':'Identify the rhythm')+'</div><div class="opts" id="arOpts" role="group" aria-label="Answer choices">'+opts+'</div></div>'+
     '<div aria-live="polite">'+(done?stripFeedback(q, chosen):'')+'</div>'+
     '<div class="qnav"><button class="btn btn-ghost" id="arPrev" '+(st.pi===1?'disabled':'')+'>← Previous</button><button class="btn btn-primary" id="arNext">'+(st.pi===total?'See area results →':(done?'Next '+unit.toLowerCase()+' →':'Skip →'))+'</button></div></div>'+
@@ -1809,7 +1887,7 @@ function renderArea(key){
   $("arNext").onclick=function(){ st.pi++; save(); renderArea(key); scrollTop(); };
   $("arDots").onclick=function(e){ var b=e.target.closest(".dot"); if(!b) return; st.pi=+b.getAttribute("data-n"); save(); renderArea(key); scrollTop(); };
   updateTally();
-  if(q && done && chosen!==q.cat && !q.leads) markStrip(document.querySelector("#v-area .paper"), q.strip, q.cat);
+  if(q && done && chosen!==q.cat){ if(q.leads) markECG12(document.querySelector("#v-area .paper"), q); else markStrip(document.querySelector("#v-area .paper"), q.strip, q.cat, q); }
   if(q){ var fk=key+":"+q.n, fresh=FIT12_LAST!==fk; FIT12_LAST=fk; fit12(false); setTimeout(function(){ fit12(fresh); }, 0); } else FIT12_LAST=null;
 }
 /* Practice areas (rhythm strips and 12-leads): scale the whole ECG to the screen and line it up at the top, so no scrolling is needed to see it */
