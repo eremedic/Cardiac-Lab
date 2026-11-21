@@ -4,6 +4,7 @@
   import { live, connect } from '$lib/app/live.svelte.js';
   import ProgressRing from '$lib/components/ProgressRing.svelte';
   import AreaTile from '$lib/components/AreaTile.svelte';
+  import SurveyPrompt from '$lib/components/SurveyPrompt.svelte';
 
   onMount(() => { connect(); show('course'); });
   const snap = $derived(live.snap);
@@ -49,7 +50,7 @@
         {#each snap?.tiles ?? [] as t (t.key)}<AreaTile {t} />{/each}
       </div>
     </section>
-    <div class="card sv-home" id="homeSurvey"></div>
+    <div class="card sv-home"><SurveyPrompt sv={snap?.survey} /></div>
     <div class="card method">
       <div class="lab">Use the same five steps on every strip</div>
       <div class="st s1"><i>1</i><div><b>Rate</b><span>QRS in 6 s × 10</span></div></div>

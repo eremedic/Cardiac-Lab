@@ -74,7 +74,6 @@ function ring(el, frac, label){
   el.innerHTML='<circle class="t" cx="32" cy="32" r="'+r+'"/><circle class="v" cx="32" cy="32" r="'+r+'" stroke-dasharray="'+(C*frac).toFixed(1)+' '+C.toFixed(1)+'" transform="rotate(-90 32 32)"/><text x="32" y="36.5" text-anchor="middle">'+label+'</text>';
 }
 function updateTally(){
-  if(typeof renderSurveyPrompts==="function") renderSurveyPrompts();
   var s=stripScore(), m=megaScore();
   if($("ringStrips")) ring($("ringStrips"), s.a/N, pct(s.a,N)+"%");   // course rings show progress (answered), not score
   if($("ringMega")) ring($("ringMega"), m.a/TOTAL_Q, pct(m.a,TOTAL_Q)+"%");
@@ -397,31 +396,6 @@ function bindRun(){
 
 /* ================= RESULTS ================= */
 var GROUPS = D.groups;
-var confirmReset = false;
-function renderResults(){
-  var s=stripScore(), m=megaScore(), totC=s.c+m.c, totT=N+TOTAL_Q, done=s.a+m.a;
-  var overall = pct(totC,done), r=62, C=2*Math.PI*r;
-  var msg = done===0 ? "Answer strips and megacode decisions to build your score." :
-    (done<totT ? "Your score is the share of the "+done+" items you've answered that were correct ("+(totT-done)+" still to go). "+(overall>=84 ? "On track: keep going." : "Review the missed items below as you go.") :
-    (overall>=90 ? "Excellent. You're reading rhythms and running codes at a high level." : overall>=84 ? "Solid pass-level performance. Review the items below to tighten up." : "Keep practicing. Review the missed strips and retry the cases below."));
-  var h = '<div class="card score-hero"><svg class="big-ring" viewBox="0 0 150 150"><circle class="t" cx="75" cy="75" r="'+r+'"/><circle class="v" cx="75" cy="75" r="'+r+'" stroke-dasharray="'+(C*overall/100).toFixed(1)+' '+C.toFixed(1)+'" transform="rotate(-90 75 75)"/><text x="75" y="86" text-anchor="middle" font-size="40">'+(done?overall+'%':'–')+'</text></svg>'+
-    '<div><div class="eyebrow">'+(done<totT?'Score so far':'Final score')+'</div><h2><span class="num">'+totC+'</span> of <span class="num">'+done+'</span> answered correct</h2><p>'+msg+'</p>'+
-    '<div class="legend" style="margin-top:12px"><span>Strips: <b class="num">'+s.c+'/'+s.a+'</b> ('+(s.a?pct(s.c,s.a)+'%':'–')+') · '+s.a+' of '+N+' answered</span><span>Megacode: <b class="num">'+m.c+'/'+m.a+'</b> ('+(m.a?pct(m.c,m.a)+'%':'–')+') · '+m.a+' of '+TOTAL_Q+' answered</span></div></div></div>';
-  var bars = GROUPS.map(function(g){ var t=0,c=0,a=0; P.forEach(function(q){ if(CATS[q.cat].group===g[0]){t++; var x=S.p[q.n]; if(x!=null){a++; if(x===q.cat)c++;}} });
-    return '<div class="barrow"><span>'+g[1]+'</span><span class="track"><i style="width:'+pct(c,a)+'%"></i></span><b>'+(a?c+'/'+a:'—')+'</b></div>'; }).join("");
-  var missed = P.filter(function(q){ var x=S.p[q.n]; return x!=null && x!==q.cat; });
-  var ml = missed.length ? missed.map(function(q){ return '<button data-n="'+q.n+'"><b>#'+q.n+'</b><span style="color:var(--ink)">'+esc(q.name)+'</span></button>'; }).join("") : '<p class="empty">'+(s.a?"No missed strips. Well done.":"No strips answered yet.")+'</p>';
-  var cs = CASES.map(function(c,ci){ var k=caseScore(ci); return '<button data-c="'+ci+'"><span style="color:var(--muted);font-size:11.5px">Case '+c.n+'</span><b>'+(k.a?k.c+'/'+k.a:'—')+'</b><span>'+esc(c.title)+'</span></button>'; }).join("");
-  h += '<div class="split"><div class="card panel"><h3>Strips by rhythm family <span class="num">'+s.c+'/'+s.a+'</span></h3><div class="bars">'+bars+'</div><h3 style="margin-top:6px">Missed strips <span class="num">'+missed.length+'</span></h3><div class="missed" id="rMissed">'+ml+'</div></div>'+
-       '<div class="card panel"><h3>Megacode by case <span class="num">'+m.c+'/'+m.a+'</span></h3><div class="case-scores" id="rCases">'+cs+'</div>'+
-       '<h3 style="margin-top:6px">Start over</h3><div class="confirm" id="rReset">'+(confirmReset?'<span>Erase all answers in this browser?</span><button class="btn btn-primary" id="rYes">Erase</button><button class="btn btn-ghost" id="rNo">Cancel</button>':'<button class="btn btn-ghost" id="rAsk">Reset all progress</button>')+'</div></div></div>';
-  $("rBody").innerHTML = h;
-  $("rMissed").onclick=function(e){ var b=e.target.closest("button"); if(!b)return; S.pi=+b.getAttribute("data-n"); save(); nav("/strips"); };
-  $("rCases").onclick=function(e){ var b=e.target.closest("button"); if(!b)return; S.ci=+b.getAttribute("data-c"); var k=caseScore(S.ci); S.si=k.a>=k.t?k.t:k.a; save(); nav("/megacode"); };
-  var b; if((b=$("rAsk"))) b.onclick=function(){confirmReset=true; renderResults();};
-  if((b=$("rNo"))) b.onclick=function(){confirmReset=false; renderResults();};
-  if((b=$("rYes"))) b.onclick=function(){ S={p:{},m:{},pi:1,ci:null,cohort:S.cohort||"",name:S.name||"",code:S.code||"",sid:S.sid,svDone:S.svDone,svAnswers:S.svAnswers,svAnon:S.svAnon,ar:S.ar,df:S.df,cl:S.cl}; save(); confirmReset=false; renderResults(); updateTally(); };
-}
 
 /* ================= VIEWS (each SvelteKit page calls show() with its own view) ================= */
 function heroKey(){ for(var i=0;i<P.length;i++) if(P[i].cat==="Normal sinus rhythm") return P[i].strip; return P[0].strip; }
@@ -438,9 +412,6 @@ function show(v, areaKey){
   if(v==="megacode"){ renderMega(); if(S.ci!=null) setTimeout(function(){ megaFit(true); }, 0); }
   if(v==="codelab") renderCodeLab(); else if(window.CodeLab) CodeLab.stop();
   if(v==="defib") renderDefib(); else if(window.DefibLab && v!=="codelab") DefibLab.stop();
-  if(v==="results") renderResults();
-  if(v==="survey") renderSurvey(); else if(SV.editing && !SV.sending){ SV.editing=false; }
-  if(v==="home" || v==="course" || v==="results") renderSurveyPrompts();
   updateTally(); setSync(SB.state);
   if(v==="scoreboard") openBoard(); else stopPoll();
 }
@@ -497,11 +468,10 @@ function initShared(){
     SB.features=(cfg && cfg.features) || {};
     if(cfg && cfg.cohorts) SB.cohortArr=cfg.cohorts; if(cfg && cfg.cohorts) SB.cohortOpts=cfg.cohorts.map(function(c){ return '<option value="'+esc(c)+'">'; }).join("");
     renderAreaTiles(); defibNav(); if(VIEW==="area" || VIEW==="defib" || VIEW==="codelab") rerender();
-    if(!cfg || !cfg.scoring){ setSync("offline"); if(VIEW==="survey") renderSurvey(); return; }
+    if(!cfg || !cfg.scoring){ setSync("offline"); emit(); return; }
     SB.online=true; SB.requireCode=!!cfg.requireCode; emit();
     pushNow();
-    if(VIEW==="survey") renderSurvey();
-  }).catch(function(){ SB.configDone=true; setSync("offline"); if(VIEW==="survey") renderSurvey(); });
+  }).catch(function(){ SB.configDone=true; setSync("offline"); });
   try{ SB.pass = sessionStorage.getItem("cl-instructor") || null; }catch(e){}
   if(SB.pass) loadBoard(true);
 }
@@ -1461,161 +1431,8 @@ var IC_LOCK='<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-w
 var IC_CLIP='<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3.5" width="12" height="14" rx="2"/><path d="M7.5 3.5h5v2.5h-5zM7 10l2 2 4-4"/></svg>';
 
 /* ----- home card + results prompt ----- */
-function surveyPromptHTML(where){
-  var c=programCounts();
-  if(!programDone()){
-    return '<div class="sv-prompt locked"><span class="sv-ic">'+IC_LOCK+'</span><div class="sv-t"><div class="eyebrow">Course survey</div><h3>Opens after '+SURVEY_UNLOCK_PCT+'% of the course</h3>'+
-      '<p>Answer '+surveyNeed()+' strips or megacode decisions to unlock a short survey about the course.</p>'+
-      '<div class="progress"><i style="width:'+pct(c.done,surveyNeed())+'%"></i></div><small class="num">'+c.done+' of '+surveyNeed()+' answered</small></div></div>';
-  }
-  if(S.svDone){
-    return '<div class="sv-prompt done"><span class="sv-ic">'+IC_CLIP+'</span><div class="sv-t"><div class="eyebrow">Course survey</div><h3>Thanks for your feedback</h3>'+
-      '<p>Your survey was submitted '+ago(S.svDone)+'. You can update your answers at any time.</p></div><a class="btn btn-ghost" href="/survey">Edit my answers</a></div>';
-  }
-  return '<div class="sv-prompt open"><span class="sv-ic">'+IC_CLIP+'</span><div class="sv-t"><div class="eyebrow">Course survey · about 4 minutes</div><h3>Tell us how the course is going</h3>'+
-    '<p>Your answers help your instructor improve the course. You can update them any time as you keep going.</p></div><a class="btn btn-primary" href="/survey">Take the survey</a></div>';
-}
-function renderSurveyPrompts(){
-  var h=$("homeSurvey"); if(h) h.innerHTML=surveyPromptHTML("home");
-  var r=$("rSurvey"); if(r) r.innerHTML=surveyPromptHTML("results");
-}
 
 /* ----- survey page ----- */
-function svScale(q, name, labels, val, lo, hi, cls, ends){
-  var h='<div class="sv-scale '+cls+'" role="radiogroup" aria-label="'+esc(q.text)+'">';
-  for(var v=lo; v<=hi; v++){
-    var id="sv-"+name+"-"+v, lab = labels ? labels[v-lo] : String(v);
-    h+='<input type="radio" id="'+id+'" name="'+name+'" value="'+v+'"'+(val===v?' checked':'')+'><label for="'+id+'"'+(labels?' title="'+esc(lab)+'"':'')+'>'+(cls==="stars"?'<span aria-hidden="true">★</span><span class="sr">'+v+' of 5</span>':(cls==="likert"?'<b>'+v+'</b><span>'+esc(lab)+'</span>':esc(lab)))+'</label>';
-  }
-  h+='</div>';
-  if(ends) h+='<div class="sv-ends"><span>'+esc(ends[0])+'</span><span>'+esc(ends[1])+'</span></div>';
-  return h;
-}
-function svQuestionHTML(q, ans, n){
-  var v = ans[q.id], bad = SV.missing && SV.missing.indexOf(q.id)>=0;
-  var h='<fieldset class="sv-q'+(bad?' sv-bad':'')+'" id="svq-'+q.id+'"><legend><span class="num">'+n+'.</span> '+esc(q.text)+(q.required?'':' <em>(optional)</em>')+'</legend>';
-  if(q.type==="choice"){
-    h+='<div class="sv-choices">'+q.options.map(function(o,i){ var id="sv-"+q.id+"-"+i; return '<input type="radio" id="'+id+'" name="'+q.id+'" value="'+esc(o)+'"'+(v===o?' checked':'')+'><label for="'+id+'">'+esc(o)+'</label>'; }).join("")+'</div>';
-  } else if(q.type==="multi"){
-    var picked=Array.isArray(v)?v:[], max=q.maxPicks||q.options.length;
-    h+='<div class="sv-choices" data-max="'+max+'">'+q.options.map(function(o,i){ var id="sv-"+q.id+"-"+i, on=picked.indexOf(o)>=0; return '<input type="checkbox" id="'+id+'" name="'+q.id+'" value="'+esc(o)+'"'+(on?' checked':'')+(!on&&picked.length>=max?' disabled':'')+'><label for="'+id+'">'+esc(o)+'</label>'; }).join("")+'</div><div class="sv-ends"><span id="svc-'+q.id+'">'+picked.length+' of '+max+' chosen</span></div>';
-  } else if(q.type==="likert"){
-    h+=svScale(q, q.id, SV.def.likert, v, 1, 5, "likert");
-  } else if(q.type==="stars"){
-    h+=svScale(q, q.id, null, v, 1, 5, "stars", ["Poor","Excellent"]);
-  } else if(q.type==="nps"){
-    h+=svScale(q, q.id, null, v, 0, 10, "nps", ["Not at all likely","Extremely likely"]);
-  } else if(q.type==="confidence"){
-    var c=v||{};
-    h+='<div class="sv-conf"><span class="sv-when">Before this course</span>'+svScale(q, q.id+"__before", null, c.before, 1, 5, "conf")+
-       '<span class="sv-when">Now</span>'+svScale(q, q.id+"__now", null, c.now, 1, 5, "conf")+'</div>'+
-       '<div class="sv-ends"><span>1 = '+esc(SV.def.confidence[0])+'</span><span>5 = '+esc(SV.def.confidence[4])+'</span></div>';
-  } else if(q.type==="text"){
-    h+='<textarea name="'+q.id+'" id="sv-'+q.id+'" rows="3" maxlength="'+(q.max||1000)+'" aria-label="'+esc(q.text)+'">'+esc(v||"")+'</textarea>';
-  }
-  return h+'</fieldset>';
-}
-function readSurveyForm(){
-  var f=$("svForm"), a={};
-  svQuestions().forEach(function(q){
-    if(q.type==="confidence"){
-      var b=f.querySelector('input[name="'+q.id+'__before"]:checked'), n=f.querySelector('input[name="'+q.id+'__now"]:checked');
-      if(b||n) a[q.id]={before:b?+b.value:null, now:n?+n.value:null};
-    } else if(q.type==="multi"){
-      var picks=Array.prototype.map.call(f.querySelectorAll('input[name="'+q.id+'"]:checked'), function(el){ return el.value; });
-      if(picks.length) a[q.id]=picks;
-    } else if(q.type==="text"){
-      var t=f.elements[q.id].value.trim(); if(t) a[q.id]=t;
-    } else {
-      var el=f.querySelector('input[name="'+q.id+'"]:checked');
-      if(el) a[q.id] = q.type==="choice" ? el.value : +el.value;
-    }
-  });
-  return a;
-}
-function svMissing(a){
-  return svQuestions().filter(function(q){
-    if(!q.required) return false;
-    var v=a[q.id];
-    if(q.type==="confidence") return !v || v.before==null || v.now==null;
-    if(q.type==="multi") return !v || !v.length;
-    return v===undefined || v===null || v==="";
-  }).map(function(q){ return q.id; });
-}
-function renderSurvey(){
-  var body=$("svBody");
-  var head='<div class="qhead"><div><div class="eyebrow">Course survey</div><h2>Tell us about the course</h2></div></div>';
-  if(!programDone()){ body.innerHTML=head+'<div class="card panel">'+surveyPromptHTML("page")+'<div class="qnav" style="justify-content:flex-start"><a class="btn btn-primary" href="/strips">Go to strips</a><a class="btn btn-ghost" href="/megacode">Go to megacode</a></div></div>'; return; }
-  if(!SB.online && !SB.configDone){ body.innerHTML=head+'<div class="card panel"><p class="empty">Loading the survey…</p></div>'; return; }
-  if(!SB.online){ body.innerHTML=head+'<div class="card panel"><h3>The survey isn\'t available on this site yet</h3><p class="empty">Survey answers are sent to your instructor, and score sharing isn\'t switched on here. Ask your instructor about it.</p></div>'; return; }
-  if(S.svDone && !SV.editing){
-    body.innerHTML=head+'<div class="card panel sv-thanks"><span class="sv-ic">'+IC_CLIP+'</span><h3>Thank you, '+esc(S.name||"")+'</h3><p>Your survey was submitted '+ago(S.svDone)+(S.svAnon?' with your name hidden next to your answers':'')+'. Your instructor can see your responses on the scoreboard.</p>'+
-      '<div class="qnav" style="justify-content:flex-start"><button class="btn btn-ghost" id="svEdit">Edit my answers</button><a class="btn btn-primary" href="/results">See my results</a></div></div>';
-    $("svEdit").onclick=function(){ SV.editing=true; renderSurvey(); };
-    return;
-  }
-  body.innerHTML=head+'<div class="card panel"><p class="empty">Loading the survey…</p></div>';
-  loadSurveyDef().then(function(){
-    var ans = S.svDraft || S.svAnswers || {}, n=0;
-    var who = '';
-    if(!S.name || (SB.requireCode && !S.code)){
-      who='<div class="card sv-sec sv-who"><h3>Before you start</h3><p class="empty">Your survey is sent to your instructor along with your results.</p><div class="share-f">'+
-        (!S.name?'<label class="cohort" for="svName"><span>Your name</span><input id="svName" type="text" maxlength="60" autocomplete="name"></label>':'')+
-        (SB.requireCode && !S.code?'<label class="cohort" for="svCode"><span>Class code</span><input id="svCode" type="text" maxlength="60" autocomplete="off"></label>':'')+'</div></div>';
-    }
-    var secs = SV.def.sections.map(function(s){
-      return '<section class="card sv-sec"><h3>'+esc(s.title)+'</h3>'+(s.intro?'<p class="sv-intro">'+esc(s.intro)+'</p>':'')+s.questions.map(function(q){ n++; return svQuestionHTML(q, ans, n); }).join("")+'</section>';
-    }).join("");
-    var anon = S.svDraftAnon!=null ? S.svDraftAnon : !!S.svAnon;
-    body.innerHTML = head+'<p class="sv-lede">Thanks for working through the course. This survey takes about 4 minutes, and you can update your answers later. Questions marked (optional) can be skipped.</p>'+
-      '<form id="svForm" novalidate>'+who+secs+
-      '<div class="card sv-sec sv-submit"><label class="sv-anon" for="svAnon"><input type="checkbox" id="svAnon"'+(anon?' checked':'')+'><span><b>Hide my name next to my answers</b><br>Your instructor will see that you completed the survey, but your answers and comments are listed as "Anonymous".</span></label>'+
-      '<div class="sv-msg" id="svMsg" role="alert">'+esc(SV.msg)+'</div><div class="qnav" style="justify-content:flex-start"><button class="btn btn-primary" type="submit" id="svSend"'+(SV.sending?' disabled':'')+'>'+(S.svDone?'Update my answers':'Submit survey')+'</button>'+(S.svDone?'<button class="btn btn-ghost" type="button" id="svCancel">Cancel</button>':'')+'</div></div></form>';
-    var f=$("svForm");
-    f.addEventListener("change", function(e){
-      var box=e.target.closest(".sv-choices[data-max]");
-      if(box){ var max=+box.getAttribute("data-max"), boxes=box.querySelectorAll('input[type="checkbox"]'), n2=box.querySelectorAll('input:checked').length;
-        boxes.forEach(function(el){ el.disabled = !el.checked && n2>=max; });
-        var cnt=$("svc-"+e.target.name); if(cnt) cnt.textContent=n2+" of "+max+" chosen"; }
-    });
-    f.addEventListener("change", function(){ S.svDraft=readSurveyForm(); S.svDraftAnon=$("svAnon").checked; if(SV.missing){ SV.missing=svMissing(S.svDraft); f.querySelectorAll(".sv-q").forEach(function(el){ el.classList.toggle("sv-bad", SV.missing.indexOf(el.id.slice(4))>=0); }); setSvMsg(SV.missing.length ? (SV.missing.length===1 ? "One required question still needs an answer." : SV.missing.length+" required questions still need an answer.") : ""); } try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} });
-    f.addEventListener("submit", function(e){ e.preventDefault(); submitSurvey(); });
-    if($("svCancel")) $("svCancel").onclick=function(){ SV.editing=false; SV.msg=""; SV.missing=null; renderSurvey(); scrollTop(); };
-  }, function(){
-    body.innerHTML=head+'<div class="card panel"><h3>The survey couldn\'t load</h3><p class="empty">Check your connection and try again.</p><button class="btn btn-primary" id="svRetry">Try again</button></div>';
-    $("svRetry").onclick=renderSurvey;
-  });
-}
-function setSvMsg(t){ SV.msg=t; var m=$("svMsg"); if(m) m.textContent=t; }
-function submitSurvey(retried){
-  if(SV.sending) return;
-  if($("svName")){ var nm=$("svName").value.trim().slice(0,60); if(!nm){ setSvMsg("Enter your name at the top of the survey."); $("svName").focus(); return; } S.name=nm; }
-  if($("svCode")){ var cd=$("svCode").value.trim().slice(0,60); if(!cd){ setSvMsg("Enter the class code from your instructor at the top of the survey."); $("svCode").focus(); return; } S.code=cd; SB.last=""; }
-  var a=readSurveyForm(), miss=svMissing(a);
-  S.svDraft=a; S.svDraftAnon=$("svAnon").checked;
-  if(miss.length){
-    SV.missing=miss;
-    document.querySelectorAll("#svForm .sv-q").forEach(function(el){ el.classList.toggle("sv-bad", miss.indexOf(el.id.slice(4))>=0); });
-    setSvMsg(miss.length===1 ? "One required question still needs an answer." : miss.length+" required questions still need an answer.");
-    var first=$("svq-"+miss[0]); if(first) first.scrollIntoView({behavior:"smooth", block:"center"});
-    return;
-  }
-  SV.missing=null; SV.sending=true; $("svSend").disabled=true; setSvMsg("Sending…");
-  var anon=$("svAnon").checked;
-  // Make sure the server has the finished results first, then send the survey.
-  var ready = (SB.state==="synced" && !SB.timer) ? Promise.resolve() : syncNow();
-  ready.then(function(){
-    return fetch(API+"/scores/"+S.sid+"/survey", {method:"PUT", headers:{"content-type":"application/json"}, body:JSON.stringify({code:S.code||"", anonymous:anon, answers:a})});
-  }).then(function(r){
-    SV.sending=false;
-    if(r.ok){ S.svDone=Date.now(); S.svAnswers=a; S.svAnon=anon; delete S.svDraft; delete S.svDraftAnon; SV.editing=false; SV.msg=""; save(); renderSurvey(); renderSurveyPrompts(); scrollTop(); return; }
-    if(r.status===403){ setSvMsg("That class code doesn't match. Check it on the Home page and try again."); }
-    else if(r.status===409 && !retried){ SB.last=""; setTimeout(function(){ submitSurvey(true); }, 1500); setSvMsg("Saving your latest results first…"); return; }
-    else if(r.status===409){ setSvMsg("Your latest results haven't reached the scoreboard yet. Check that you're online and that the top bar says \"Shared with instructor\", then try again."); }
-    else setSvMsg("The survey couldn't be sent. Check your connection and try again.");
-    $("svSend").disabled=false;
-  }, function(){ SV.sending=false; $("svSend").disabled=false; setSvMsg("The survey couldn't be sent. Check your connection and try again."); });
-}
 // Sends the latest results right away and resolves when done.
 function syncNow(){
   clearTimeout(SB.timer); SB.timer=null; SB.last="";
@@ -1743,7 +1560,8 @@ function snapshot(){
     sync:{ state:st, kind: st==="synced"?"synced":(st==="saving"?"saving":(st==="badcode"||st==="error"?"error":"local")), chip:SYNC_TXT[st], share:SHARE_TXT[st] },
     strips:{ a:s.a, c:s.c, n:N, pi:S.pi }, mega:{ a:m.a, c:m.c, n:TOTAL_Q, cases:CASES.length },
     admin:!!SB.admin, showDefib: defibOpen() || !!SB.admin, showCode: codeOpen() || !!SB.admin,
-    tiles: tileData(), stripsTile: stripsTileData()
+    tiles: tileData(), stripsTile: stripsTileData(),
+    survey: (function(){ var c=programCounts(); return { state: !programDone() ? "locked" : (S.svDone ? "done" : "open"), unlockPct:SURVEY_UNLOCK_PCT, need:surveyNeed(), done:c.done, doneAgo: S.svDone ? ago(S.svDone) : "" }; })()
   };
 }
 function setProfile(k, v){
@@ -1754,9 +1572,49 @@ function setProfile(k, v){
     // switches can differ by cohort: refresh what this student can see
     fetch(API+"/config?cohort="+encodeURIComponent(S.cohort||""), {cache:"no-store"}).then(function(r){ return r.ok?r.json():null; }).then(function(cfg){ if(cfg && !SB.admin){ SB.features=cfg.features||{}; AREA_META.forEach(function(x){ if(x.gated){ delete AREAS[x.key]; AREA_LOADING[x.key]=null; } }); renderAreaTiles(); defibNav(); } }, function(){}); }
 }
+/* ----- Results page data and actions ----- */
+function resultsData(){
+  var s=stripScore(), m=megaScore();
+  return {
+    strips:{a:s.a, c:s.c, n:N}, mega:{a:m.a, c:m.c, n:TOTAL_Q},
+    groups: GROUPS.map(function(g){ var c=0,a=0; P.forEach(function(q){ if(CATS[q.cat].group===g[0]){ var x=S.p[q.n]; if(x!=null){a++; if(x===q.cat)c++;} } }); return {key:g[0], label:g[1], c:c, a:a}; }),
+    missed: P.filter(function(q){ var x=S.p[q.n]; return x!=null && x!==q.cat; }).map(function(q){ return {n:q.n, name:q.name}; }),
+    cases: CASES.map(function(c,ci){ var k=caseScore(ci); return {ci:ci, n:c.n, title:c.title, c:k.c, a:k.a}; })
+  };
+}
+function openStrip(n){ S.pi=+n; save(); nav("/strips"); }
+function openCaseAt(ci){ S.ci=+ci; var k=caseScore(S.ci); S.si=k.a>=k.t?k.t:k.a; save(); nav("/megacode"); }
+function resetProgress(){ S={p:{},m:{},pi:1,ci:null,cohort:S.cohort||"",name:S.name||"",code:S.code||"",sid:S.sid,svDone:S.svDone,svAnswers:S.svAnswers,svAnon:S.svAnon,ar:S.ar,df:S.df,cl:S.cl}; save(); }
+/* ----- survey data and actions ----- */
+function surveyInfo(){
+  var c=programCounts();
+  return { state: !programDone() ? "locked" : (S.svDone ? "done" : "open"), unlockPct:SURVEY_UNLOCK_PCT, need:surveyNeed(), done:c.done,
+    doneAgo: S.svDone ? ago(S.svDone) : "", anon:!!S.svAnon, online:!!SB.online, configDone:!!SB.configDone,
+    name:S.name||"", needName:!S.name, needCode: !!SB.requireCode && !S.code,
+    draft: JSON.parse(JSON.stringify(S.svDraft || S.svAnswers || {})), draftAnon: S.svDraftAnon!=null ? !!S.svDraftAnon : !!S.svAnon };
+}
+function saveSurveyDraft(a, anon){ S.svDraft=a; S.svDraftAnon=!!anon; try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} }
+// Sends the survey (after making sure the server has the latest results). Resolves to {ok} or {ok:false, msg}.
+function sendSurvey(a, anon, name, code, retried){
+  if(name){ S.name=String(name).trim().slice(0,60); }
+  if(code){ S.code=String(code).trim().slice(0,60); SB.last=""; }
+  saveSurveyDraft(a, anon);
+  var ready = (SB.state==="synced" && !SB.timer) ? Promise.resolve() : syncNow();
+  return ready.then(function(){
+    return fetch(API+"/scores/"+S.sid+"/survey", {method:"PUT", headers:{"content-type":"application/json"}, body:JSON.stringify({code:S.code||"", anonymous:!!anon, answers:a})});
+  }).then(function(r){
+    if(r.ok){ S.svDone=Date.now(); S.svAnswers=a; S.svAnon=!!anon; delete S.svDraft; delete S.svDraftAnon; save(); return {ok:true}; }
+    if(r.status===403) return {ok:false, msg:"That class code doesn't match. Check it on the Home page and try again."};
+    if(r.status===409 && !retried){ SB.last=""; return new Promise(function(res){ setTimeout(function(){ res(sendSurvey(a, anon, null, null, true)); }, 1500); }); }
+    if(r.status===409) return {ok:false, msg:"Your latest results haven't reached the scoreboard yet. Check that you're online and that the top bar says \"Shared with instructor\", then try again."};
+    return {ok:false, msg:"The survey couldn't be sent. Check your connection and try again."};
+  }, function(){ return {ok:false, msg:"The survey couldn't be sent. Check your connection and try again."}; });
+}
 function heroSVG(){ return stripSVG(D.strips.p1 ? heroKey() : Object.keys(D.strips)[0], "monitor", "loop", 3000); }
 initShared();
 return { show: show, rerender: rerender, snapshot: snapshot, setProfile: setProfile, heroSVG: heroSVG,
+  results: resultsData, openStrip: openStrip, openCase: openCaseAt, resetProgress: resetProgress,
+  surveyInfo: surveyInfo, surveyDef: loadSurveyDef, saveSurveyDraft: saveSurveyDraft, sendSurvey: sendSurvey,
   subscribe: function(f){ LISTENERS.push(f); return function(){ LISTENERS=LISTENERS.filter(function(x){ return x!==f; }); }; } };
 }
 
