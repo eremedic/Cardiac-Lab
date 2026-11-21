@@ -1027,6 +1027,7 @@ html.ecgv-open,html.ecgv-open body{overflow:hidden}
 .inst-signin-f[hidden]{display:none}
 .go-course{justify-content:center}
 @media (max-width:560px){.hero-right .share-f{grid-template-columns:minmax(0,1fr)}}
+.area-bolt{display:flex;justify-content:flex-start}.area-tile .area-bolt svg{width:26px!important;height:26px}
 </style>
 </head>
 <body>
@@ -2340,7 +2341,7 @@ function defibNav(){
   var show = defibOpen() || SB.admin;
   $("tabDefib").hidden = !show;
   var h=$("homeDefib"); if(!h) return;
-  if(!show){ h.innerHTML=""; return; }
+  h.innerHTML=""; if(typeof renderAreaTiles==="function") renderAreaTiles(); return;
   var c=defibCounts({defib:defibDoc()});
   h.innerHTML='<a class="card df-home" href="#defib"><span class="df-home-ic">'+IC_BOLT+'</span><span class="df-home-t"><span class="eyebrow">'+(defibOpen()?'New module':'Closed to students · instructor preview')+'</span><b>Defib lab: monitor, defibrillator and pacer</b>'+
     '<span>Run a real-time monitor with sound. Select energy, charge, shock, synchronize, pace and give drugs through '+DEFIB_LIST.length+' scenarios, then get step-by-step feedback.</span></span><span class="df-home-n num">'+c[0]+'/'+DEFIB_LIST.length+'<small>passed</small></span></a>';
@@ -2433,7 +2434,18 @@ function areaTilesHTML(){
       '<span class="area-body"><b>'+esc(m.title)+'</b><span class="area-blurb">'+esc(m.blurb)+'</span>'+
       '<span class="progress"><i style="width:'+pct(sc.a,sc.t)+'%"></i></span>'+
       '<span class="area-foot"><span class="num">'+(started? sc.a+' of '+sc.t+' answered · '+pct(sc.c,sc.a)+'% correct' : 'Not started')+'</span><span class="area-go">'+(done?'Review':(started?'Resume':'Start'))+' →</span></span></span></a>';
-  }).join("");
+  }).join("")+defibTileHTML();
+}
+/* the Defib lab, drawn as one of the practice tiles */
+function defibTileHTML(){
+  if(!(defibOpen() || SB.admin) || typeof DEFIB_LIST==="undefined") return "";
+  var c=defibCounts({defib:defibDoc()}), n=DEFIB_LIST.length, tried=c[1], passed=c[0];
+  var note=defibOpen() ? n+' scenarios · New' : n+' scenarios · closed to students · preview';
+  return '<a class="area-tile wide" href="#defib" style="--ac:linear-gradient(120deg,#3A4148,var(--band-red) 55%,var(--band-orange));--as:var(--red-soft);--ai:var(--brand-red)">'+
+    '<span class="area-band"><span class="area-ecg area-bolt">'+IC_BOLT+'</span><span class="area-count num">'+note+'</span></span>'+
+    '<span class="area-body"><b>Defib lab: monitor, defibrillator and pacer</b><span class="area-blurb">Run a real-time monitor with sound. Select energy, charge, shock, synchronize, pace and give drugs, then get step-by-step feedback on every scenario.</span>'+
+    '<span class="progress"><i style="width:'+pct(tried,n)+'%"></i></span>'+
+    '<span class="area-foot"><span class="num">'+(tried? tried+' of '+n+' run · '+passed+' passed' : 'Not started')+'</span><span class="area-go">'+(tried>=n?'Review':(tried?'Resume':'Start'))+' →</span></span></span></a>';
 }
 function renderAreaTiles(){
   var h=$("homeAreas"); if(h) h.innerHTML=areaTilesHTML();
