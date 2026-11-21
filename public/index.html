@@ -372,7 +372,7 @@ h1,h2,h3,.qhead h2,.runner-head h2,.score-hero h2,.answer-name,.stat b,.hero .me
    radial-gradient(520px 300px at 0% 100%, color-mix(in srgb,var(--orange) 20%,transparent), transparent 72%),
    radial-gradient(520px 320px at 100% 100%, color-mix(in srgb,var(--brand-red) 17%,transparent), transparent 72%),
    var(--surface)}
-.hero-copy{display:grid;gap:14px;align-content:start}
+.hero-copy{display:grid;gap:14px;align-content:start;align-self:start}
 .logo-badge{display:inline-flex;background:#FFFFFF;border-radius:16px;padding:8px 12px;box-shadow:0 1px 2px rgba(2,36,93,.08),0 6px 18px -10px rgba(2,36,93,.35);justify-self:start}
 .logo-badge img{display:block;height:auto}
 .logo-badge.sm{padding:6px 9px;border-radius:12px}
@@ -1028,6 +1028,8 @@ html.ecgv-open,html.ecgv-open body{overflow:hidden}
 .go-course{justify-content:center}
 @media (max-width:560px){.hero-right .share-f{grid-template-columns:minmax(0,1fr)}}
 .area-bolt{display:flex;justify-content:flex-start}.area-tile .area-bolt svg{width:26px!important;height:26px}
+#v-home .hero{align-items:start}
+#v-home .hero-copy .logo-badge{margin-top:0}
 </style>
 </head>
 <body>
@@ -1055,7 +1057,7 @@ html.ecgv-open,html.ecgv-open body{overflow:hidden}
       <a href="#defib" data-v="defib" id="tabDefib" hidden>Defib lab</a>
       <a href="#results" data-v="results">Results</a>
       <a href="#survey" data-v="survey">Survey</a>
-      <a href="#scoreboard" data-v="scoreboard" id="tabBoard" hidden>Scoreboard</a>
+      <a href="#scoreboard" data-v="scoreboard" id="tabBoard">Instructor sign-in</a>
     </nav>
     <div class="tally" aria-live="polite">
       <span class="chip">Strips <b class="num" id="tStrips">0/0</b></span>
@@ -1940,7 +1942,7 @@ function showProblem(title, detail){
 function loadBoard(silent){
   if(!SB.pass) return;
   fetch(API+"/scores", {headers:{authorization:"Bearer "+SB.pass}, cache:"no-store"}).then(function(r){
-    if(r.status===401){ SB.pass=null; SB.admin=false; try{ sessionStorage.removeItem("cl-instructor"); }catch(e){} $("tabBoard").hidden=true; if(!silent || location.hash==="#scoreboard") showLogin("That password didn't work. Try again."); return null; }
+    if(r.status===401){ SB.pass=null; SB.admin=false; try{ sessionStorage.removeItem("cl-instructor"); }catch(e){} $("tabBoard").textContent="Instructor sign-in"; if(!silent || location.hash==="#scoreboard") showLogin("That password didn't work. Try again."); return null; }
     var isJson=(r.headers.get("content-type")||"").indexOf("application/json")>=0;
     if(r.status===404 || !isJson){
       if(location.hash==="#scoreboard" && !(silent && SB.rows)) showProblem("The score API isn't running on this site", "The page loaded, but /api/scores wasn't found (HTTP "+r.status+"). In Netlify, open Logs → Functions and check that a function named \"api\" is listed. If it isn't, open the latest deploy log, fix any build error, and trigger a new deploy. If you opened this page from a file or a different host, open it from your Netlify address instead.");
@@ -1955,7 +1957,7 @@ function loadBoard(silent){
     return r.json();
   }).then(function(data){
     if(!data) return;
-    SB.admin=true; SB.rows=data.rows||[]; SB.me=data.me||{role:"owner", perms:{}}; $("tabBoard").hidden=false; defibNav();
+    SB.admin=true; SB.rows=data.rows||[]; SB.me=data.me||{role:"owner", perms:{}}; $("tabBoard").textContent="Scoreboard"; defibNav();
     if(SB.me.role==="owner" && !SB.inst) loadInstructors();
     renderWho();
     if(!SB.settings) loadSettings();
@@ -2318,7 +2320,7 @@ $("sbBody").addEventListener("keydown", function(e){ if((e.key==="Enter"||e.key=
 $("sbCohort").addEventListener("change", renderBoard);
 $("sbSort").addEventListener("change", function(){ SB.tsort=null; renderBoard(); });
 $("sbRefresh").addEventListener("click", function(){ loadBoard(true); });
-$("sbOut").addEventListener("click", function(){ SB.pass=null; SB.admin=false; SB.rows=null; SB.settings=null; SB.me=null; SB.inst=null; SB.instPw=null; SB.instEdit=null; SB.cohortSet=null; renderWho(); AREA_META.forEach(function(x){ if(x.gated){ delete AREAS[x.key]; AREA_LOADING[x.key]=null; } }); renderAreaTiles(); defibNav(); stopPoll(); try{ sessionStorage.removeItem("cl-instructor"); }catch(e){} $("tabBoard").hidden=true; showLogin(""); });
+$("sbOut").addEventListener("click", function(){ SB.pass=null; SB.admin=false; SB.rows=null; SB.settings=null; SB.me=null; SB.inst=null; SB.instPw=null; SB.instEdit=null; SB.cohortSet=null; renderWho(); AREA_META.forEach(function(x){ if(x.gated){ delete AREAS[x.key]; AREA_LOADING[x.key]=null; } }); renderAreaTiles(); defibNav(); stopPoll(); try{ sessionStorage.removeItem("cl-instructor"); }catch(e){} $("tabBoard").textContent="Instructor sign-in"; showLogin(""); });
 $("sbCsv").addEventListener("click", function(){
   var rows=selectedRows();
   var head=["Student","Cohort","Strips correct","Strips answered","Strips total","Megacode correct","Megacode answered","Megacode total","Score % (correct of answered)"].concat(GROUPS.map(function(g){return g[1]+" %"})).concat(AREA_META.map(function(x){ return x.short+" practice answered"; })).concat(AREA_META.map(function(x){ return x.short+" practice %"; })).concat(["Defib scenarios passed","Defib scenarios attempted"]).concat(DEFIB_LIST.map(function(x){ return "Defib: "+x[1]; })).concat(["Survey submitted","Last active"]);
