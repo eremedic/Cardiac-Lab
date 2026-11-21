@@ -66,7 +66,7 @@ After changing environment variables, redeploy (**Deploys → Trigger deploy →
 Progress is kept in the student's browser. Using a different device or browser starts a new record, which appears as a separate row under the same name.
 
 **Instructors**
-- Click **Instructor sign-in** at the bottom of any page (or go to `/#scoreboard`) and enter the instructor password. The **Scoreboard** tab then appears in the top bar.
+- Click the **Instructor sign-in** tab in the menu (or go to `/#scoreboard`) and enter your password. Once you're signed in the tab reads **Scoreboard**.
 - The scoreboard refreshes every 30 seconds. Filter by cohort, sort by recent activity, score, name or progress, and click a student to see their score in each rhythm family, missed strips and case scores.
 - Every module is tracked. Under the main score cards, a second row shows class results for the **practice areas**, the **12-lead ECGs**, the **Defib lab** and the **course survey**. The student table has **Practice areas** and **Defib lab** columns, and each module has its own panel lower down.
 - **Class setup (owner only):** set, change or remove the **class code** students enter (it overrides CLASS_CODE in Netlify; capitals don't matter), and keep a list of **cohorts**. Saved cohorts appear in every cohort dropdown (filter, print, instructor editor) even before anyone joins, and as suggestions when students type their cohort, so names match. A cohort added while editing an instructor is saved to the list too.
