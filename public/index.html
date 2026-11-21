@@ -1074,11 +1074,6 @@ html.ecgv-open,html.ecgv-open body{overflow:hidden}
         <div class="logo-badge"><img src="/img/logo.webp" width="190" alt="CSHealthED, Healthcare Education Software"></div>
         <h1>Read the strip.<br><em>Run the code.</em></h1>
         <p class="lede">Work through <span class="nStrips">102</span> six-second rhythm strips with instant feedback, then manage 20 cardiac arrest megacodes decision by decision. Every wrong answer explains what you missed, and your score is tallied at the end.</p>
-        <div class="meta">
-          <div class="m-blue"><b class="num nStrips">102</b><span>ECG strips</span></div>
-          <div class="m-red"><b class="num">20</b><span>Megacode cases</span></div>
-          <div class="m-green"><b class="num" id="hQ">66</b><span>Treatment decisions</span></div>
-        </div>
       </div>
       <div class="hero-right">
       <div class="monitor" aria-label="Animated monitor showing normal sinus rhythm">
@@ -1220,7 +1215,7 @@ html.ecgv-open,html.ecgv-open body{overflow:hidden}
   <!-- PRACTICE AREAS -->
   <section class="view" id="v-practice" hidden>
     <div class="qhead"><div><div class="eyebrow">Practice</div><h2>Practice areas</h2></div></div>
-    <p class="sv-lede">Start with the random strips, or pick a rhythm family and work through its 50 strips. Your progress in each area is saved and shared with your instructor along with your other results.</p>
+    <p class="sv-lede">Pick a rhythm family and work through its 50 strips, or try the random strips at the end. Your progress in each area is saved and shared with your instructor along with your other results.</p>
     <div class="area-grid" id="practiceAreas"></div>
   </section>
   <section class="view" id="v-area" hidden>
@@ -1322,7 +1317,7 @@ function updateTally(){
   ring($("ringStrips"), s.a/N, pct(s.a,N)+"%");   // home rings show progress (answered), not score
   ring($("ringMega"), m.a/TOTAL_Q, pct(m.a,TOTAL_Q)+"%");
   $("goStrips").textContent = s.a===0 ? "Start strips" : (s.a===N ? "Review strips" : "Resume at strip "+S.pi);
-  $("hQ").textContent = TOTAL_Q;
+  if($("hQ")) $("hQ").textContent = TOTAL_Q;
 }
 
 /* ---------- seeded shuffle for megacode options ---------- */
@@ -2447,7 +2442,7 @@ function stripsTileHTML(){
 }
 function renderAreaTiles(){
   var h=$("homeAreas"); if(h) h.innerHTML=areaTilesHTML();
-  var p=$("practiceAreas"); if(p) p.innerHTML=stripsTileHTML()+areaTilesHTML();
+  var p=$("practiceAreas"); if(p) p.innerHTML=areaTilesHTML()+stripsTileHTML();
 }
 var CUR_AREA=null;
 function renderArea(key){
