@@ -50,6 +50,42 @@ def field_build(self):
                     r.uniform(0.15, 0.35); r.choice([-1, 1])   # draws kept so set 3 stays the same; no bump is added (it looked like an extra beat)
                     break
         self.noisy[ld] = y
+    # More of the field strips' real-world look, from a separate random stream so the ECG itself (and which
+    # finding lands where) doesn't change: road vibration and slow drift on every lead, tremor more often,
+    # sometimes in the chest leads too, and occasionally 60-cycle hum. Still nothing shaped like a beat.
+    a = np.random.default_rng(int(self.rate * 1e6) % (2 ** 32))
+    notes = ["baseline wander with breathing", "road vibration", "slow drift"]
+    road = 0.55 + 0.45 * np.sin(2 * np.pi * a.uniform(0.15, 0.5) * t + a.uniform(0, 6.3))
+    vib_amp = a.uniform(0.6, 1.2)
+    limb_trem = tremor or a.random() < 0.35
+    if limb_trem and not tremor:
+        tc, tw = a.uniform(1.0, 9.0), a.uniform(1.0, 2.5)
+        emg2 = np.convolve(a.normal(0, 1, t.size), np.ones(3) / 3, mode="same") * np.exp(-0.5 * ((t - tc) / (tw / 2.6)) ** 2) * a.uniform(0.02, 0.04)
+    chest_trem = a.random() < 0.25
+    if chest_trem:
+        cc, cw = a.uniform(5.2, 9.6), a.uniform(0.8, 1.8)
+        emg3 = np.convolve(a.normal(0, 1, t.size), np.ones(3) / 3, mode="same") * np.exp(-0.5 * ((t - cc) / (cw / 2.6)) ** 2) * a.uniform(0.015, 0.03)
+    hum2 = 0.0 if hum else (a.uniform(0.006, 0.012) if a.random() < 0.1 else 0.0)
+    for ld in LEADS:
+        y = self.noisy[ld]
+        y = y + sum(a.uniform(0.003, 0.008) * np.sin(2 * np.pi * a.uniform(6, 28) * t + a.uniform(0, 6.3)) for _ in range(5)) * road * vib_amp
+        walk = np.cumsum(a.normal(0, 1, t.size)); walk = np.convolve(walk - walk.mean(), np.ones(1500) / 1500, mode="same")
+        y = y + walk / (np.abs(walk).max() or 1) * a.uniform(0.03, 0.08)
+        if limb_trem and not tremor and ld in LIMB:
+            y = y + emg2 * (0.6 if ld in ("aVR", "aVL") else 1.0)
+        if chest_trem and ld not in LIMB:
+            y = y + emg3
+        if hum2:
+            y = y + hum2 * np.sin(2 * np.pi * 60 * t)
+        self.noisy[ld] = y
+    if limb_trem:
+        notes.append("muscle tremor in the limb leads (shivering)")
+    if chest_trem:
+        notes.append("tremor in the chest leads")
+    if hum or hum2:
+        notes.append("60-cycle interference")
+    txt = ", ".join(notes[:-1]) + " and " + notes[-1]
+    self.art_notes = txt[0].upper() + txt[1:] + "."
     return self
 
 

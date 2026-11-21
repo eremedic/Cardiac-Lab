@@ -921,6 +921,26 @@ body.df-focus .bar{position:relative}
 .sb-pr1{padding:4px 9px;font-size:12.5px;gap:5px;flex:none}
 .sb-pr1 svg,.detail .btn svg{vertical-align:-3px}
 @media (max-width:760px){.sb-pr1 span{display:none}}
+/* ---------- 12-lead viewer ---------- */
+#v-area .paper svg.ecg12{cursor:zoom-in}
+.ecg-expand{padding:4px 10px;font-size:12.5px;gap:6px}
+.ecgv{position:fixed;inset:0;z-index:80;display:flex;flex-direction:column;background:rgba(6,14,32,.94)}
+.ecgv[hidden]{display:none}
+html.ecgv-open,html.ecgv-open body{overflow:hidden}
+.ecgv-bar{display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding:10px 16px;color:#FFFFFF}
+.ecgv-bar b{font-size:16px}
+.ecgv-help{font-size:12.5px;color:#B9C6DD;flex:1 1 200px}
+.ecgv-tools{display:flex;gap:6px;align-items:center}
+.ecgv-tools .btn{padding:7px 12px;min-width:40px;justify-content:center;font-size:16px}
+.ecgv-tools .btn-ghost{background:#FFFFFF;color:#0E1B36}
+.ecgv-tools .btn:disabled{opacity:.45}
+.ecgv-tools output{min-width:54px;text-align:center;font:600 13px var(--f-mono);color:#FFFFFF}
+.ecgv-stage{position:relative;flex:1;overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none;cursor:grab;margin:0 10px 10px;border-radius:10px;background:#1A2540;outline:none}
+.ecgv-stage:focus-visible{box-shadow:0 0 0 3px #4C95EE}
+.ecgv-stage.grab{cursor:grabbing}
+.ecgv-inner{position:absolute;left:0;top:0;transform-origin:0 0;background:var(--paper);border-radius:6px;box-shadow:0 10px 40px rgba(0,0,0,.5)}
+.ecgv-inner svg{display:block;width:100%;height:100%;min-width:0!important}
+@media (max-width:600px){.ecgv-help{display:none}.ecgv-bar{padding:8px 10px}}
 </style>
 </head>
 <body>
@@ -2164,7 +2184,7 @@ function renderArea(key){
   }).join("");
   var dots=data.items.map(function(it){ var x=st.p[it.n], c = x==null ? "" : (x===it.cat?"r":"w"); return '<button class="dot '+c+(it.n===st.pi?" cur":"")+'" data-n="'+it.n+'" aria-label="Strip '+it.n+'">'+it.n+'</button>'; }).join("");
   body.innerHTML=head+'<div class="card qcard"><div class="strip-top"><div class="stem"><span class="tag">'+esc(m.short)+'</span><p>'+(q.leads?'Interpret this 12-lead ECG.':'Identify this rhythm.')+'</p></div>'+(q.hints?cardioBtnHTML(q, st, done):'')+'</div>'+
-    '<div><div class="paper">'+(q.leads?ecg12SVG(q):stripSVG(q.strip,"paper",false))+'</div><div class="paper-meta"><span>'+(q.leads?'12-lead · 25 mm/s · 10 mm/mV · bottom row: lead II rhythm strip'+(q.field?' · recorded on scene, real patient':''):'Lead II · 25 mm/s · 6-second strip'+(key==="field"?' · recorded in a moving ambulance':''))+'</span><span class="scroll-hint"></span></div></div>'+
+    '<div><div class="paper">'+(q.leads?ecg12SVG(q):stripSVG(q.strip,"paper",false))+'</div><div class="paper-meta"><span>'+(q.leads?'12-lead · 25 mm/s · 10 mm/mV · bottom row: lead II rhythm strip'+(q.field?' · recorded on scene, real patient':'')+'</span><span><button class="btn btn-ghost ecg-expand" id="ecgExpand" type="button">'+IC_EXPAND+'Expand and zoom</button>':'Lead II · 25 mm/s · 6-second strip'+(key==="field"?' · recorded in a moving ambulance':''))+'</span><span class="scroll-hint"></span></div></div>'+
     '<div><div class="eyebrow" style="margin-bottom:10px">'+(q.leads?'What does it show?':'Identify the rhythm')+'</div><div class="opts" id="arOpts" role="group" aria-label="Answer choices">'+opts+'</div></div>'+
     '<div aria-live="polite">'+(done?stripFeedback(q, chosen):'')+'</div>'+
     '<div class="qnav"><button class="btn btn-ghost" id="arPrev" '+(st.pi===1?'disabled':'')+'>← Previous</button><button class="btn btn-primary" id="arNext">'+(st.pi===total?'See area results →':(done?'Next '+unit.toLowerCase()+' →':'Skip →'))+'</button></div></div>'+
@@ -2572,6 +2592,88 @@ function surveyCsv(rows){
 updateTally(); route(); initShared();
 })();
 
+
+/* ================= 12-LEAD VIEWER: click or Expand to open it big, then zoom and pan ================= */
+var IC_EXPAND='<svg viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3h5v5M8 17H3v-5M17 3l-6 6M3 17l6-6"/></svg>';
+(function(){
+var $ = function(id){ return document.getElementById(id); };
+var ECGV = {s:1, x:0, y:0, w:0, h:0, ptrs:{}, pinch:null, last:null, opener:null};
+function ecgViewerOpen(srcSvg, title){
+  var ov=$("ecgView");
+  if(!ov){
+    ov=document.createElement("div"); ov.id="ecgView"; ov.className="ecgv"; ov.setAttribute("role","dialog"); ov.setAttribute("aria-modal","true"); ov.setAttribute("aria-labelledby","ecgvTitle");
+    ov.innerHTML='<div class="ecgv-bar"><b id="ecgvTitle">12-lead ECG</b><span class="ecgv-help">Scroll or pinch to zoom · drag to move · double-click to zoom in</span>'+
+      '<div class="ecgv-tools"><button class="btn btn-ghost" id="ecgvOut" aria-label="Zoom out">−</button><output id="ecgvPct" aria-live="polite">100%</output><button class="btn btn-ghost" id="ecgvIn" aria-label="Zoom in">+</button>'+
+      '<button class="btn btn-ghost" id="ecgvFit">Fit</button><button class="btn btn-primary" id="ecgvClose" aria-label="Close the viewer">Close ✕</button></div></div>'+
+      '<div class="ecgv-stage" id="ecgvStage" tabindex="0" aria-label="12-lead ECG. Use plus and minus to zoom and the arrow keys to move."><div class="ecgv-inner" id="ecgvInner"></div></div>';
+    document.body.appendChild(ov);
+    var st=$("ecgvStage");
+    $("ecgvClose").onclick=ecgViewerClose;
+    $("ecgvIn").onclick=function(){ ecgZoomAt(1.5); };
+    $("ecgvOut").onclick=function(){ ecgZoomAt(1/1.5); };
+    $("ecgvFit").onclick=ecgFit;
+    st.addEventListener("wheel", function(e){ e.preventDefault(); var r=st.getBoundingClientRect(); ecgZoomAt(Math.exp(-e.deltaY*0.0018), e.clientX-r.left, e.clientY-r.top); }, {passive:false});
+    st.addEventListener("dblclick", function(e){ var r=st.getBoundingClientRect(); ecgZoomAt(2, e.clientX-r.left, e.clientY-r.top); });
+    st.addEventListener("pointerdown", function(e){ st.setPointerCapture(e.pointerId); ECGV.ptrs[e.pointerId]={x:e.clientX, y:e.clientY}; ECGV.last={x:e.clientX, y:e.clientY}; st.classList.add("grab"); ECGV.pinch=null; });
+    st.addEventListener("pointermove", function(e){
+      var p=ECGV.ptrs[e.pointerId]; if(!p) return;
+      p.x=e.clientX; p.y=e.clientY;
+      var ids=Object.keys(ECGV.ptrs);
+      if(ids.length>=2){ var a=ECGV.ptrs[ids[0]], b=ECGV.ptrs[ids[1]], d=Math.hypot(a.x-b.x, a.y-b.y), r=st.getBoundingClientRect();
+        if(ECGV.pinch) ecgZoomAt(d/ECGV.pinch, (a.x+b.x)/2-r.left, (a.y+b.y)/2-r.top); ECGV.pinch=d; return; }
+      ECGV.x+=e.clientX-ECGV.last.x; ECGV.y+=e.clientY-ECGV.last.y; ECGV.last={x:e.clientX, y:e.clientY}; ecgApply();
+    });
+    var up=function(e){ delete ECGV.ptrs[e.pointerId]; ECGV.pinch=null; var ids=Object.keys(ECGV.ptrs); if(ids.length) ECGV.last={x:ECGV.ptrs[ids[0]].x, y:ECGV.ptrs[ids[0]].y}; else st.classList.remove("grab"); };
+    st.addEventListener("pointerup", up); st.addEventListener("pointercancel", up);
+    ov.addEventListener("keydown", function(e){
+      if(e.key==="Escape"){ e.preventDefault(); ecgViewerClose(); return; }
+      if(e.key==="+"||e.key==="="){ ecgZoomAt(1.5); } else if(e.key==="-"||e.key==="_"){ ecgZoomAt(1/1.5); } else if(e.key==="0"){ ecgFit(); }
+      else if(e.key==="ArrowLeft"){ ECGV.x+=80; ecgApply(); } else if(e.key==="ArrowRight"){ ECGV.x-=80; ecgApply(); }
+      else if(e.key==="ArrowUp"){ ECGV.y+=80; ecgApply(); } else if(e.key==="ArrowDown"){ ECGV.y-=80; ecgApply(); }
+      else if(e.key==="Tab"){ var f=[].slice.call(ov.querySelectorAll("button,[tabindex='0']")), i=f.indexOf(document.activeElement); if(e.shiftKey && i<=0){ e.preventDefault(); f[f.length-1].focus(); } else if(!e.shiftKey && i===f.length-1){ e.preventDefault(); f[0].focus(); } return; }
+      else return;
+      e.preventDefault();
+    });
+    window.addEventListener("resize", function(){ if(!$("ecgView").hidden) ecgFit(); });
+  }
+  ECGV.opener=document.activeElement;
+  var clone=srcSvg.cloneNode(true); clone.removeAttribute("style"); clone.classList.add("ecgv-svg");
+  $("ecgvInner").innerHTML=""; $("ecgvInner").appendChild(clone);
+  $("ecgvTitle").textContent=title||"12-lead ECG";
+  ov.hidden=false; document.documentElement.classList.add("ecgv-open");
+  ecgFit(); $("ecgvStage").focus();
+}
+function ecgViewerClose(){ var ov=$("ecgView"); if(!ov) return; ov.hidden=true; document.documentElement.classList.remove("ecgv-open"); if(ECGV.opener && ECGV.opener.focus) ECGV.opener.focus(); }
+function ecgFit(){
+  var st=$("ecgvStage"), r=st.getBoundingClientRect(), svg=$("ecgvInner").firstChild; if(!svg) return;
+  var vb=svg.getAttribute("viewBox").split(/\s+/), asp=(+vb[2])/(+vb[3]);
+  var w=Math.min(r.width-16, (r.height-16)*asp); ECGV.w=w; ECGV.h=w/asp;
+  $("ecgvInner").style.width=w+"px"; $("ecgvInner").style.height=ECGV.h+"px";
+  ECGV.s=1; ECGV.x=(r.width-w)/2; ECGV.y=(r.height-ECGV.h)/2; ecgApply();
+}
+function ecgZoomAt(f, px, py){
+  var st=$("ecgvStage"), r=st.getBoundingClientRect();
+  if(px==null){ px=r.width/2; py=r.height/2; }
+  var ns=Math.max(1, Math.min(14, ECGV.s*f)); f=ns/ECGV.s;
+  ECGV.x=px-(px-ECGV.x)*f; ECGV.y=py-(py-ECGV.y)*f; ECGV.s=ns; ecgApply();
+}
+function ecgApply(){
+  var st=$("ecgvStage"), r=st.getBoundingClientRect(), W=ECGV.w*ECGV.s, Hh=ECGV.h*ECGV.s;
+  // keep the ECG on screen: centered when it's smaller than the window, otherwise no empty gap at the edges
+  ECGV.x = W<=r.width ? (r.width-W)/2 : Math.min(0, Math.max(r.width-W, ECGV.x));
+  ECGV.y = Hh<=r.height ? (r.height-Hh)/2 : Math.min(0, Math.max(r.height-Hh, ECGV.y));
+  $("ecgvInner").style.transform="translate("+ECGV.x+"px,"+ECGV.y+"px) scale("+ECGV.s+")";
+  $("ecgvPct").textContent=Math.round(ECGV.s*100)+"%";
+  $("ecgvOut").disabled=ECGV.s<=1.001; $("ecgvIn").disabled=ECGV.s>=13.99;
+}
+document.addEventListener("click", function(e){
+  var b=e.target.closest && e.target.closest("#ecgExpand");
+  var svg=!b && e.target.closest && e.target.closest("#v-area .paper svg.ecg12");
+  if(!b && !svg) return;
+  var src=b ? document.querySelector("#v-area svg.ecg12") : svg; if(!src) return;
+  var h2=document.querySelector("#v-area .qhead h2"); ecgViewerOpen(src, h2 ? h2.textContent.replace(/\s+/g," ").trim() : "12-lead ECG");
+});
+})();
 /* ================= CALIPERS (strips, practice areas, 12-lead and the megacode monitor; not the Defib lab) =================
    Two legs joined by a bar. Drag a knob or leg, or focus one and use the arrow keys (1 small box = 0.04 s; Shift for 0.01 s).
    Positions are shared across strips, so the calipers stay where you left them as you move on.                                  */

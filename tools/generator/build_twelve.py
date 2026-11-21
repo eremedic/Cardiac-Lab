@@ -44,6 +44,7 @@ def main():
     TF.uninstall()
     for it in set3:
         it["field"] = True
+        it["rows"] = it["rows"] + [["Artifact", it["ecg"].art_notes]]
     order1 = list(range(len(set1))); random.Random("twelve-order").shuffle(order1)
     order2 = list(range(len(set2))); random.Random("twelve-order-2").shuffle(order2)
     order3 = list(range(len(set3))); random.Random("twelve-order-3").shuffle(order3)
