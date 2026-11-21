@@ -91,12 +91,16 @@
     ]);
   }
   function rosc(p) {
-    return Q(p, "During compressions the ETCO₂ suddenly rises from 18 to 46 mmHg, and the monitor shows an organized rhythm.", "What does that suggest, and what do you do?", [
+    return roscQ(p);
+  }
+  function roscQ(p) {
+    var q = Q(p, "During compressions the ETCO₂ suddenly rises from 18 to 46 mmHg, and the monitor shows an organized rhythm.", "What does that suggest, and what do you do?", [
       ["Likely return of spontaneous circulation: check for a pulse at the rhythm check", true, "An abrupt, sustained rise in ETCO₂ (often to 40 mmHg or more) is a strong sign of ROSC. Check the pulse and blood pressure."],
       ["Likely ROSC: give the next epinephrine dose now to support the blood pressure", false, "An arrest dose of epinephrine into a beating heart can cause severe hypertension and arrhythmias.", "Is the 1 mg arrest dose right if the heart is beating again?", "A bolus of epinephrine into a beating heart: dangerous hypertension and tachycardia."],
       ["It's the effect of the last epinephrine dose: continue CPR and give the next dose on schedule", false, "Epinephrine can nudge ETCO₂, but an abrupt, sustained jump to 40+ mmHg means ROSC.", "How big a change does a drug usually cause, compared with this?", "ROSC goes unrecognized and an arrest dose is given to a beating heart."],
       ["The tube has slipped into the esophagus: pull it and re-intubate", false, "An esophageal tube gives an ETCO₂ near zero, not a sudden rise.", "What does ETCO₂ look like with an esophageal tube?", "A good airway is pulled from a patient who just got a pulse back."]
     ]);
+    q.rosc = 1; return q;
   }
 
   // --- post-cardiac arrest care (Adult Post-Cardiac Arrest Care Algorithm)
@@ -346,13 +350,157 @@
   var LEVELS = [
     ["beg", "Beginner", "Coaching on every step. Device steps show how to do them, and a choice that isn't the best gets “Do you really want to do that?” with a hint."],
     ["int", "Intermediate", "“Are you sure?” on a choice that isn't the best, with no hint. Device coaching only after a mistake."],
-    ["pro", "I Got This", "No prompts and no coaching. Every choice plays out on the patient, and it's all reviewed in the feedback at the end."]
+    ["pro", "“I Got This”", "No prompts and no coaching. Every choice plays out on the patient, and it's all reviewed in the feedback at the end."]
   ];
   var LKEY = "cardiac-lab-codelvl", LVL = null;
   try { LVL = localStorage.getItem(LKEY); } catch (e) {}
   if (!LEVELS.some(function (l) { return l[0] === LVL; })) LVL = null;
   function lvlName(k) { var l = LEVELS.filter(function (x) { return x[0] === k; })[0]; return l ? l[1] : ""; }
   function setLvl(k) { LVL = k; try { localStorage.setItem(LKEY, k); } catch (e) {} }
+
+  /* ------------------------------------------------------------------ action bar: CPR, airway, access, drugs
+     Each press is judged against the patient right now (the current step's state) and what has happened so far.
+     Beginner: a poorly timed action asks "Do you really want to do that?" with a hint. Intermediate: "Are you sure?".
+     "I Got This": it's done, it plays out, and it's reviewed at the end. */
+  var ACTS = [
+    ["cpr", "Start CPR", "cpr"], ["tube", "Intubate", "air"], ["iv", "IV / IO access", "air"],
+    ["epi", "Epi 1 mg IV/IO", "drug"], ["amio300", "Amiodarone 300 mg IVP", "drug"], ["amio150", "Amiodarone 150 mg IVP", "drug"],
+    ["lido", "Lidocaine 1.5 mg/kg IVP", "drug"], ["epidrip", "Epi drip 2–10 mcg/min", "drip"], ["dopa", "Dopamine drip 5–20 mcg/kg/min", "drip"]
+  ];
+  var ACT_NAME = { cpr: "CPR", tube: "Intubation", iv: "IV/IO access", epi: "Epinephrine 1 mg IV/IO", amio300: "Amiodarone 300 mg IV push", amio150: "Amiodarone 150 mg IV",
+    lido: "Lidocaine 1.5 mg/kg IV push", epidrip: "Epinephrine infusion 2–10 mcg/min", dopa: "Dopamine infusion 5–20 mcg/kg/min" };
+  function actsHTML() {
+    return '<div class="cl-acts" id="clActs"><div class="cl-actmsg" id="clActMsg" aria-live="polite"></div><div class="cl-actrow">' +
+      ACTS.map(function (a) { return '<button type="button" class="cl-act ' + a[2] + '" data-act="' + a[0] + '">' + H(a[1]) + '</button>'; }).join("") + '</div></div>';
+  }
+  function sysBP(p) { var m = /^(\d+)/.exec(p.bp || ""); return m ? +m[1] : null; }
+  function stepText(i) { var s = cur.c.steps[i]; return (s.say || "") + " " + (s.q || "") + " " + (s.task || ""); }
+  function scriptSays(re) { for (var i = 0; i <= cur.i; i++) if (re.test(stepText(i))) return true; return false; }
+  function hasAccess() { return cur.hx.iv || scriptSays(/\b(IV|IO)\b[^.]*\b(in|placed|access)\b/); }
+  function hasTube() { return cur.hx.tube || scriptSays(/advanced airway in place|airway in place/i); }
+  function shockableNow(p) { var r = p.rhythm.r; return !p.pulse && (r === "vf" || r === "vt"); }
+  function since(k) { var a = cur.hx[k]; return a.length ? cur.i - a[a.length - 1] : 99; }
+  function slowRhythm(p) { var r = p.rhythm.r; return r === "chb" || r === "b21" || (r === "sinus" && (p.rhythm.rate || 80) < 60); }
+
+  // [ok, why (feedback), prompt (beginner hint), what happens (if done anyway)]
+  function judge(k) {
+    var s = cur.c.steps[cur.i], p = s.p, st = dev.state(), arrest = !p.pulse, sbp = sysBP(p);
+    switch (k) {
+      case "cpr":
+        if (st.cpr) return arrest && !s.rosc ? [true, "Compressions paused. Keep pauses under 10 seconds: rhythm check, pulse check or shock, then straight back on the chest."] : [true, "CPR stopped."];
+        if (!arrest) return [false, "There's a pulse. Compressions are for a patient without one.", "Does this patient have a pulse?", "Compressions on a beating heart: rib injuries and a falling blood pressure."];
+        return [true, "Compressions started: 100–120/min, at least 2 in (5 cm), full recoil, minimal pauses."];
+      case "tube":
+        if (hasTube()) return [false, "The patient already has an advanced airway.", "Is there already a tube in?", "A second attempt interrupts care for no benefit."];
+        if (arrest) return [true, "Advanced airway placed with minimal interruption to compressions. Confirm it with waveform capnography, then 1 breath every 6 seconds with continuous compressions."];
+        if (p.good) return [true, "Airway secured for an unresponsive patient after ROSC. Confirm with waveform capnography and ventilate about 10/min."];
+        return [false, "This patient is awake with a pulse and protecting their airway. Intubation isn't indicated now.", "Is this patient unresponsive, or protecting their own airway?", "An awake patient fights the tube; the procedure delays the treatment they actually need."];
+      case "iv":
+        if (hasAccess()) return [false, "IV/IO access is already in place.", "Is access already in?", "A second line delays the next step."];
+        return [true, arrest ? "Vascular access (IV or IO) placed without stopping compressions." : "IV access established."];
+      case "epi":
+        if (!hasAccess()) return [false, "There's no IV/IO access yet.", "How will the drug get in?", "Nothing is given: there's no line."];
+        if (!arrest) return [false, "Epinephrine 1 mg IV push is the cardiac arrest dose. This patient has a pulse.", "Is the patient pulseless?", "A bolus of epinephrine into a beating heart: severe hypertension, tachycardia and ventricular ectopy."];
+        if (s.rosc) return [false, "An abrupt rise in ETCO₂ to over 40 mmHg suggests ROSC. Check for a pulse before more epinephrine.", "What does a sudden ETCO₂ jump usually mean?", "Epinephrine given into a returning circulation: hypertension and arrhythmias."];
+        if (shockableNow(p) && cur.hx.shocks < 2) return [false, "In VF/pulseless VT, epinephrine is given after the second shock.", "How many shocks have been delivered so far?", "The drug goes in before the shocks that matter most."];
+        if (since("epi") < 2) return [false, "Epinephrine is repeated every 3–5 minutes (about every other 2-minute cycle).", "When was the last dose?", "Doses stacked too close together: more myocardial oxygen demand, no added benefit."];
+        return [true, shockableNow(p) ? "Epinephrine 1 mg after the second shock, then every 3–5 minutes." : "Epinephrine 1 mg as soon as possible in a non-shockable arrest, then every 3–5 minutes."];
+      case "amio300":
+        if (!hasAccess()) return [false, "There's no IV/IO access yet.", "How will the drug get in?", "Nothing is given: there's no line."];
+        if (!arrest) return [false, "300 mg IV push is the cardiac arrest dose. With a pulse, amiodarone is 150 mg over 10 minutes.", "Is the patient pulseless?", "Hypotension and bradycardia from a large, rapid dose."];
+        if (!shockableNow(p)) return [false, "Antiarrhythmics are for shockable rhythms (VF/pulseless VT), not asystole or PEA.", "Is this rhythm shockable?", "No benefit in a non-shockable arrest."];
+        if (cur.hx.amio300.length) return [false, "The first dose has been given. The second amiodarone dose is 150 mg.", "What's the second dose?", "Excess amiodarone: hypotension and bradycardia after ROSC."];
+        if (cur.hx.lido.length) return [false, "Lidocaine has already been given. Use one antiarrhythmic.", "Which antiarrhythmic is on board?", "Two antiarrhythmics together add toxicity without proven benefit."];
+        if (cur.hx.shocks < 3) return [false, "Amiodarone is for shock-refractory VF/pVT: after the third shock.", "How many shocks have been delivered?", "An antiarrhythmic ahead of the shocks and the vasopressor."];
+        return [true, "Amiodarone 300 mg IV/IO push for shock-refractory VF/pVT."];
+      case "amio150":
+        if (!hasAccess()) return [false, "There's no IV/IO access yet.", "How will the drug get in?", "Nothing is given: there's no line."];
+        if (arrest) {
+          if (!shockableNow(p)) return [false, "Antiarrhythmics are for shockable rhythms.", "Is this rhythm shockable?", "No benefit in a non-shockable arrest."];
+          if (!cur.hx.amio300.length) return [false, "The first amiodarone dose in cardiac arrest is 300 mg. 150 mg is the second dose.", "What's the first dose in arrest?", "Too little drug for shock-refractory VF."];
+          if (cur.hx.amio150.length) return [false, "Both amiodarone doses have been given.", "How much amiodarone is already in?", "Excess amiodarone: hypotension and bradycardia."];
+          if (since("amio300") < 2) return [false, "Give the second dose after another shock and CPR cycle, not right after the first.", "When was the 300 mg given?", "Doses too close together."];
+          return [true, "Amiodarone 150 mg IV/IO: the second dose for shock-refractory VF/pVT."];
+        }
+        if (p.rhythm.r === "vt" || (p.good && scriptSays(/wide, regular tachycardia|Wide regular tachycardia/i))) {
+          if (p.rhythm.r === "vt" && sbp != null && sbp < 90) return [false, "This VT is unstable. Synchronized cardioversion comes first; a 10-minute infusion is too slow.", "Is this patient stable?", "Ten minutes of falling perfusion."];
+          return [true, "Amiodarone 150 mg for VT with a pulse, given over 10 minutes (not as a rapid push)."];
+        }
+        return [false, "Amiodarone 150 mg is for VT with a pulse (over 10 minutes) or the second arrest dose. It isn't indicated for this rhythm.", "What rhythm is this?", "Hypotension and bradycardia without an indication."];
+      case "lido":
+        if (!hasAccess()) return [false, "There's no IV/IO access yet.", "How will the drug get in?", "Nothing is given: there's no line."];
+        if (!arrest) return [false, "Lidocaine here is for shock-refractory VF/pulseless VT.", "Is the patient pulseless?", "CNS toxicity and myocardial depression without an indication."];
+        if (!shockableNow(p)) return [false, "Antiarrhythmics are for shockable rhythms.", "Is this rhythm shockable?", "No benefit in a non-shockable arrest."];
+        if (cur.hx.amio300.length || cur.hx.amio150.length) return [false, "Amiodarone has already been given. Use one antiarrhythmic.", "Which antiarrhythmic is on board?", "Two antiarrhythmics together add toxicity without proven benefit."];
+        if (cur.hx.lido.length) return [false, "Repeat lidocaine is 0.5–0.75 mg/kg, not another 1.5 mg/kg.", "What's the repeat lidocaine dose?", "Lidocaine toxicity: seizures and myocardial depression."];
+        if (cur.hx.shocks < 3) return [false, "Lidocaine is for shock-refractory VF/pVT: after the third shock.", "How many shocks have been delivered?", "An antiarrhythmic ahead of the shocks and the vasopressor."];
+        return [true, "Lidocaine 1–1.5 mg/kg IV/IO push for shock-refractory VF/pVT (an alternative to amiodarone)."];
+      case "epidrip": case "dopa":
+        var nm = k === "dopa" ? "dopamine" : "epinephrine";
+        if (cur.hx.epidrip.length || cur.hx.dopa.length) return [false, "A vasopressor/chronotropic infusion is already running. Titrate it rather than adding another.", "Is an infusion already running?", "Two infusions without a reason: tachyarrhythmias."];
+        if (!hasAccess()) return [false, "There's no IV/IO access yet.", "How will the drug get in?", "Nothing is given: there's no line."];
+        if (arrest) return [false, "There's no pulse. In cardiac arrest, epinephrine is given as 1 mg IV/IO push every 3–5 minutes, not as an infusion.", "Does this patient have a pulse?", "An infusion does nothing for a heart that isn't beating; CPR and the push dose are what count."];
+        if (slowRhythm(p) && sbp != null && sbp < 90) return [true, "An " + nm + " infusion is an option for unstable bradycardia, alongside or instead of transcutaneous pacing. Get expert help for transvenous pacing."];
+        if (p.good && sbp != null && sbp < 90) return [true, "Post-arrest hypotension: a vasopressor infusion to keep SBP at least 90 and MAP at least 65 (fluids too). Norepinephrine or epinephrine are common choices."];
+        if (p.rhythm.r === "svt" || p.rhythm.r === "af" || p.rhythm.r === "flutter" || p.rhythm.r === "vt") return [false, "This patient is tachycardic. A chronotropic infusion makes the rate faster.", "Is the heart rate too slow or too fast?", "Faster rate, more ischemia, lower pressure."];
+        return [false, "The blood pressure is adequate. An infusion isn't indicated right now.", "What's the blood pressure?", "Hypertension and tachyarrhythmias."];
+    }
+    return [true, ""];
+  }
+  function doAct(k, verdict) {
+    var s = cur.c.steps[cur.i];
+    if (k === "cpr") { var on = !dev.state().cpr; dev.cpr(on); }
+    else if (k === "tube") cur.hx.tube = true;
+    else if (k === "iv") cur.hx.iv = true;
+    else if (cur.hx[k]) cur.hx[k].push(cur.i);
+    var label = k === "cpr" ? (dev.state().cpr ? "Started CPR" : "Stopped CPR") : ACT_NAME[k];
+    cur.log.push({ i: cur.i, t: label, ok: verdict[0], why: verdict[1] });
+    if (!verdict[0]) { (cur.errs[cur.i] = cur.errs[cur.i] || []).push(label + ": " + verdict[1]); cur.bad[cur.i] = 1; }
+    actMsg(verdict[0] ? (cur.lvl === "pro" ? "✓ " + label + "." : "✓ " + label + ". " + verdict[1]) : (cur.lvl === "pro" ? "What happens: " + verdict[3] : "✗ " + label + ". " + verdict[1]), verdict[0] ? "ok" : (cur.lvl === "pro" ? "play" : "bad"));
+    updActs();
+    if (s.t === "d" && s.goal.kind === "pace") checkPace();
+  }
+  function act(k) {
+    if (!cur || !dev) return;
+    var v = judge(k);
+    if (k === "iv" && !v[0] || k === "tube" && hasTube()) { actMsg(v[1], "info"); return; }
+    if (v[0] || cur.lvl === "pro") { doAct(k, v); return; }
+    var beg = cur.lvl === "beg", name = k === "cpr" ? "Start CPR" : ACT_NAME[k];
+    var box = root.querySelector("#clActMsg");
+    box.className = "cl-actmsg ask";
+    box.innerHTML = '<b>' + (beg ? 'Do you really want to do that?' : 'Are you sure?') + '</b> <span>' + H(name) + (beg ? ': ' + H(v[2]) : '') + '</span>' +
+      ' <button type="button" class="btn btn-ghost" id="clActNo">' + (beg ? 'Rethink' : 'Cancel') + '</button><button type="button" class="btn btn-ghost" id="clActYes">Yes, do it</button>';
+    box.querySelector("#clActNo").onclick = function () { actMsg("", ""); };
+    box.querySelector("#clActYes").onclick = function () { doAct(k, v); };
+  }
+  function actMsg(t, cls) { var m = root.querySelector("#clActMsg"); if (!m) return; m.className = "cl-actmsg" + (cls ? " " + cls : ""); m.textContent = t; }
+  function updActs() {
+    var bar = root.querySelector("#clActs"); if (!bar || !dev) return;
+    var st = dev.state(), c = bar.querySelector('[data-act="cpr"]');
+    c.textContent = st.cpr ? "Stop CPR" : "Start CPR"; c.classList.toggle("on", !!st.cpr);
+    bar.querySelector('[data-act="iv"]').classList.toggle("done", !!hasAccess());
+    bar.querySelector('[data-act="tube"]').classList.toggle("done", !!hasTube());
+    ["epidrip", "dopa"].forEach(function (k) { bar.querySelector('[data-act="' + k + '"]').classList.toggle("on", cur.hx[k].length > 0); });
+  }
+  function bindActs() {
+    root.querySelectorAll(".cl-act").forEach(function (b) { b.onclick = function () { act(b.getAttribute("data-act")); }; });
+  }
+
+  // a shock during a question step: judged against the patient right now
+  function shockOnQuestion(type, d) {
+    var s = cur.c.steps[cur.i], p = s.p, r = p.rhythm.r, sbp = sysBP(p), v;
+    if (type === "nosync") { v = [false, "SYNC is on, so the device won't fire on VF/pulseless VT: there's no QRS to sync to.", "", "The device waits and no shock is delivered."]; }
+    else if (shockableNow(p)) v = d.sync ? [false, "VF/pulseless VT needs an unsynchronized shock.", "", "No conversion."] : (d.J < 120 ? [false, d.J + " J is below the adult defibrillation dose.", "", "Still VF."] : [true, "Defibrillation for a shockable rhythm."]);
+    else if (!p.pulse) v = [false, (r === "asystole" ? "Asystole" : "PEA") + " isn't shockable. CPR and epinephrine.", "", "Compressions are interrupted for a shock that can't help."];
+    else if ((r === "vt" || r === "svt" || r === "af" || r === "flutter") && sbp != null && sbp < 90) v = d.sync ? [true, "Synchronized cardioversion for an unstable tachycardia with a pulse."] : [false, "With a pulse, the shock must be synchronized.", "", "The shock lands on the T wave: VF."];
+    else v = [false, "This patient has a pulse and doesn't need a shock" + (r === "chb" || r === "b21" || r === "sinus" ? "." : " now: they're stable."), "", "The shock lands on a perfusing rhythm and can cause VF."];
+    if (v[0] && !d.sync) cur.hx.shocks++;
+    var label = type === "nosync" ? "Pressed SHOCK with SYNC on" : (d.sync ? "Synchronized shock at " + d.J + " J" : "Unsynchronized shock at " + d.J + " J");
+    cur.log.push({ i: cur.i, t: label, ok: v[0], why: v[1] });
+    if (!v[0]) { (cur.errs[cur.i] = cur.errs[cur.i] || []).push(label + ": " + v[1]); cur.bad[cur.i] = 1; }
+    actMsg(v[0] ? "✓ " + label + "." + (cur.lvl === "pro" ? "" : " " + v[1]) : (cur.lvl === "pro" ? "What happens: " + v[3] : "✗ " + label + ". " + v[1]), v[0] ? "ok" : (cur.lvl === "pro" ? "play" : "bad"));
+    if (type !== "nosync") setTimeout(function () { if (cur && cur.c.steps[cur.i] === s && dev) { dev.patient(s.p); dev.reset(); updActs(); } }, 3500);
+  }
 
   /* ------------------------------------------------------------------ screens */
   function listHTML() {
@@ -399,17 +547,18 @@
     if (mid && !window.confirm("Exit this case? Your progress on it won't be saved.")) return;
     list(); window.scrollTo(0, 0);
   }
-  function refit() { if (dev && dev.fit) dev.fit(); }
+  function refit() { var b = root && root.querySelector("#clActs"); if (dev && dev.fit) dev.fit(b && window.innerWidth > 1000 ? b.getBoundingClientRect().height + 10 : 0); }
   var rsT; window.addEventListener("resize", function () { clearTimeout(rsT); rsT = setTimeout(refit, 150); });
   document.addEventListener("fullscreenchange", function () { setTimeout(refit, 120); });
 
   function start(id) {
     var c = CASES.filter(function (x) { return x.id === id; })[0];
-    cur = { c: c, i: 0, marks: [], tries: 0, struck: {}, phase: "ask", lvl: LVL || "beg", picks: {}, errs: {} };
+    cur = { c: c, i: 0, marks: [], tries: 0, struck: {}, phase: "ask", lvl: LVL || "beg", picks: {}, errs: {}, bad: {}, log: [],
+      hx: { iv: false, tube: false, shocks: 0, epi: [], amio300: [], amio150: [], lido: [], epidrip: [], dopa: [] } };
     root.innerHTML = '<div class="cl-run full"><div class="runner-head"><div><div class="eyebrow">' + H(CATS.filter(function (k) { return k[0] === c.cat; })[0][1]) + ' · Code lab · ' + H(lvlName(cur.lvl)) + '</div><h2>' + H(c.title) + '</h2></div>' +
       '<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><div class="steps" id="clSteps"></div><button class="btn cl-exit" id="clBack" type="button" aria-label="Exit this case and return to all cases">✕ Exit case</button></div></div>' +
-      '<div class="cl-grid"><div id="clDev"></div><div class="cl-side" id="clSide"><div class="card scenario cl-story"><p>' + H(c.text) + '</p></div><div id="clStep"></div></div></div></div>';
-    root.querySelector("#clBack").onclick = exitCase; full();
+      '<div class="cl-grid"><div id="clDev"></div><div class="cl-side" id="clSide"><div class="card scenario cl-story"><p>' + H(c.text) + '</p></div><div id="clStep"></div></div></div>' + actsHTML() + '</div>';
+    root.querySelector("#clBack").onclick = exitCase; full(); bindActs();
     var p0 = c.steps[0].p;
     dev = window.DefibLab.embed(root.querySelector("#clDev"), { rhythm: p0.rhythm, pulse: p0.pulse, bp: p0.bp }, { esc: HOST.esc, onDevice: onDevice });
     step(); refit(); setTimeout(refit, 300);
@@ -423,9 +572,9 @@
   function step() {
     clearInterval(timer);
     var s = cur.c.steps[cur.i]; cur.tries = 0; cur.struck = {}; cur.phase = "ask"; cur.order = s.t === "q" ? shuffled(s.opts.length) : null;
-    dev.patient(s.p); dev.reset();
-    if (s.t === "d") { dev.config({ minJ: s.goal.kind === "sync" && !s.goal.noConvert ? s.goal.lo : 99999, shocksNeeded: 999 }); dev.lock(false); }
-    else dev.lock(true, "Answer the question first");
+    dev.patient(s.p); dev.reset(); dev.lock(false); actMsg("", ""); updActs();
+    if (s.t === "d") dev.config({ minJ: s.goal.kind === "sync" && !s.goal.noConvert ? s.goal.lo : 99999, shocksNeeded: 999 });
+    else { var sb = sysBP(s.p), cj = { svt: 50, flutter: 50, vt: 100, af: 120 }[s.p.rhythm.r]; dev.config({ minJ: s.p.pulse && cj && sb != null && sb < 90 ? cj : 99999, shocksNeeded: 999 }); }
     dots(); render();
     var side = root.querySelector("#clSide"); if (side) side.scrollTop = 0;
     if (s.t === "d" && s.goal.kind === "pace") timer = setInterval(checkPace, 400);
@@ -440,7 +589,7 @@
         else cls = cur.struck[i] ? "is-struck" : "";
         return '<button class="opt ' + cls + '" data-i="' + i + '"' + (dis ? ' disabled' : '') + '><span class="k">' + letters[pos] + '</span><span>' + H(o[0]) + '</span></button>'; }).join("") + '</div>';
     } else {
-      h += '<h3>' + H(s.task) + '</h3>';
+      h += '<h3>' + H(cur.lvl === "pro" ? ({ shock: "Defibrillate.", sync: "Perform synchronized cardioversion.", pace: "Start transcutaneous pacing." })[s.goal.kind] : s.task) + '</h3>';
       if (cur.lvl === "beg" && cur.phase === "ask") h += '<p class="cl-how"><b>How:</b> ' + H(s.how) + '</p>';
       else h += '<p class="cl-dev-hint">Use the device' + (window.innerWidth > 1000 ? ' on the left' : ' above') + '.</p>';
       if (s.goal.kind === "pace" && cur.lvl !== "pro") h += '<ul class="cl-check" id="clPace"></ul>';
@@ -452,8 +601,8 @@
     h += (extra || "") + '</div>';
     box.innerHTML = h;
     var o = box.querySelector("#clOpts"); if (o) o.onclick = function (e) { var b = e.target.closest(".opt"); if (b && !b.disabled) choose(+b.getAttribute("data-i")); };
-    var hw = box.querySelector("#clHow"); if (hw) hw.onclick = function () { cur.phase = "done"; mark(0); dev.lock(true, "Press Next to continue"); render(feedback(false, "Here's how: " + s.how, "No points for this step.")); };
-    var sk = box.querySelector("#clSkip"); if (sk) sk.onclick = function () { cur.phase = "done"; mark(0); (cur.errs[cur.i] = cur.errs[cur.i] || []).push("Moved on without finishing the device step."); dev.lock(true, "Press Next to continue"); render(played("You moved on. The team takes over the device.")); };
+    var hw = box.querySelector("#clHow"); if (hw) hw.onclick = function () { cur.phase = "done"; mark(0); render(feedback(false, "Here's how: " + s.how, "No points for this step.")); };
+    var sk = box.querySelector("#clSkip"); if (sk) sk.onclick = function () { cur.phase = "done"; mark(0); (cur.errs[cur.i] = cur.errs[cur.i] || []).push("Moved on without finishing the device step."); render(played("You moved on. The team takes over the device.")); };
     bindNext();
     if (s.t === "d" && s.goal.kind === "pace") checkPace();
   }
@@ -489,14 +638,16 @@
 
   // device tasks
   function onDevice(type, d) {
-    if (!cur || cur.phase !== "ask") return;
-    var s = cur.c.steps[cur.i]; if (s.t !== "d") return;
+    if (!cur || !dev) return;
+    var s = cur.c.steps[cur.i];
+    if (s.t !== "d" || cur.phase !== "ask") { if (type === "shock" || (type === "nosync" && !s.p.pulse)) shockOnQuestion(type, d); return; }
     var g = s.goal;
     if (type === "nosync" && g.kind === "shock") return coach("SYNC is on, so the device is waiting for a QRS that VF will never give it. Turn SYNC off for VF and pulseless VT, then shock.", false, "The device is in SYNC mode and won't fire: there's no QRS to sync to. No shock is delivered.", "Left SYNC on for a pulseless rhythm, so the shock didn't fire.");
     if (type !== "shock") return;
     if (g.kind === "shock") {
       if (d.sync) return coach("That was a synchronized shock. VF and pulseless VT need an unsynchronized shock.", false, "A synchronized shock on VF. The rhythm doesn't change.", "Used a synchronized shock on a pulseless rhythm.");
       if (d.J < g.minJ) return coach(d.J + " J is below the adult defibrillation dose. Use 120–200 J biphasic (your device's recommended dose, or the maximum if unknown). Charge again.", false, "Shock delivered at " + d.J + " J. Still VF.", "Shocked at " + d.J + " J, below the adult defibrillation dose (120–200 J biphasic).");
+      cur.hx.shocks++;
       return success("Shock delivered at " + d.J + " J. Now resume compressions immediately.");
     }
     if (g.kind === "sync") {
@@ -531,13 +682,14 @@
     render('<div class="cl-confirm"><b>Not quite yet</b><p>' + H(text) + '</p></div>');
   }
   function success(text, half) {
-    cur.phase = "done"; mark(cur.tries || half ? 0.5 : 1); dev.lock(true, "Press Next to continue");
+    cur.phase = "done"; mark(cur.tries || half ? 0.5 : 1);
     if (cur.lvl === "pro") { render(played(text.replace(/ Now resume.*$/, "").replace(/ It worked, but.*$/, "").replace(/ Set the current.*$/, ""))); return; }
     render(feedback(true, text, cur.tries ? "Half credit: it took " + (cur.tries + 1) + " tries." : ""));
   }
 
   function finish() {
     stopDevice();
+    Object.keys(cur.bad).forEach(function (i) { if (cur.marks[i] != null && cur.marks[i] > 0.5) cur.marks[i] = 0.5; });
     var c = cur.c, pts = cur.marks.reduce(function (a, b) { return a + (b || 0); }, 0), max = c.steps.length, pc = Math.round(100 * pts / max), ok = pc >= 80;
     HOST.save(c.id, { ok: ok, pct: pc, p2: Math.round(pts * 2), m2: max * 2, at: Date.now(), lvl: cur.lvl });
     var rows = c.steps.map(function (s, i) {
@@ -557,7 +709,7 @@
       return '<li class="' + cls + '"><span class="cl-m">' + (m === 1 ? '✓' : (m === 0.5 ? '½' : '✗')) + '</span><div>' + body + '</div></li>'; }).join("");
     var how = cur.lvl === "pro" ? "Full credit for a right decision or a device step done right the first time; no credit for a wrong decision." : "Full credit for a right first choice, half credit after rethinking or a second try.";
     root.innerHTML = '<div class="card cl-sum ' + (ok ? 'pass' : 'fail') + '"><div class="verdict">' + (ok ? 'Case passed' : 'Case needs review') + ' · ' + H(lvlName(cur.lvl)) + '</div><h2>' + H(c.title) + ' · ' + pc + '%</h2>' +
-      '<p>' + (Math.round(pts * 10) / 10) + ' of ' + max + ' points. ' + how + '</p><ol class="cl-list">' + rows + '</ol>' +
+      '<p>' + (Math.round(pts * 10) / 10) + ' of ' + max + ' points. ' + how + '</p><ol class="cl-list">' + rows + '</ol>' + (cur.log.length ? '<h3 class="cl-acth">Your actions</h3><ul class="cl-actlog">' + cur.log.map(function (a) { return '<li class="' + (a.ok ? 'ok' : 'bad') + '"><b>' + (a.ok ? '✓' : '✗') + '</b> <span>Step ' + (a.i + 1) + ': ' + H(a.t) + (a.ok ? '' : '. ' + H(a.why)) + '</span></li>'; }).join('') + '</ul><p class="fb-note">A step where an action was poorly timed earns at most half credit.</p>' : '') +
       '<div class="qnav" style="justify-content:flex-start"><button class="btn btn-primary" id="clAgain">Run it again</button><button class="btn btn-ghost" id="clAll">All cases</button></div>' +
       '<p class="empty">Based on the current AHA adult advanced life support algorithms. Always follow your local protocols and medical direction.</p></div>';
     root.querySelector("#clAgain").onclick = function () { start(c.id); };

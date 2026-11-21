@@ -783,15 +783,16 @@
         if (on) { if (eng.pacer.on) { eng.pacer.on = false; } st.charged = false; st.charging = false; st.pendingSync = 0; stopChargeTone(); updateScreen(); } },
       reset: function () { st.shocks = []; st.syncNoQRS = false; st.captureT = null; st.capEver = false; st.sync = false; st.charged = false; st.charging = false; st.energyI = ENERGIES.indexOf(200);
         eng.pacer.on = false; eng.pacer.mA = 0; eng.pacer.rate = 60; stopChargeTone(); updateScreen(); },
-      state: function () { var p = eng.pacer; return { sync: st.sync, J: ENERGIES[st.energyI], pacer: { on: p.on, rate: p.rate, mA: p.mA }, threshold: eng.threshold, captured: p.on && p.mA >= eng.threshold && eng.hasQRS() }; },
+      state: function () { var p = eng.pacer; return { sync: st.sync, J: ENERGIES[st.energyI], pacer: { on: p.on, rate: p.rate, mA: p.mA }, threshold: eng.threshold, captured: p.on && p.mA >= eng.threshold && eng.hasQRS(), cpr: st.cpr, perfusing: st.perfusing, rhythm: eng.rh.r }; },
+      cpr: function (on) { setCpr(!!on); },
       message: function (t, cls) { msg(t, cls); },
       // scale the device to fit the window height (Code lab full screen, two-column layout)
-      fit: function () {
+      fit: function (reserve) {
         var dv = el("dv"); if (!dv || !eng) return;
         dv.style.zoom = 1;
         if (window.innerWidth <= 1000) { setupCanvases(); return; }
         var r = dv.getBoundingClientRect(), top = root.getBoundingClientRect().top;
-        var zh = (window.innerHeight - Math.max(0, top) - 16) / r.height, zw = (window.innerWidth - 32 - 360 - 16) / r.width;
+        var zh = (window.innerHeight - Math.max(0, top) - 16 - (reserve || 0)) / r.height, zw = (window.innerWidth - 32 - 360 - 16) / r.width;
         var z = Math.max(0.5, Math.min(1.35, zh, zw));
         dv.style.zoom = Math.abs(z - 1) > 0.005 ? z.toFixed(3) : 1;
         setupCanvases();
