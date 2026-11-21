@@ -1051,7 +1051,6 @@ html.ecgv-open,html.ecgv-open body{overflow:hidden}
     <nav class="tabs" aria-label="Sections">
       <a href="#home" data-v="home">Home</a>
       <a href="#course" data-v="course">Course</a>
-      <a href="#strips" data-v="strips">Strips</a>
       <a href="#practice" data-v="practice">Practice</a>
       <a href="#megacode" data-v="megacode">Megacode</a>
       <a href="#defib" data-v="defib" id="tabDefib" hidden>Defib lab</a>
@@ -1115,7 +1114,7 @@ html.ecgv-open,html.ecgv-open body{overflow:hidden}
       <article class="card module m-strips">
         <div class="band">
           <div class="band-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 13h4l2-6 3 12 3-9 2 3h6"/></svg></div>
-          <div class="band-t"><div class="eyebrow">Module 1</div><h2><span class="nStrips">102</span> ECG strips</h2></div>
+          <div class="band-t"><div class="eyebrow">Module 1</div><h2>Random ECG Practice Strips</h2></div>
           <svg class="ring" viewBox="0 0 64 64" id="ringStrips"></svg>
         </div>
         <div class="module-b">
@@ -1157,7 +1156,7 @@ html.ecgv-open,html.ecgv-open body{overflow:hidden}
   <!-- STRIPS -->
   <section class="view" id="v-strips" hidden>
     <div class="qhead">
-      <div><div class="eyebrow">Module 1 · Rhythm interpretation</div><h2>Strip <span id="sNum" class="num">1</span><span> / <span class="nStrips">102</span></span></h2></div>
+      <div><div class="eyebrow">Practice · Random ECG Practice Strips</div><h2>Strip <span id="sNum" class="num">1</span><span> / <span class="nStrips">102</span></span></h2></div>
       <div class="qstats"><span>Answered <b id="sAns" class="num">0</b></span><span>Correct <b id="sCor" class="num">0</b></span><span>Score <b id="sPct" class="num">–</b></span></div>
     </div>
     <div class="progress" style="margin-bottom:16px"><i id="sBar" style="width:0"></i></div>
@@ -1221,8 +1220,8 @@ html.ecgv-open,html.ecgv-open body{overflow:hidden}
 
   <!-- PRACTICE AREAS -->
   <section class="view" id="v-practice" hidden>
-    <div class="qhead"><div><div class="eyebrow">Practice by rhythm family</div><h2>Practice areas</h2></div></div>
-    <p class="sv-lede">Pick a rhythm family and work through its 50 strips. Your progress in each area is saved and shared with your instructor along with your other results.</p>
+    <div class="qhead"><div><div class="eyebrow">Practice</div><h2>Practice areas</h2></div></div>
+    <p class="sv-lede">Start with the random strips, or pick a rhythm family and work through its 50 strips. Your progress in each area is saved and shared with your instructor along with your other results.</p>
     <div class="area-grid" id="practiceAreas"></div>
   </section>
   <section class="view" id="v-area" hidden>
@@ -1671,7 +1670,7 @@ function route(){
   if(v.indexOf("area-")===0 && areaMeta(v.slice(5))){ areaKey=v.slice(5); v="area"; }
   if(VIEWS.indexOf(v)<0 || v==="area" && !areaKey) v="home";
   VIEWS.forEach(function(x){ $("v-"+x).hidden = x!==v; });
-  var tabV = v==="area" ? "practice" : v;
+  var tabV = (v==="area" || v==="strips") ? "practice" : v;
   document.querySelectorAll(".tabs a").forEach(function(a){ if(a.getAttribute("data-v")===tabV) a.setAttribute("aria-current","page"); else a.removeAttribute("aria-current"); });
   if(v==="area") renderArea(areaKey); else { CUR_AREA=null; renderCardioPop(null); }
   if(v==="practice" || v==="home" || v==="course") renderAreaTiles();
@@ -2439,9 +2438,17 @@ function defibTileHTML(){
     '<span class="progress"><i style="width:'+pct(tried,n)+'%"></i></span>'+
     '<span class="area-foot"><span class="num">'+(tried? tried+' of '+n+' run · '+passed+' passed' : 'Not started')+'</span><span class="area-go">'+(tried>=n?'Review':(tried?'Resume':'Start'))+' →</span></span></span></a>';
 }
+function stripsTileHTML(){
+  var sc=stripScore(), started=sc.a>0, done=sc.a>=N;
+  return '<a class="area-tile wide" href="#strips" style="--ac:linear-gradient(120deg,var(--band-blue),var(--band-navy));--as:var(--blue-soft);--ai:var(--blue)">'+
+    '<span class="area-band"><span class="area-ecg">'+MINI_ECG+'</span><span class="area-count num">'+N+' strips · all rhythm families</span></span>'+
+    '<span class="area-body"><b>Random ECG Practice Strips</b><span class="area-blurb">A mixed set of '+N+' strips from every rhythm family, in random order, with a scenario for each and a full interpretation after you answer.</span>'+
+    '<span class="progress"><i style="width:'+pct(sc.a,N)+'%"></i></span>'+
+    '<span class="area-foot"><span class="num">'+(started? sc.a+' of '+N+' answered · '+pct(sc.c,sc.a)+'% correct' : 'Not started')+'</span><span class="area-go">'+(done?'Review':(started?'Resume at strip '+S.pi:'Start'))+' →</span></span></span></a>';
+}
 function renderAreaTiles(){
   var h=$("homeAreas"); if(h) h.innerHTML=areaTilesHTML();
-  var p=$("practiceAreas"); if(p) p.innerHTML=areaTilesHTML();
+  var p=$("practiceAreas"); if(p) p.innerHTML=stripsTileHTML()+areaTilesHTML();
 }
 var CUR_AREA=null;
 function renderArea(key){

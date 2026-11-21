@@ -61,7 +61,7 @@ After changing environment variables, redeploy (**Deploys → Trigger deploy →
 - The **Home** page is the landing page: the monitor, then student sign-in (name, cohort, class code) and **Go to the course**. Instructors sign in from the **Instructor sign-in** tab. The modules, practice areas, Defib lab card and survey are on the **Course** page.
 1. Open the site link you send them.
 2. On the **Overview** page, under **Your results**, enter their name, cohort (optional) and the class code (if you set one).
-3. Work through **Strips** and **Megacode**. The top bar shows **Shared with instructor** when scores are reaching you. The **Results** tab shows their own score at any time.
+3. Work through **Random ECG Practice Strips** (on the **Practice** page) and **Megacode**. The top bar shows **Shared with instructor** when scores are reaching you. The **Results** tab shows their own score at any time.
 
 Progress is kept in the student's browser. Using a different device or browser starts a new record, which appears as a separate row under the same name.
 
