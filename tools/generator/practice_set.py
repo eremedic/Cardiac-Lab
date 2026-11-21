@@ -304,13 +304,13 @@ def build():
         T("1st-degree AV block", E.avb1(r, pr, seed=sd), stem, "Regular", UP, f"{pr:.2f} s, constant", NARROW, ["Benign conduction delay: monitor", "Note AV-nodal blocking drugs; watch for progression in MI"])
     for n, pp, sd, stem in ((3, 0.92, 172, "Inferior MI, mildly lightheaded."), (4, 0.84, 173, "Athlete at rest."), (5, 0.76, 174, "Elderly patient on digoxin.")):
         st = E.wenck(n, pp, seed=sd)
-        T("2nd-degree AV block type I (Wenckebach)", st, stem, "Regularly irregular, grouped beats", f"Atrial {E.ar(st)}; one per group blocked", "Lengthens, then a dropped beat", NARROW, ["Usually nodal and transient", "Atropine if symptomatic"], name=f"2nd-degree AV block type I (Wenckebach), {n}:{n-1}")
+        T("2nd-degree AV block type I (Wenckebach)", st, stem, "Regularly irregular, grouped beats", f"Atrial {E.ar(st)}; one per group blocked", "Lengthens, then a dropped beat", NARROW, ["Usually nodal and transient", "Symptomatic: pads on, pace if unstable (atropine isn't indicated)"], name=f"2nd-degree AV block type I (Wenckebach), {n}:{n-1}")
     for n, pp, sd, stem in ((3, 0.68, 175, "Anterior MI, BP 84/50, confused."), (4, 0.7, 176, "Syncope at home; now alert."), (5, 0.62, 177, "Exertional dizziness.")):
         st = E.mobitz2(n, pp, seed=sd)
-        T("2nd-degree AV block type II (Mobitz II)", st, stem, "Irregular", f"Atrial {E.ar(st)}; some blocked", "0.18 s, constant", WIDE, ["Pads on; prepare to pace", "Atropine unlikely to help"], name=f"2nd-degree AV block type II (Mobitz II), {n}:{n-1}")
+        T("2nd-degree AV block type II (Mobitz II)", st, stem, "Irregular", f"Atrial {E.ar(st)}; some blocked", "0.18 s, constant", WIDE, ["Pads on; prepare to pace", "Atropine isn't indicated; pace if unstable"], name=f"2nd-degree AV block type II (Mobitz II), {n}:{n-1}")
     for pp, kind, sd, stem in ((0.7, "n", 178, "Weak and dizzy, BP 98/60."), (0.72, "w", 179, "Fatigue and dyspnea, BP 88/52.")):
         st = E.block_ratio(2, pp, kind, sd)
-        T("2nd-degree AV block, 2:1", st, stem, "Regular", f"Atrial {E.ar(st)}; 2 per QRS", "0.20 s on conducted beats", NARROW if kind == "n" else WIDE, ["The type can't be determined from 2:1 alone", "Narrow: atropine may help. Wide: pace."])
+        T("2nd-degree AV block, 2:1", st, stem, "Regular", f"Atrial {E.ar(st)}; 2 per QRS", "0.20 s on conducted beats", NARROW if kind == "n" else WIDE, ["The type can't be determined from 2:1 alone", "Pads on; pace if unstable. Atropine isn't indicated for 2nd-degree block."])
     for ratio, pp, sd, stem in ((3, 0.6, 180, "Syncope, HR in the 30s."), (4, 0.5, 181, "Gray and clammy, BP 74/40.")):
         st = E.block_ratio(ratio, pp, "w", sd)
         T("Advanced (high-grade) AV block", st, stem, "Regular", f"Atrial {E.ar(st)}; {ratio} per QRS", "0.20 s on conducted beats", WIDE, ["Treat like complete heart block", "Transcutaneous pacing; epinephrine or dopamine bridge"], name=f"Advanced (high-grade) AV block, {ratio}:1")

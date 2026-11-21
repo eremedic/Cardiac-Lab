@@ -1073,8 +1073,12 @@ body.cl-full{overflow:hidden}
 .cl-lvl-opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
 .cl-lvl-o{display:grid;gap:4px;text-align:left;padding:12px 14px;border-radius:12px;border:2px solid var(--line-2);background:var(--surface-2);color:var(--ink);font:inherit;cursor:pointer}
 .cl-lvl-o b{font-size:16px}.cl-lvl-o span{font-size:13.5px;color:var(--ink-2);line-height:1.4}
-.cl-lvl-o:hover{border-color:var(--accent)}
-.cl-lvl-o.on{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,var(--surface));box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 22%,transparent)}
+.cl-lvl-o[data-lvl="beg"]{--lv:#1E9E4A}.cl-lvl-o[data-lvl="int"]{--lv:#D9A400}.cl-lvl-o[data-lvl="pro"]{--lv:#D9121A}
+.cl-lvl-o{border-color:color-mix(in srgb,var(--lv) 55%,var(--line-2));background:color-mix(in srgb,var(--lv) 10%,var(--surface));border-top-width:6px}
+.cl-lvl-o b{color:color-mix(in srgb,var(--lv) 55%,var(--ink))}
+.cl-lvl-o:hover{border-color:var(--lv)}
+.cl-lvl-o.on{border-color:var(--lv);background:color-mix(in srgb,var(--lv) 24%,var(--surface));box-shadow:0 0 0 3px color-mix(in srgb,var(--lv) 35%,transparent)}
+.cl-lvl-o.on b::before{content:"✓ "}
 .cl-lvl-o:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
 .cl-lvl-note{margin:10px 0 0;font-weight:600;color:var(--bad)}.cl-lvl-note.flash{animation:clFlash .6s ease-out 2}
 @keyframes clFlash{50%{opacity:.25}}

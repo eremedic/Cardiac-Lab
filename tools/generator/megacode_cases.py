@@ -84,7 +84,7 @@ CASES = [
   "scenario": "An 82-year-old man is dizzy, pale and confused. BP 72/40.",
   "stages": [
    {"strip": "chb", "vitals": "HR 34 · BP 72/40 · confused", "prompt": "What is the best immediate treatment?", "options": [
-     ("Pads on and transcutaneous pacing now; atropine may be tried but must not delay pacing", Y, "Unstable complete block with a wide escape is unlikely to respond to atropine. Pace now."),
+     ("Pads on and transcutaneous pacing now", Y, "Unstable complete heart block: pace now. Atropine isn't indicated for 2nd- or 3rd-degree AV block."),
      ("Amiodarone 150 mg", N, "Antiarrhythmics can suppress the ventricular escape and cause asystole."),
      ("Adenosine 6 mg", N, "Adenosine slows AV conduction, which is the opposite of what's needed."),
      ("Observe: his rate is adequate", N, "He is hypotensive and confused, so this bradycardia is unstable.")]},
@@ -97,7 +97,7 @@ CASES = [
      ("Confirm mechanical capture with a femoral pulse and BP", Y, "Electrical capture doesn't guarantee perfusion. A femoral pulse at the paced rate confirms mechanical capture."),
      ("Confirm with a carotid pulse", N, "Pacing makes the neck muscles twitch, which can mimic a carotid pulse."),
      ("Stop pacing: capture proves he's fixed", N, "He depends on the pacer; stopping returns him to complete block."),
-     ("Give atropine now", N, "Not needed once effective pacing is established.")]},
+     ("Give atropine now", N, "Atropine isn't indicated for 2nd- or 3rd-degree AV block.")]},
    {"strip": "tcp_cap", "vitals": "Femoral pulse 80 · BP 104/62 · grimacing", "prompt": "Patient is perfusing but in pain. What now?", "options": [
      ("Analgesia or sedation per protocol, and transport to a center that can place a transvenous pacer", Y, "TCP is painful. Treat it, then arrange definitive pacing."),
      ("Turn the mA below threshold to stop the pain", N, "Losing capture returns him to unstable bradycardia."),
@@ -249,7 +249,7 @@ CASES = [
   "scenario": "A 70-year-old with an anterior STEMI is hypotensive.",
   "stages": [
    {"strip": "mobitz2", "vitals": "HR 46 · BP 82/50", "prompt": "Interpret and treat.", "options": [
-     ("Mobitz II: pads on and start TCP; atropine is unlikely to help", Y, "This is an infranodal block with a risk of sudden complete block. Pace."),
+     ("Mobitz II: pads on and start TCP", Y, "This is an infranodal block with a risk of sudden complete block. Atropine isn't indicated for 2nd- or 3rd-degree AV block. Pace."),
      ("Nitroglycerin", N, "Contraindicated with hypotension."),
      ("Wenckebach: observe", N, "The PR is constant before the dropped beat, so this is Mobitz II."),
      ("Amiodarone", N, "Not indicated.")]},
@@ -258,21 +258,21 @@ CASES = [
      ("PCI center with a STEMI pre-alert; post-ROSC care", Y, "He needs emergent reperfusion."),
      HYPERVENT, EXTRA_EPI, ("The closest non-PCI hospital", N, "Bypass to PCI per system design.")]},
   ]},
- {"title": "Inferior MI and grouped beats", "focus": "Wenckebach and atropine",
+ {"title": "Inferior MI and grouped beats", "focus": "Wenckebach in an inferior MI",
   "scenario": "A 64-year-old with an inferior STEMI is lightheaded.",
   "stages": [
    {"strip": "wenck", "vitals": "HR 48 · BP 86/58", "prompt": "Interpret and treat.", "options": [
-     ("Wenckebach: atropine 1 mg IV (repeat q3–5 min, max 3 mg), pads on", Y, "A symptomatic nodal block usually responds to atropine."),
+     ("Wenckebach: pads on, IV fluid bolus for the low pressure, and pace if he becomes unstable", Y, "Atropine isn't indicated for 2nd- or 3rd-degree AV block. In an inferior MI the low pressure often responds to fluids (right ventricular involvement); keep the pacer ready."),
      ("Nitroglycerin SL", N, "He is hypotensive, with possible RV involvement."),
      ("Adenosine", N, "This would worsen the block."),
-     ("Synchronized cardioversion", N, "Not a tachyarrhythmia.")]},
-   {"strip": "avb1", "vitals": "HR 72 · BP 112/70 after atropine", "prompt": "Improved. Next?", "options": [
+     ("Wenckebach: atropine 1 mg IV, repeat every 3–5 minutes", N, "Atropine isn't indicated for 2nd- or 3rd-degree AV block.")]},
+   {"strip": "avb1", "vitals": "HR 72 · BP 112/70 after a fluid bolus", "prompt": "Improved. Next?", "options": [
      ("Monitor, STEMI pre-alert, transport to PCI", Y, "Treat the underlying MI."),
-     ("Repeat atropine to 3 mg anyway", N, "He has already responded."),
+     ("Start pacing anyway at 80/min", N, "He's perfusing at 72. Keep the pads on and watch for progression."),
      ("Amiodarone", N, "Not indicated."),
      ("Stop monitoring", N, "He may progress to higher-grade block.")]},
    {"strip": "chb_n", "vitals": "HR 44 · BP 100/64 · alert", "prompt": "En route the rhythm changes.", "options": [
-     ("Complete heart block with junctional escape: pads on, atropine may be tried, pace if unstable", Y, "Narrow escape complete block in an inferior MI often responds to atropine."),
+     ("Complete heart block with junctional escape: pads on, ready to pace if he becomes unstable", Y, "He's stable for now with a narrow junctional escape. Atropine isn't indicated for 2nd- or 3rd-degree AV block. Pace if he becomes unstable."),
      ("Defibrillate", N, "He has a pulse and a non-shockable rhythm."),
      ("Adenosine", N, "Not indicated."),
      ("Lidocaine", N, "Could suppress the escape rhythm.")]},

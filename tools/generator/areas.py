@@ -570,7 +570,7 @@ def b_wenck(r):
     need(len(vis) >= n - 1, "group visible")
     return s, dict(cat="2nd-degree AV block type I (Wenckebach)", name=f"2nd-degree AV block type I (Wenckebach), {n}:{n - 1}",
                    rhythm="Regularly irregular: grouped beats", p=f"Regular at {round(60 / pp)}/min; one per group not conducted",
-                   pr=f"Lengthens {prs[0]:.2f} → {prs[-1]:.2f} s, then a dropped beat", qrs=qrs_txt(s.qrs_d), action=["Usually nodal and transient", "Atropine if symptomatic"])
+                   pr=f"Lengthens {prs[0]:.2f} → {prs[-1]:.2f} s, then a dropped beat", qrs=qrs_txt(s.qrs_d), action=["Usually nodal and transient", "Symptomatic: pads on, pace if unstable (atropine isn't indicated)"])
 
 
 def b_mobitz2(r):
@@ -598,7 +598,7 @@ def b_mobitz2(r):
     ratio = f"{first_drop + 1}:{first_drop}" if len(pattern) <= 5 else "variable"
     return s, dict(cat="2nd-degree AV block type II (Mobitz II)", name=f"2nd-degree AV block type II (Mobitz II), {ratio}",
                    rhythm="Irregular when beats drop", p=f"Regular at {round(60 / pp)}/min; some not conducted", pr=sec(pr) + ", constant on conducted beats",
-                   qrs=qrs_txt(d), action=["High risk of complete block: pads on, prepare to pace", "Atropine unlikely to help; don't delay pacing"])
+                   qrs=qrs_txt(d), action=["High risk of complete block: pads on, prepare to pace", "Atropine isn't indicated; don't delay pacing"])
 
 
 def b_ratio_block(r, ratio):
@@ -618,7 +618,7 @@ def b_ratio_block(r, ratio):
     d = tm["d"] if wide else s.qrs_d
     if ratio == 2:
         return s, dict(cat="2nd-degree AV block, 2:1", rhythm="Regular", p=f"Regular at {round(60 / pp)}/min; 2 for every QRS", pr=sec(pr) + ", constant on conducted beats",
-                       qrs=qrs_txt(d), action=["The type can't be determined from 2:1 alone", "Narrow: atropine may help. Wide: behaves like Mobitz II, so pace."])
+                       qrs=qrs_txt(d), action=["The type can't be determined from 2:1 alone", "Pads on; pace if unstable. Atropine isn't indicated for 2nd-degree block."])
     return s, dict(cat="Advanced (high-grade) AV block", name=f"Advanced (high-grade) AV block, {ratio}:1", rhythm="Regular",
                    p=f"Regular at {round(60 / pp)}/min; {ratio} for every QRS", pr=sec(pr) + ", constant on conducted beats", qrs=qrs_txt(d),
                    action=["Treat like complete heart block", "Transcutaneous pacing; epinephrine or dopamine bridge"])
