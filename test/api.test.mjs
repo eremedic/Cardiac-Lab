@@ -22,7 +22,7 @@ const req = (method, path, { body, auth } = {}) => new Request('http://x' + path
 
 test('config reports scoring and class-code settings', async () => {
   const r = await make({ CLASS_CODE: 'ACLS1' })(req('GET', '/api/config'));
-  assert.deepEqual(await r.json(), { scoring: true, requireCode: true, instructor: false, features: { twelveLead: false, defibLab: false, fieldStrips: false } });
+  assert.deepEqual(await r.json(), { scoring: true, requireCode: true, instructor: false, features: { twelveLead: false, defibLab: false, fieldStrips: false }, cohorts: [] });
 });
 
 test('scores routes say so when no database is configured', async () => {
@@ -314,4 +314,28 @@ test('instructor accounts: cohort-scoped scores, permissions and per-cohort swit
   await api(req('DELETE', '/api/instructors/' + made.instructor.id, { auth: 'secret' }));
   assert.equal((await api(req('GET', '/api/me', { auth: upd.password }))).status, 401);
   await api(req('PUT', '/api/settings', { auth: 'secret', body: { cohort: 'PCP Spring', twelveLead: false } }));
+});
+
+test('owner sets the class code and saved cohorts from the scoreboard', async () => {
+  const api = make({ INSTRUCTOR_PASSWORD: 'secret', CLASS_CODE: 'medic' });
+  const S = 'cc000000-0000-4000-8000-000000000001';
+  const send = (code) => api(req('PUT', '/api/scores/' + S, { body: { name: 'Cal', code, doc: doc() } }));
+  assert.equal((await send('nope')).status, 403);
+  assert.equal((await send('MEDIC')).status, 200);
+  assert.equal((await api(req('PUT', '/api/class-code', { body: { code: 'x' } }))).status, 401);
+  const c = await (await api(req('PUT', '/api/class-code', { auth: 'secret', body: { code: 'Rig42' } }))).json();
+  assert.deepEqual([c.classCode, c.codeSource], ['Rig42', 'scoreboard']);
+  assert.equal((await send('medic')).status, 403);
+  assert.equal((await send('rig42')).status, 200);
+  await api(req('PUT', '/api/class-code', { auth: 'secret', body: { code: '' } }));
+  assert.equal((await (await api(req('GET', '/api/config'))).json()).requireCode, false);
+  assert.equal((await send('')).status, 200);
+  await api(req('PUT', '/api/cohorts', { auth: 'secret', body: { add: 'PCP Spring' } }));
+  await api(req('PUT', '/api/cohorts', { auth: 'secret', body: { add: 'pcp spring ' } }));
+  const l = await (await api(req('PUT', '/api/cohorts', { auth: 'secret', body: { add: 'ACP Fall' } }))).json();
+  assert.deepEqual(l.cohortList, ['ACP Fall', 'PCP Spring']);
+  assert.deepEqual((await (await api(req('GET', '/api/config'))).json()).cohorts, ['ACP Fall', 'PCP Spring']);
+  await api(req('PUT', '/api/cohorts', { auth: 'secret', body: { remove: 'acp fall' } }));
+  await api(req('PUT', '/api/class-code', { auth: 'secret', body: { code: 'medic' } }));
+  await api(req('PUT', '/api/cohorts', { auth: 'secret', body: { remove: 'PCP Spring' } }));
 });

@@ -987,6 +987,10 @@ html.ecgv-open,html.ecgv-open body{overflow:hidden}
 .inst-chks label{display:flex;gap:8px;align-items:center;font-size:13.5px;padding:6px 9px;border:1px solid var(--line);border-radius:9px;cursor:pointer}
 .inst-chks input{accent-color:var(--chart-bar)}
 .inst-addco{display:flex;gap:8px;margin-top:8px}.inst-addco input{flex:1;font:inherit;padding:7px 10px;border-radius:9px;border:1px solid var(--line-2);background:var(--surface);color:var(--ink)}
+.sb-class{margin-bottom:18px}
+.sb-class-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px}
+@media (max-width:820px){.sb-class-grid{grid-template-columns:minmax(0,1fr)}}
+.sb-class-l{font-size:13px;font-weight:600;color:var(--ink-2)}
 </style>
 </head>
 <body>
@@ -1096,7 +1100,7 @@ html.ecgv-open,html.ecgv-open body{overflow:hidden}
       <div class="share-l"><div class="eyebrow">Your results</div><p id="shareMsg">Your progress is saved on this device.</p></div>
       <div class="share-f">
         <label class="cohort" for="stuName"><span>Your name</span><input id="stuName" type="text" maxlength="60" placeholder="First and last name" autocomplete="name"></label>
-        <label class="cohort" for="cohort"><span>Class or cohort (optional)</span><input id="cohort" type="text" maxlength="40" placeholder="e.g. PCP Spring 2026" autocomplete="off"></label>
+        <label class="cohort" for="cohort"><span>Class or cohort (optional)</span><input id="cohort" type="text" maxlength="40" placeholder="e.g. PCP Spring 2026" autocomplete="off" list="cohortList"><datalist id="cohortList"></datalist></label>
         <label class="cohort" for="classCode" id="codeWrap" hidden><span>Class code</span><input id="classCode" type="text" maxlength="60" placeholder="From your instructor" autocomplete="off"></label>
       </div>
     </div>
@@ -1693,6 +1697,7 @@ function initShared(){
   fetch(API+"/config?cohort="+encodeURIComponent(S.cohort||""), {cache:"no-store"}).then(function(r){ return r.ok ? r.json() : null; }).then(function(cfg){
     SB.configDone=true;
     SB.features=(cfg && cfg.features) || {};
+    if(cfg && cfg.cohorts) $("cohortList").innerHTML=cfg.cohorts.map(function(c){ return '<option value="'+esc(c)+'">'; }).join("");
     renderAreaTiles(); defibNav(); if(location.hash.indexOf("#area-")===0 || location.hash==="#defib") route();
     if(!cfg || !cfg.scoring){ setSync("offline"); if(location.hash==="#survey") renderSurvey(); return; }
     SB.online=true; SB.requireCode=!!cfg.requireCode; $("codeWrap").hidden=!SB.requireCode;
@@ -1711,7 +1716,7 @@ function loginHTML(msg){
 }
 function loadSettings(){
   return fetch(API+"/settings?cohorts=1", {headers:{authorization:"Bearer "+SB.pass}, cache:"no-store"}).then(function(r){ return r.ok ? r.json() : null; })
-    .then(function(j){ if(j && j.settings){ SB.settings=j.settings; SB.cohortSet=j.cohorts||{}; if(j.me) SB.me=j.me; if(!SB.me || SB.me.role==="owner") SB.features=j.settings; renderSettings(); renderAreaTiles(); defibNav(); } }, function(){});
+    .then(function(j){ if(j && j.settings){ SB.settings=j.settings; SB.cohortSet=j.cohorts||{}; SB.cohortList=j.cohortList||[]; if(j.classCode!==undefined){ SB.classCode=j.classCode; SB.codeSource=j.codeSource; } if(j.me) SB.me=j.me; if(!SB.me || SB.me.role==="owner") SB.features=j.settings; renderSettings(); renderAreaTiles(); defibNav(); } }, function(){});
 }
 function can(p){ return !!SB.me && (SB.me.role==="owner" || !!(SB.me.perms||{})[p]); }
 function isOwner(){ return !!SB.me && SB.me.role==="owner"; }
@@ -1738,8 +1743,8 @@ function renderSettings(msg, which){
     return '<div class="card sb-switch"><div class="sb-switch-ic">'+w.icon()+'</div><div class="sb-switch-t"><div class="eyebrow">'+w.eyebrow+'</div><h3>'+esc(w.title)+' <span class="pill '+(on?'done':'part')+'">'+(on?'Open to students':'Closed to students')+'</span></h3>'+
       '<p>'+(on?w.on:w.off)+'</p>'+(msg && which===w.key?'<p class="login-msg" role="alert">'+esc(msg)+'</p>':'')+'</div>'+
       '<div class="sb-switch-a"><a class="btn btn-ghost" href="'+w.preview+'">Preview</a><button class="btn '+(on?'btn-ghost':'btn-primary')+'" data-switch="'+w.key+'" id="'+(w.key==="twelveLead"?"sbTwelve":"sb_"+w.key)+'">'+(on?'Close to students':'Open to students')+'</button></div></div>';
-  }).join("")+instructorsHTML();
-  bindInstructors();
+  }).join("")+classSetupHTML()+instructorsHTML();
+  bindClassSetup(); bindInstructors();
   box.querySelectorAll("[data-switch]").forEach(function(btn){ btn.onclick=function(){
     var k=btn.getAttribute("data-switch"), on=SB.settings[k]===true, body={}; body[k]=!on;
     btn.disabled=true; btn.textContent=on?"Closing…":"Opening…";
@@ -1769,6 +1774,32 @@ function renderCohortSwitches(box, msg, which){
   }; });
 }
 
+
+/* ----- owner: class code and saved cohorts ----- */
+function classSetupHTML(){
+  if(!isOwner()) return "";
+  var src = SB.codeSource==="scoreboard" ? "Set here" : (SB.codeSource==="netlify" ? "From Netlify (CLASS_CODE)" : "No code: anyone with the link can share scores");
+  return '<div class="card panel sb-class" id="sbClass"><div class="sv-board-head"><div><div class="eyebrow">Owner only</div><h3>Class setup</h3></div></div>'+
+    '<div class="sb-class-grid"><form id="codeForm"><label class="cohort"><span>Class code students enter</span><input id="codeIn" maxlength="60" autocomplete="off" value="'+esc(SB.classCode||"")+'" placeholder="Leave blank for no code"></label>'+
+      '<p class="empty" id="codeNote">'+esc(src)+'. Students type it on the Overview page; capitals don\'t matter. Changing it doesn\'t sign anyone out, but new saves need the new code.</p>'+
+      '<div class="inst-act"><button class="btn btn-primary" type="submit">Save code</button>'+(SB.classCode?'<button class="btn btn-ghost" type="button" id="codeClear">Remove code</button>':'')+'</div></form>'+
+    '<div><span class="sb-class-l">Cohorts</span><div class="sb-chips">'+(SB.cohortList||[]).map(function(c){ return '<button class="sb-chip" data-co-rm="'+esc(c)+'" aria-label="Remove '+esc(c)+' from the list">'+esc(c)+' ✕</button>'; }).join("")+'</div>'+
+      '<form class="inst-addco" id="coForm"><input id="coIn" maxlength="40" placeholder="Add a cohort, e.g. PCP Spring 2027"><button class="btn btn-ghost" type="submit">Add</button></form>'+
+      '<p class="empty">Saved cohorts appear in every cohort dropdown here and as suggestions when students type their cohort. Removing one from the list doesn\'t change any student\'s results.</p></div></div>'+
+    '<p class="login-msg" id="classMsg" role="alert" hidden></p></div>';
+}
+function ownerPut(path, body){
+  return fetch(API+path, {method:"PUT", headers:{"content-type":"application/json", authorization:"Bearer "+SB.pass}, body:JSON.stringify(body)}).then(function(r){ return r.json().then(function(j){ return {ok:r.ok, j:j}; }); });
+}
+function applyClass(x){ if(!x.ok){ var m=$("classMsg"); if(m){ m.textContent=(x.j && x.j.detail) || "That didn't save. Try again."; m.hidden=false; } return; }
+  SB.classCode=x.j.classCode; SB.codeSource=x.j.codeSource; SB.cohortList=x.j.cohortList; renderSettings(); renderBoard(); }
+function bindClassSetup(){
+  var b;
+  if((b=$("codeForm"))) b.onsubmit=function(e){ e.preventDefault(); ownerPut("/class-code", {code:$("codeIn").value}).then(applyClass, function(){ applyClass({ok:false}); }); };
+  if((b=$("codeClear"))) b.onclick=function(){ ownerPut("/class-code", {code:""}).then(applyClass, function(){ applyClass({ok:false}); }); };
+  if((b=$("coForm"))) b.onsubmit=function(e){ e.preventDefault(); var v=$("coIn").value.trim(); if(!v) return; ownerPut("/cohorts", {add:v}).then(applyClass, function(){ applyClass({ok:false}); }); };
+  if((b=$("sbClass"))) b.addEventListener("click", function(e){ var x=e.target.closest("[data-co-rm]"); if(x) ownerPut("/cohorts", {remove:x.getAttribute("data-co-rm")}).then(applyClass); });
+}
 /* ----- owner: instructor accounts ----- */
 var INST_PERMS = [["twelveLead","Open or close the 12-lead area"],["fieldStrips","Open or close the field strips"],["defibLab","Open or close the Defib lab"],
   ["print","Print reports"],["csv","Download CSV"],["survey","See course survey results"],["delete","Remove students"]];
@@ -1821,7 +1852,7 @@ function bindInstructors(){
   if((b=$("instCancel"))) b.onclick=function(){ SB.instEdit=null; renderSettings(); };
   if((b=$("instPwDone"))) b.onclick=function(){ SB.instPw=null; renderSettings(); };
   if((b=$("instCopy"))) b.onclick=function(){ var v=$("instPwVal").textContent; try{ navigator.clipboard.writeText(v); b.textContent="Copied"; }catch(e){} };
-  if((b=$("instAddCo"))) b.onclick=function(){ var v=$("instNewCo").value.trim().slice(0,40); if(!v) return; var st=instFormState(); st.cohorts.push(v); SB.instEdit=Object.assign(SB.instEdit, st, {extra:(SB.instEdit.extra||[]).concat([v])}); renderSettings(); };
+  if((b=$("instAddCo"))) b.onclick=function(){ var v=$("instNewCo").value.trim().slice(0,40); if(!v) return; ownerPut("/cohorts", {add:v}).then(function(x){ if(x.ok){ SB.cohortList=x.j.cohortList; renderBoard(); } }); var st=instFormState(); st.cohorts.push(v); SB.instEdit=Object.assign(SB.instEdit, st, {extra:(SB.instEdit.extra||[]).concat([v])}); renderSettings(); };
   if((b=$("instForm"))) b.onsubmit=function(e){ e.preventDefault(); var st=instFormState(), ed=SB.instEdit;
     if(!st.name.trim() || !st.cohorts.length){ SB.instEdit=Object.assign(ed, st, {msg:"Give them a name and at least one cohort."}); renderSettings(); return; }
     instCall(ed.id?"PUT":"POST", ed.id?"/"+ed.id:"", st).then(function(x){
@@ -1906,7 +1937,7 @@ function mini(c,t){ var p=pct(c,t); return '<div class="mini"><span class="track
 function renderBoard(){
   if(location.hash!=="#scoreboard" || !SB.admin) return;
   var all=SB.rows||[];
-  var cohorts={}; all.forEach(function(r){ if(r.cohort) cohorts[r.cohort]=1; });
+  var cohorts=cohortsOf();
   var sel=$("sbCohort"), cur=sel.value;
   sel.innerHTML='<option value="">All</option>'+Object.keys(cohorts).sort().map(function(c){return '<option'+(c===cur?' selected':'')+'>'+esc(c)+'</option>'}).join("");
   renderPicker();
@@ -1965,7 +1996,9 @@ function sortRows(list){
 }
 function selectedRows(){ return sortRows((SB.rows||[]).filter(function(r){ return SB.sel[r.id]; })); }
 function byName(a,b){ return (a.name||"").localeCompare(b.name||""); }
-function cohortsOf(){ var c={}; (SB.rows||[]).forEach(function(r){ if(r.cohort) c[r.cohort]=(c[r.cohort]||0)+1; }); return c; }
+function cohortsOf(){ var c={}, key={}, nk=function(x){ return String(x||"").trim().toLowerCase(); };
+  (SB.cohortList||[]).forEach(function(x){ if(SB.me && !isOwner() && !(SB.me.cohorts||[]).some(function(y){ return nk(y)===nk(x); })) return; key[nk(x)]=x; c[x]=0; });
+  (SB.rows||[]).forEach(function(r){ if(!r.cohort) return; var name=key[nk(r.cohort)]||r.cohort; key[nk(r.cohort)]=name; c[name]=(c[name]||0)+1; }); return c; }
 function renderPicker(){
   var box=$("sbPick"); if(!box) return;
   if(!SB.admin || !(SB.rows||[]).length){ box.innerHTML=""; return; }
