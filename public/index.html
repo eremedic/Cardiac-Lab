@@ -354,6 +354,7 @@ h1,h2,h3,.qhead h2,.runner-head h2,.score-hero h2,.answer-name,.stat b,.hero .me
 .tabs a{display:inline-flex;align-items:center;gap:7px;border-radius:9px;font-weight:600}
 .tabs a::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--tc,var(--navy));flex:none}
 .tabs a[data-v="home"]{--tc:var(--navy);--ts:var(--navy-soft)}
+.tabs a[data-v="course"]{--tc:var(--teal);--ts:var(--teal-soft)}
 .tabs a[data-v="strips"]{--tc:var(--blue);--ts:var(--blue-soft)}
 .tabs a[data-v="megacode"]{--tc:var(--brand-red);--ts:var(--red-soft)}
 .tabs a[data-v="results"]{--tc:var(--green);--ts:var(--green-soft)}
@@ -1012,6 +1013,20 @@ html.ecgv-open,html.ecgv-open body{overflow:hidden}
 .th-sort.on{color:var(--ink)}.th-sort.on span{opacity:1}
 .th-sort:hover span{opacity:.9}
 .th-sort:focus-visible{outline:2px solid var(--chart-bar);outline-offset:1px}
+/* ---------- landing page: sign-in under the monitor ---------- */
+.hero-right{display:grid;gap:14px;align-content:start;min-width:0}
+.hero-right .mon-screen{display:flex;align-items:center}
+.hero-right .mon-screen svg{flex:1}
+.hero-right .share-f{grid-template-columns:minmax(0,1fr)!important}
+.hero-right .signin-card{margin-top:0;padding:16px 18px}
+.hero-right .share-f{grid-template-columns:minmax(0,1fr) minmax(0,1fr);flex:1 1 100%}
+.hero-right .share-f label:first-child{grid-column:1/-1}
+.inst-signin{display:grid;gap:10px;padding:16px 18px}
+.inst-signin p{color:var(--ink-2);font-size:14px}
+.inst-signin-f{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap}.inst-signin-f .cohort{flex:1 1 200px}
+.inst-signin-f[hidden]{display:none}
+.go-course{justify-content:center}
+@media (max-width:560px){.hero-right .share-f{grid-template-columns:minmax(0,1fr)}}
 </style>
 </head>
 <body>
@@ -1032,6 +1047,7 @@ html.ecgv-open,html.ecgv-open body{overflow:hidden}
     </a>
     <nav class="tabs" aria-label="Sections">
       <a href="#home" data-v="home">Overview</a>
+      <a href="#course" data-v="course">Course</a>
       <a href="#strips" data-v="strips">Strips</a>
       <a href="#practice" data-v="practice">Practice</a>
       <a href="#megacode" data-v="megacode">Megacode</a>
@@ -1063,6 +1079,7 @@ html.ecgv-open,html.ecgv-open body{overflow:hidden}
           <div class="m-green"><b class="num" id="hQ">66</b><span>Treatment decisions</span></div>
         </div>
       </div>
+      <div class="hero-right">
       <div class="monitor" aria-label="Animated monitor showing normal sinus rhythm">
         <div class="mon-top"><span class="live">Lead II · Monitor</span><span>25 mm/s · 10 mm/mV</span></div>
         <div class="mon-body">
@@ -1075,7 +1092,25 @@ html.ecgv-open,html.ecgv-open body{overflow:hidden}
           </div>
         </div>
       </div>
+    <div class="card share-card signin-card">
+      <div class="share-l"><div class="eyebrow">Student sign-in</div><p id="shareMsg">Your progress is saved on this device.</p></div>
+      <div class="share-f">
+        <label class="cohort" for="stuName"><span>Your name</span><input id="stuName" type="text" maxlength="60" placeholder="First and last name" autocomplete="name"></label>
+        <label class="cohort" for="cohort"><span>Class or cohort (optional)</span><input id="cohort" type="text" maxlength="40" placeholder="e.g. PCP Spring 2026" autocomplete="off" list="cohortList"><datalist id="cohortList"></datalist></label>
+        <label class="cohort" for="classCode" id="codeWrap" hidden><span>Class code</span><input id="classCode" type="text" maxlength="60" placeholder="From your instructor" autocomplete="off"></label>
+      </div>
     </div>
+        <form class="card inst-signin" id="homeInst"><div><div class="eyebrow">Instructor sign-in</div><p id="homeInstMsg">See your students' results on the scoreboard.</p></div>
+          <div class="inst-signin-f" id="homeInstF"><label class="cohort" for="homeInstPw"><span>Instructor password</span><input id="homeInstPw" type="password" autocomplete="current-password" required></label><button class="btn btn-ghost" type="submit">Sign in</button></div>
+          <a class="btn btn-ghost" href="#scoreboard" id="homeInstGo" hidden>Open scoreboard →</a></form>
+        <a class="btn btn-primary go-course" href="#course">Go to the course →</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- COURSE (modules, practice areas, Defib lab, survey) -->
+  <section class="view" id="v-course" hidden>
+    <div class="qhead"><div><div class="eyebrow">Your course</div><h2>Modules and practice</h2></div></div>
     <div class="modules">
       <article class="card module m-strips">
         <div class="band">
@@ -1116,14 +1151,6 @@ html.ecgv-open,html.ecgv-open body{overflow:hidden}
       <div class="st s3"><i>3</i><div><b>P waves</b><span>Present, upright, 1:1?</span></div></div>
       <div class="st s4"><i>4</i><div><b>PR</b><span>0.12–0.20 s, constant?</span></div></div>
       <div class="st s5"><i>5</i><div><b>QRS</b><span>&lt; 0.12 s is narrow</span></div></div>
-    </div>
-    <div class="card share-card">
-      <div class="share-l"><div class="eyebrow">Your results</div><p id="shareMsg">Your progress is saved on this device.</p></div>
-      <div class="share-f">
-        <label class="cohort" for="stuName"><span>Your name</span><input id="stuName" type="text" maxlength="60" placeholder="First and last name" autocomplete="name"></label>
-        <label class="cohort" for="cohort"><span>Class or cohort (optional)</span><input id="cohort" type="text" maxlength="40" placeholder="e.g. PCP Spring 2026" autocomplete="off" list="cohortList"><datalist id="cohortList"></datalist></label>
-        <label class="cohort" for="classCode" id="codeWrap" hidden><span>Class code</span><input id="classCode" type="text" maxlength="60" placeholder="From your instructor" autocomplete="off"></label>
-      </div>
     </div>
   </section>
 
@@ -1639,7 +1666,12 @@ function renderResults(){
 }
 
 /* ================= ROUTER ================= */
-var VIEWS=["home","strips","practice","area","megacode","defib","results","survey","scoreboard"];
+var VIEWS=["home","course","strips","practice","area","megacode","defib","results","survey","scoreboard"];
+function homeSignin(){
+  var on=!!SB.admin; $("homeInstF").hidden=on; $("homeInstGo").hidden=!on;
+  $("homeInstMsg").textContent = on ? (SB.me && SB.me.role==="instructor" ? "Signed in as "+(SB.me.name||"instructor")+"." : "You're signed in as the owner.") : "See your students' results on the scoreboard.";
+}
+$("homeInst").addEventListener("submit", function(e){ e.preventDefault(); var pw=$("homeInstPw").value.trim(); if(!pw) return; SB.pass=pw; $("homeInstPw").value=""; location.hash="scoreboard"; });
 function route(){
   var v=(location.hash||"#home").slice(1), areaKey=null;
   if(v.indexOf("area-")===0 && areaMeta(v.slice(5))){ areaKey=v.slice(5); v="area"; }
@@ -1648,15 +1680,16 @@ function route(){
   var tabV = v==="area" ? "practice" : v;
   document.querySelectorAll(".tabs a").forEach(function(a){ if(a.getAttribute("data-v")===tabV) a.setAttribute("aria-current","page"); else a.removeAttribute("aria-current"); });
   if(v==="area") renderArea(areaKey); else { CUR_AREA=null; renderCardioPop(null); }
-  if(v==="practice" || v==="home") renderAreaTiles();
+  if(v==="practice" || v==="home" || v==="course") renderAreaTiles();
+  if(v==="home") homeSignin();
   defibNav();
   if(v==="strips") renderStrip();
   if(v==="megacode"){ renderMega(); if(S.ci!=null) setTimeout(function(){ megaFit(true); }, 0); }
   if(v==="defib") renderDefib(); else if(window.DefibLab) DefibLab.stop();
   if(v==="results") renderResults();
   if(v==="survey") renderSurvey(); else if(SV.editing && !SV.sending){ SV.editing=false; }
-  if(v==="home" || v==="results") renderSurveyPrompts();
-  if(v==="home") updateTally();
+  if(v==="home" || v==="course" || v==="results") renderSurveyPrompts();
+  if(v==="home" || v==="course") updateTally();
   if(v==="scoreboard") openBoard(); else stopPoll();
 }
 window.addEventListener("hashchange", function(){ route(); window.scrollTo(0,0); });

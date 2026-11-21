@@ -58,6 +58,7 @@ After changing environment variables, redeploy (**Deploys → Trigger deploy →
 ## Using it with a class
 
 **Students**
+- The **Overview** page is the landing page: the monitor, then student sign-in (name, cohort, class code) and instructor sign-in underneath, and **Go to the course**. The modules, practice areas, Defib lab card and survey are on the **Course** page.
 1. Open the site link you send them.
 2. On the **Overview** page, under **Your results**, enter their name, cohort (optional) and the class code (if you set one).
 3. Work through **Strips** and **Megacode**. The top bar shows **Shared with instructor** when scores are reaching you. The **Results** tab shows their own score at any time.
