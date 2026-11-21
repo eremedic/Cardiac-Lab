@@ -355,6 +355,7 @@ h1,h2,h3,.qhead h2,.runner-head h2,.score-hero h2,.answer-name,.stat b,.hero .me
 .tabs a::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--tc,var(--navy));flex:none}
 .tabs a[data-v="home"]{--tc:var(--navy);--ts:var(--navy-soft)}
 .tabs a[data-v="course"]{--tc:var(--teal);--ts:var(--teal-soft)}
+.tabs a[data-v="codelab"]{--tc:var(--brand-red);--ts:var(--red-soft)}
 .tabs a[data-v="strips"]{--tc:var(--blue);--ts:var(--blue-soft)}
 .tabs a[data-v="megacode"]{--tc:var(--brand-red);--ts:var(--red-soft)}
 .tabs a[data-v="results"]{--tc:var(--green);--ts:var(--green-soft)}
@@ -1030,6 +1031,33 @@ html.ecgv-open,html.ecgv-open body{overflow:hidden}
 .area-bolt{display:flex;justify-content:flex-start}.area-tile .area-bolt svg{width:26px!important;height:26px}
 #v-home .hero{align-items:start}
 #v-home .hero-copy .logo-badge{margin-top:0}
+/* ---------- Code lab ---------- */
+.cl-cat{margin:18px 0 6px}.cl-cat.mega{padding:14px;border-radius:16px;background:linear-gradient(120deg,var(--red-soft),var(--surface) 70%);border:1px solid var(--line)}
+.cl-cat-h{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap;margin-bottom:8px}.cl-cat-h h3{font-size:18px}.cl-cat-h span{color:var(--muted);font-size:13.5px}
+.cl-run .runner-head{display:flex;justify-content:space-between;align-items:flex-end;gap:14px;flex-wrap:wrap;margin-bottom:14px}
+.cl-grid{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(320px,1fr);gap:16px;align-items:start}
+@media (max-width:1000px){.cl-grid{grid-template-columns:minmax(0,1fr)}}
+.cl-side{display:grid;gap:12px}
+.cl-story p{margin:0}
+.cl-q{padding:18px;display:grid;gap:12px}.cl-q h3{font-size:17px;margin:0}
+.cl-say{margin:0;padding:10px 12px;border-radius:10px;background:var(--surface-2);font-size:14.5px}
+.cl-dev-hint{margin:0;color:var(--muted);font-size:13px}
+.opt.is-struck{opacity:.45;text-decoration:line-through}
+.cl-confirm{border:2px solid var(--orange);border-radius:12px;padding:12px 14px;background:var(--orange-soft)}
+.cl-confirm b{display:block;font-size:15.5px;margin-bottom:4px}.cl-confirm p{margin:0 0 8px}
+.cl-confirm-a{display:flex;gap:8px;flex-wrap:wrap}
+.cl-result{border-left:4px solid var(--bad);padding:8px 12px;background:var(--red-soft);border-radius:8px;font-size:14px}
+.cl-check{list-style:none;margin:0;padding:0;display:grid;gap:4px;font-size:14px}.cl-check li{color:var(--muted)}.cl-check li.ok{color:var(--ok);font-weight:600}
+.steps i.h{background:var(--orange)}
+.cl-sum{padding:22px;border-left:6px solid var(--ok)}.cl-sum.fail{border-left-color:var(--bad)}
+.cl-sum .verdict{font-family:var(--f-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--ok)}.cl-sum.fail .verdict{color:var(--bad)}
+.cl-list{list-style:none;margin:12px 0;padding:0;display:grid;gap:8px}
+.cl-list li{display:flex;gap:10px;padding:9px 12px;border:1px solid var(--line);border-radius:10px}.cl-list li p{margin:2px 0 0;color:var(--ink-2);font-size:13.5px}
+.cl-m{flex:none;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;color:#FFFFFF;font-weight:700;background:var(--ok)}
+.cl-list li.half .cl-m{background:var(--orange)}.cl-list li.bad .cl-m{background:var(--bad)}
+.df-embed .dv{width:100%}
+.dv.locked .dv-keys{opacity:.5}
+.dv.locked .dv-keys .key{cursor:not-allowed}
 </style>
 </head>
 <body>
@@ -1054,6 +1082,7 @@ html.ecgv-open,html.ecgv-open body{overflow:hidden}
       <a href="#practice" data-v="practice">Practice</a>
       <a href="#megacode" data-v="megacode">Megacode</a>
       <a href="#defib" data-v="defib" id="tabDefib" hidden>Defib lab</a>
+      <a href="#codelab" data-v="codelab" id="tabCode" hidden>Code lab</a>
       <a href="#results" data-v="results">Results</a>
       <a href="#survey" data-v="survey">Survey</a>
       <a href="#scoreboard" data-v="scoreboard" id="tabBoard">Instructor sign-in</a>
@@ -1191,6 +1220,11 @@ html.ecgv-open,html.ecgv-open body{overflow:hidden}
   </section>
 
   <!-- DEFIB LAB (instructor switch: defibLab) -->
+  <!-- CODE LAB (instructor switch: codeLab) -->
+  <section class="view" id="v-codelab" hidden>
+    <div id="clRoot"></div>
+  </section>
+
   <section class="view" id="v-defib" hidden>
     <div id="dfRoot"></div>
   </section>
@@ -1654,11 +1688,11 @@ function renderResults(){
   $("rCases").onclick=function(e){ var b=e.target.closest("button"); if(!b)return; S.ci=+b.getAttribute("data-c"); var k=caseScore(S.ci); S.si=k.a>=k.t?k.t:k.a; save(); location.hash="megacode"; };
   var b; if((b=$("rAsk"))) b.onclick=function(){confirmReset=true; renderResults();};
   if((b=$("rNo"))) b.onclick=function(){confirmReset=false; renderResults();};
-  if((b=$("rYes"))) b.onclick=function(){ S={p:{},m:{},pi:1,ci:null,cohort:S.cohort||"",name:S.name||"",code:S.code||"",sid:S.sid,svDone:S.svDone,svAnswers:S.svAnswers,svAnon:S.svAnon,ar:S.ar,df:S.df}; save(); confirmReset=false; renderResults(); updateTally(); };
+  if((b=$("rYes"))) b.onclick=function(){ S={p:{},m:{},pi:1,ci:null,cohort:S.cohort||"",name:S.name||"",code:S.code||"",sid:S.sid,svDone:S.svDone,svAnswers:S.svAnswers,svAnon:S.svAnon,ar:S.ar,df:S.df,cl:S.cl}; save(); confirmReset=false; renderResults(); updateTally(); };
 }
 
 /* ================= ROUTER ================= */
-var VIEWS=["home","course","strips","practice","area","megacode","defib","results","survey","scoreboard"];
+var VIEWS=["home","course","strips","practice","area","megacode","defib","codelab","results","survey","scoreboard"];
 function route(){
   var v=(location.hash||"#home").slice(1), areaKey=null;
   if(v.indexOf("area-")===0 && areaMeta(v.slice(5))){ areaKey=v.slice(5); v="area"; }
@@ -1671,7 +1705,8 @@ function route(){
   defibNav();
   if(v==="strips") renderStrip();
   if(v==="megacode"){ renderMega(); if(S.ci!=null) setTimeout(function(){ megaFit(true); }, 0); }
-  if(v==="defib") renderDefib(); else if(window.DefibLab) DefibLab.stop();
+  if(v==="codelab") renderCodeLab(); else if(window.CodeLab) CodeLab.stop();
+  if(v==="defib") renderDefib(); else if(window.DefibLab && v!=="codelab") DefibLab.stop();
   if(v==="results") renderResults();
   if(v==="survey") renderSurvey(); else if(SV.editing && !SV.sending){ SV.editing=false; }
   if(v==="home" || v==="course" || v==="results") renderSurveyPrompts();
@@ -1706,7 +1741,7 @@ function summaryDoc(){
   var s=stripScore(), m=megaScore(), groups={};
   GROUPS.forEach(function(g){ var t=0,c=0,a=0; P.forEach(function(q){ if(CATS[q.cat].group===g[0]){ t++; var x=S.p[q.n]; if(x!=null){a++; if(x===q.cat)c++;} } }); groups[g[0]]=[c,a,t]; });
   var cases=CASES.map(function(_,ci){ var k=caseScore(ci); return [k.c,k.a,k.t]; });
-  return {strips:{c:s.c,a:s.a,n:N}, mega:{c:m.c,a:m.a,n:TOTAL_Q}, overall:pct(s.c+m.c, s.a+m.a), groups:groups, cases:cases, areas:areasDoc(), defib:defibDoc(), p:S.p, m:S.m};
+  return {strips:{c:s.c,a:s.a,n:N}, mega:{c:m.c,a:m.a,n:TOTAL_Q}, overall:pct(s.c+m.c, s.a+m.a), groups:groups, cases:cases, areas:areasDoc(), defib:defibDoc(), code:codeDoc(), p:S.p, m:S.m};
 }
 function pushNow(){
   if(!SB.online) return;
@@ -1738,7 +1773,7 @@ function initShared(){
     SB.configDone=true;
     SB.features=(cfg && cfg.features) || {};
     if(cfg && cfg.cohorts) $("cohortList").innerHTML=cfg.cohorts.map(function(c){ return '<option value="'+esc(c)+'">'; }).join("");
-    renderAreaTiles(); defibNav(); if(location.hash.indexOf("#area-")===0 || location.hash==="#defib") route();
+    renderAreaTiles(); defibNav(); if(location.hash.indexOf("#area-")===0 || location.hash==="#defib" || location.hash==="#codelab") route();
     if(!cfg || !cfg.scoring){ setSync("offline"); if(location.hash==="#survey") renderSurvey(); return; }
     SB.online=true; SB.requireCode=!!cfg.requireCode; $("codeWrap").hidden=!SB.requireCode;
     pushNow();
@@ -1770,6 +1805,8 @@ var SWITCHES = [
    on:"Students see a 12-lead tile on the Home, Course and Practice pages and can work through all 150 ECGs.", off:"Students can't see or open it. Preview it yourself, then open it when the class is ready."},
   {key:"fieldStrips", eyebrow:"Practice area control", title:"Field strips: real-world artifact", icon:function(){ return MINI_ECG; }, preview:"#area-field",
    on:"Students see a Field strips tile on the Home, Course and Practice pages and work through 100 strips with ambulance artifact.", off:"Students can't see or open it. Preview it yourself, then open it when the class is ready."},
+  {key:"codeLab", eyebrow:"Module control", title:"Code lab: defibrillator and megacode together", icon:function(){ return IC_BOLT; }, preview:"#codelab",
+   on:"Students see a Code lab tab and run adaptive ACLS cases on the live defibrillator: single algorithms or full megacodes.", off:"Students can't see or open it. Preview it yourself, then open it when the class is ready."},
   {key:"defibLab", eyebrow:"Module control", title:"Defib lab: monitor, defibrillator and pacer", icon:function(){ return IC_BOLT; }, preview:"#defib",
    on:"Students see a Defib lab tab and run 20 scenarios: defibrillation (adult and pediatric), synchronized cardioversion, stable tachycardias, atropine and pacing, and non-shockable arrests.", off:"Students can't see or open it. Preview it yourself, then turn it on when the class is ready."}
 ];
@@ -1841,7 +1878,7 @@ function bindClassSetup(){
   if((b=$("sbClass"))) b.addEventListener("click", function(e){ var x=e.target.closest("[data-co-rm]"); if(x) ownerPut("/cohorts", {remove:x.getAttribute("data-co-rm")}).then(applyClass); });
 }
 /* ----- owner: instructor accounts ----- */
-var INST_PERMS = [["twelveLead","Open or close the 12-lead area"],["fieldStrips","Open or close the field strips"],["defibLab","Open or close the Defib lab"],
+var INST_PERMS = [["twelveLead","Open or close the 12-lead area"],["fieldStrips","Open or close the field strips"],["defibLab","Open or close the Defib lab"],["codeLab","Open or close the Code lab"],
   ["print","Print reports"],["csv","Download CSV"],["survey","See course survey results"],["delete","Remove students"]];
 function loadInstructors(){
   return fetch(API+"/instructors", {headers:{authorization:"Bearer "+SB.pass}, cache:"no-store"}).then(function(r){ return r.ok ? r.json() : null; })
@@ -2157,7 +2194,8 @@ function chartData(rows){
   var defib=DEFIB_LIST.map(function(x){ var p=0,t=0; rows.forEach(function(r){ var v=(r.defib||{})[x[0]]; if(v){ t++; if(v[2]===1) p++; } }); return {label:x[1], c:p, a:t}; });
   var vc=0, va=0, vk=0; rows.forEach(function(r){ var v=(r.areas||{}).vessel; if(v && v[1]){ vc+=v[0]; va+=v[1]; vk++; } });
   if(va) areas.push({label:"STEMI culprit vessel", c:vc, a:va, extra:vk+' student'+(vk===1?'':'s')});
-  return {fam:fam, areas:areas, cats:Object.keys(cats).map(function(k){ return cats[k]; }).filter(function(x){ return x.a>=3; }), cases:cases, defib:defib};
+  var code=CODE_LIST.map(function(x){ var p=0,t=0; rows.forEach(function(r){ var v=(r.code||{})[x[0]]; if(v){ t++; if(v[2]===1) p++; } }); return {label:x[1], c:p, a:t}; });
+  return {code:code, fam:fam, areas:areas, cats:Object.keys(cats).map(function(k){ return cats[k]; }).filter(function(x){ return x.a>=3; }), cases:cases, defib:defib};
 }
 function chartsHTML(rows){
   var d=chartData(rows);
@@ -2167,6 +2205,7 @@ function chartsHTML(rows){
     hbarHTML("Most-missed rhythm types", "Lowest accuracy first (rhythms answered 3 or more times)", d.cats, {asc:true, limit:10})+
     hbarHTML("Hardest megacode cases", "Lowest share of correct decisions first", d.cases, {asc:true, limit:10, noun:'decisions'})+
     hbarHTML("Defib lab scenarios", "Pass rate among students who ran each scenario, lowest first", d.defib, {asc:true, limit:10, verb:'passed', noun:'students who tried'})+
+    hbarHTML("Code lab cases", "Pass rate among students who ran each case, lowest first", d.code, {asc:true, limit:12, verb:'passed', noun:'students who tried'})+
   '</div></section>';
 }
 (function(){
@@ -2272,7 +2311,7 @@ function detailHTML(r){
   del = (can("print") ? '<button class="btn btn-ghost" data-print="'+esc(r.id)+'">'+IC_PRINT+' Print report</button> '+(can("survey")?'<button class="btn btn-ghost" data-print-sv="'+esc(r.id)+'">'+IC_PRINT+' Print survey answers</button> ':'') : '')+del;
   var ap=AREA_META.map(function(x){ var v=(r.areas||{})[x.key]||[0,0,x.size||AREA_SIZE]; return '<div class="barrow"><span>'+esc(x.short)+'</span><span class="track"><i style="width:'+pct(v[0],v[1])+'%;background:'+x.color+'"></i></span><b>'+(v[1]?v[0]+'/'+v[1]:'—')+'</b></div>'; }).join("");
   var vv=(r.areas||{}).vessel; if(vv && vv[1]) ap+='<div class="barrow"><span>STEMI vessel</span><span class="track"><i style="width:'+pct(vv[0],vv[1])+'%;background:'+MKC.ste+'"></i></span><b>'+vv[0]+'/'+vv[1]+'</b></div>';
-  return '<div class="inner"><div><h4>Strips by rhythm family · correct / answered</h4><div class="bars">'+g+'</div><h4 style="margin-top:14px">Practice areas · correct / answered</h4><div class="bars">'+ap+'</div><div style="margin-top:14px">'+del+'</div></div><div><h4>Missed strips ('+missed.length+')</h4><div class="tags">'+ml+'</div><h4 style="margin-top:14px">Megacode cases</h4><div class="tags">'+cs+'</div>'+defibDetailHTML(r)+(can("survey")?surveyDetailHTML(r):'')+'</div></div>';
+  return '<div class="inner"><div><h4>Strips by rhythm family · correct / answered</h4><div class="bars">'+g+'</div><h4 style="margin-top:14px">Practice areas · correct / answered</h4><div class="bars">'+ap+'</div><div style="margin-top:14px">'+del+'</div></div><div><h4>Missed strips ('+missed.length+')</h4><div class="tags">'+ml+'</div><h4 style="margin-top:14px">Megacode cases</h4><div class="tags">'+cs+'</div>'+defibDetailHTML(r)+codeDetailHTML(r)+(can("survey")?surveyDetailHTML(r):'')+'</div></div>';
 }
 function hardHTML(rows){
   var stat={}; rows.forEach(function(r){ var p=r.p||{}; Object.keys(p).forEach(function(n){ var q=P[n-1]; if(!q) return; p[n]=canon(p[n]); stat[n]=stat[n]||[0,0]; stat[n][1]++; if(p[n]!==q.cat) stat[n][0]++; }); });
@@ -2306,9 +2345,9 @@ $("sbRefresh").addEventListener("click", function(){ loadBoard(true); });
 $("sbOut").addEventListener("click", function(){ SB.pass=null; SB.admin=false; SB.rows=null; SB.settings=null; SB.me=null; SB.inst=null; SB.instPw=null; SB.instEdit=null; SB.cohortSet=null; renderWho(); AREA_META.forEach(function(x){ if(x.gated){ delete AREAS[x.key]; AREA_LOADING[x.key]=null; } }); renderAreaTiles(); defibNav(); stopPoll(); try{ sessionStorage.removeItem("cl-instructor"); }catch(e){} $("tabBoard").textContent="Instructor sign-in"; showLogin(""); });
 $("sbCsv").addEventListener("click", function(){
   var rows=selectedRows();
-  var head=["Student","Cohort","Strips correct","Strips answered","Strips total","Megacode correct","Megacode answered","Megacode total","Score % (correct of answered)"].concat(GROUPS.map(function(g){return g[1]+" %"})).concat(AREA_META.map(function(x){ return x.short+" practice answered"; })).concat(AREA_META.map(function(x){ return x.short+" practice %"; })).concat(["Defib scenarios passed","Defib scenarios attempted"]).concat(DEFIB_LIST.map(function(x){ return "Defib: "+x[1]; })).concat(["Survey submitted","Last active"]);
+  var head=["Student","Cohort","Strips correct","Strips answered","Strips total","Megacode correct","Megacode answered","Megacode total","Score % (correct of answered)"].concat(GROUPS.map(function(g){return g[1]+" %"})).concat(AREA_META.map(function(x){ return x.short+" practice answered"; })).concat(AREA_META.map(function(x){ return x.short+" practice %"; })).concat(["Defib scenarios passed","Defib scenarios attempted","Code lab cases passed","Code lab cases attempted"]).concat(DEFIB_LIST.map(function(x){ return "Defib: "+x[1]; })).concat(["Survey submitted","Last active"]);
   var lines=[head].concat(rows.map(function(r){ var s=r.strips||{}, m=r.mega||{};
-    return [r._name, r.cohort||"", num(s.c), num(s.a), N, num(m.c), num(m.a), TOTAL_Q, rowAnswered(r)?rowOverall(r):""].concat(GROUPS.map(function(g){ var v=(r.groups||{})[g[0]]; return v&&v[1]?pct(v[0],v[1]):""; })).concat(AREA_META.map(function(x){ var v=(r.areas||{})[x.key]; return v?v[1]:0; })).concat(AREA_META.map(function(x){ var v=(r.areas||{})[x.key]; return v&&v[1]?pct(v[0],v[1]):""; })).concat(defibCounts(r)).concat(DEFIB_LIST.map(function(x){ var v=(r.defib||{})[x[0]]; return v ? (v[2]?"Passed ":"Review ")+v[0]+"/"+v[1] : ""; })).concat([r.surveyAt? new Date(r.surveyAt).toISOString():"", r.updatedAt? new Date(r.updatedAt).toISOString():""]); }));
+    return [r._name, r.cohort||"", num(s.c), num(s.a), N, num(m.c), num(m.a), TOTAL_Q, rowAnswered(r)?rowOverall(r):""].concat(GROUPS.map(function(g){ var v=(r.groups||{})[g[0]]; return v&&v[1]?pct(v[0],v[1]):""; })).concat(AREA_META.map(function(x){ var v=(r.areas||{})[x.key]; return v?v[1]:0; })).concat(AREA_META.map(function(x){ var v=(r.areas||{})[x.key]; return v&&v[1]?pct(v[0],v[1]):""; })).concat(defibCounts(r)).concat(codeCounts(r)).concat(DEFIB_LIST.map(function(x){ var v=(r.defib||{})[x[0]]; return v ? (v[2]?"Passed ":"Review ")+v[0]+"/"+v[1] : ""; })).concat([r.surveyAt? new Date(r.surveyAt).toISOString():"", r.updatedAt? new Date(r.updatedAt).toISOString():""]); }));
   downloadCsv(lines, "cardiac-lab-scores-"+new Date().toISOString().slice(0,10)+".csv");
 });
 function downloadCsv(lines, filename){
@@ -2323,6 +2362,7 @@ var DEFIB_LIST = [["vf","VF"],["pvt","Pulseless VT"],["tdp","Torsades"],["fvf","
 var DEFIB_LOADING = null;
 function defibOpen(){ return (SB.features||{}).defibLab===true; }
 function defibNav(){
+  $("tabCode").hidden = !(codeOpen() || SB.admin);
   var show = defibOpen() || SB.admin;
   $("tabDefib").hidden = !show;
   var h=$("homeDefib"); if(!h) return;
@@ -2348,7 +2388,7 @@ function renderDefib(){
   }); if(!defibOpen()) root.insertAdjacentHTML("afterbegin", '<p class="df-preview">Instructor preview: students can\'t see the Defib lab until you open it on the scoreboard.</p>'); };
   if(window.DefibLab){ go(); return; }
   root.innerHTML='<div class="card panel"><p class="empty">Loading the Defib lab…</p></div>';
-  if(!DEFIB_LOADING) DEFIB_LOADING=new Promise(function(res, rej){ var sc=document.createElement("script"); sc.src="/defib.js?v=6"; sc.onload=res; sc.onerror=function(){ DEFIB_LOADING=null; rej(); }; document.head.appendChild(sc); });
+  if(!DEFIB_LOADING) DEFIB_LOADING=new Promise(function(res, rej){ var sc=document.createElement("script"); sc.src="/defib.js?v=7"; sc.onload=res; sc.onerror=function(){ DEFIB_LOADING=null; rej(); }; document.head.appendChild(sc); });
   DEFIB_LOADING.then(go, function(){ root.innerHTML='<div class="card panel problem"><h3>The Defib lab didn\'t load</h3><p>Check your connection and reload the page.</p></div>'; });
 }
 function areaTotals(r){ var c=0,a=0; Object.keys(r.areas||{}).forEach(function(k){ if(k==="vessel") return; var v=r.areas[k]; if(v){ c+=v[0]; a+=v[1]; } }); return [c,a]; }
@@ -2372,11 +2412,51 @@ function defibPanelHTML(rows){
   }).join("");
   return '<div class="card panel ar-board"><div class="sv-board-head"><div><div class="eyebrow">Monitor · defibrillator · pacer</div><h3>Defib lab</h3></div></div><div class="ar-board-grid df-board">'+cells+'</div></div>';
 }
+function codeDetailHTML(r){
+  var d=r.code||{}; if(!Object.keys(d).length) return '';
+  return '<h4 style="margin-top:14px">Code lab</h4><div class="tags">'+CODE_LIST.filter(function(x){ return d[x[0]]; }).map(function(x){ var v=d[x[0]]; return '<span>'+(v[2]?'✓ ':'✗ ')+esc(x[1])+' '+Math.round(100*v[0]/v[1])+'%</span>'; }).join("")+'</div>';
+}
 function defibDetailHTML(r){
   var d=r.defib||{}; if(!Object.keys(d).length) return '';
   return '<h4 style="margin-top:14px">Defib lab</h4><div class="tags">'+DEFIB_LIST.filter(function(x){ return d[x[0]]; }).map(function(x){ var v=d[x[0]]; return '<span>'+(v[2]?'✓ ':'✗ ')+esc(x[1])+' '+v[0]+'/'+v[1]+'</span>'; }).join("")+'</div>';
 }
 
+
+/* ================= CODE LAB (public/codelab.js + the defib device; instructor switch codeLab) ================= */
+var CODE_LIST = [["vf1","VF: collapse at the gym"],["pvt1","Pulseless VT"],["asy1","Asystole"],["pea1","PEA: hyperkalemia"],["brady1","Bradycardia: pacing"],["svt1","SVT"],
+  ["vt1","VT with a pulse"],["af1","Unstable AF"],["post1","Post-arrest care"],["mega1","Megacode: chest pain to VF"],["mega2","Megacode: slow, then pulseless"],["mega3","Megacode: racing heart to flat line"]];
+var CODE_LOADING = null;
+function codeOpen(){ return (SB.features||{}).codeLab===true; }
+function codeDoc(){ var out={}, d=S.cl||{}; Object.keys(d).forEach(function(k){ var r=d[k]; if(r && r.m2) out[k]=[Math.min(r.p2, r.m2), r.m2, r.ok?1:0]; }); return out; }
+function codeCounts(r){ var d=r.code||{}, p=0, a=0; Object.keys(d).forEach(function(k){ a++; if(d[k][2]===1) p++; }); return [p, a]; }
+function loadScript(src){ return new Promise(function(res, rej){ var sc=document.createElement("script"); sc.src=src; sc.onload=res; sc.onerror=rej; document.head.appendChild(sc); }); }
+function renderCodeLab(){
+  var root=$("clRoot");
+  if(!codeOpen() && !SB.admin){
+    if(!SB.configDone){ root.innerHTML='<div class="card panel"><p class="empty">Loading…</p></div>'; return; }
+    root.innerHTML='<div class="card panel area-locked" style="--ac:var(--band-red)"><span class="sv-ic">'+IC_LOCK+'</span><h3>The Code lab isn\'t open yet</h3><p class="empty">Your instructor will open it when the class is ready.</p><a class="btn btn-primary" href="#home">Back to Home</a></div>';
+    return;
+  }
+  var go=function(){ if(location.hash!=="#codelab") return; CodeLab.render(root, {
+    esc:esc,
+    load:function(id){ return (S.cl||{})[id]||null; },
+    save:function(id, r){ S.cl=S.cl||{}; var old=S.cl[id], keep=old && old.ok && !r.ok;   // a later failed run doesn't erase a pass
+      S.cl[id]= keep ? Object.assign({}, old, {tries:(old.tries||0)+1, last:r.pct}) : Object.assign({}, r, {tries:((old&&old.tries)||0)+1}); save(); renderAreaTiles(); }
+  }); if(!codeOpen()) root.insertAdjacentHTML("afterbegin", '<p class="df-preview">Instructor preview: students can\'t see the Code lab until you open it on the scoreboard.</p>'); };
+  if(window.CodeLab && window.DefibLab){ go(); return; }
+  root.innerHTML='<div class="card panel"><p class="empty">Loading the Code lab…</p></div>';
+  if(!CODE_LOADING) CODE_LOADING=(window.DefibLab ? Promise.resolve() : (DEFIB_LOADING || loadScript("/defib.js?v=7"))).then(function(){ return window.CodeLab ? null : loadScript("/codelab.js?v=1"); });
+  CODE_LOADING.then(go, function(){ CODE_LOADING=null; root.innerHTML='<div class="card panel problem"><h3>The Code lab didn\'t load</h3><p>Check your connection and reload the page.</p></div>'; });
+}
+function codeTileHTML(){
+  if(!(codeOpen() || SB.admin)) return "";
+  var c=codeCounts({code:codeDoc()}), n=CODE_LIST.length;
+  return '<a class="area-tile wide" href="#codelab" style="--ac:linear-gradient(120deg,var(--band-navy),var(--band-red) 60%,var(--band-orange));--as:var(--red-soft);--ai:var(--brand-red)">'+
+    '<span class="area-band"><span class="area-ecg">'+MINI_ECG+'</span><span class="area-count num">'+n+' cases · '+(codeOpen()?'New':'closed to students · preview')+'</span></span>'+
+    '<span class="area-body"><b>Code lab: run a real code</b><span class="area-blurb">The live defibrillator and ACLS decisions together. Practice one algorithm or a full megacode from pre-arrest to post-arrest care, with coaching when a choice isn\'t the best one.</span>'+
+    '<span class="progress"><i style="width:'+pct(c[1],n)+'%"></i></span>'+
+    '<span class="area-foot"><span class="num">'+(c[1]? c[1]+' of '+n+' run · '+c[0]+' passed' : 'Not started')+'</span><span class="area-go">'+(c[1]?'Resume':'Start')+' →</span></span></span></a>';
+}
 /* ================= PRACTICE AREAS (50 strips per rhythm family) ================= */
 var AREA_META = [
   {key:"sinus", title:"Sinus rhythms", short:"Sinus", color:"var(--band-green)", soft:"var(--green-soft)", ink:"var(--green)", blurb:"Normal sinus, bradycardia, tachycardia, sinus arrhythmia, sinus arrest and SA exit block."},
@@ -2419,7 +2499,7 @@ function areaTilesHTML(){
       '<span class="area-body"><b>'+esc(m.title)+'</b><span class="area-blurb">'+esc(m.blurb)+'</span>'+
       '<span class="progress"><i style="width:'+pct(sc.a,sc.t)+'%"></i></span>'+
       '<span class="area-foot"><span class="num">'+(started? sc.a+' of '+sc.t+' answered · '+pct(sc.c,sc.a)+'% correct' : 'Not started')+'</span><span class="area-go">'+(done?'Review':(started?'Resume':'Start'))+' →</span></span></span></a>';
-  }).join("")+defibTileHTML();
+  }).join("")+defibTileHTML()+codeTileHTML();
 }
 /* the Defib lab, drawn as one of the practice tiles */
 function defibTileHTML(){

@@ -313,7 +313,8 @@
 
   /* ------------------------------------------------------------------ controls */
   function bindKeys() {
-    var on = function (id, fn) { var b = el(id); if (b) b.onclick = function () { if (!st.done) fn(); }; };
+    var FREE = { kLead: 1, kNibp: 1 };
+    var on = function (id, fn) { var b = el(id); if (b) b.onclick = function () { if (st.done) return; if (st.locked && !FREE[id]) { msg(st.lockMsg || "Answer the question first", "warn"); return; } fn(); }; };
     on("kEup", function () { changeEnergy(1); }); on("kEdn", function () { changeEnergy(-1); });
     on("kCharge", charge); on("kShock", shock);
     on("kSync", function () { st.sync = !st.sync; if (st.charged && !st.sync) {} logEv("SYNC " + (st.sync ? "on" : "off") + "."); pop(st.sync ? "SYNC ON" : "SYNC OFF", ENERGIES[st.energyI] + " J", st.sync ? "Shock delivers on the next QRS" : "Unsynchronized"); msg(st.sync ? "SYNC MODE: markers on each QRS" : "SYNC off", st.sync ? "info" : ""); updateScreen(); });
@@ -354,12 +355,17 @@
   function shock() {
     if (!st.charged) { msg(st.charging ? "Still charging" : "Not charged · press CHARGE first", "warn"); return; }
     if (st.sync) {
-      if (!eng.hasQRS()) { msg("SYNC: NO QRS DETECTED · SHOCK NOT DELIVERED", "warn"); logEv("SHOCK pressed in SYNC mode, but there's no QRS to synchronize to: no shock delivered.", "bad"); st.syncNoQRS = true; return; }
+      if (!eng.hasQRS()) { msg("SYNC: NO QRS DETECTED · SHOCK NOT DELIVERED", "warn"); logEv("SHOCK pressed in SYNC mode, but there's no QRS to synchronize to: no shock delivered.", "bad"); st.syncNoQRS = true; if (HOST && HOST.onDevice) HOST.onDevice("nosync", {}); return; }
       st.pendingSync = 1; msg("SYNC: delivering on the next QRS…", "info"); return;
     }
     deliver(false);
   }
   function deliver(synced) {
+    var before = { r: eng.rh.r, perfusing: st.perfusing, cpr: st.cpr };
+    deliverCore(synced);
+    if (HOST && HOST.onDevice) { var last = (st.shocks || [])[st.shocks.length - 1] || {}; HOST.onDevice("shock", { J: last.J, sync: !!synced, before: before, after: { r: eng ? eng.rh.r : null, perfusing: st.perfusing }, duringCpr: before.cpr }); }
+  }
+  function deliverCore(synced) {
     var J = ENERGIES[st.energyI], r = eng.rh.r;
     st.charged = false; if (st.firstShockT == null) st.firstShockT = now();
     if (st.cpr) { st.shockDuringCpr = true; setCpr(false, true); logEv("Shock delivered while compressions were going: always stop CPR and call \"clear\" before pressing SHOCK.", "bad"); }
@@ -467,6 +473,7 @@
     var pc = el("scPacer"); pc.hidden = !p.on;
     if (p.on) pc.innerHTML = 'PACER <b>' + p.rate + '</b> ppm &nbsp; <b>' + p.mA + '</b> mA' + (p.paused ? ' &nbsp;PAUSED' : '');
     var cap = p.on && p.mA >= eng.threshold && eng.hasQRS();
+    if (cap && st.captureT == null && HOST && HOST.onDevice) setTimeout(function () { HOST.onDevice("capture", { rate: p.rate, mA: p.mA }); }, 0);
     if (cap && st.captureT == null) { st.captureT = now(); logEv("Electrical capture: every pacer spike is now followed by a wide QRS."); if (sc.type === "pace" && p.rate >= 60) { setTimeout(function () { if (eng && eng.pacer.on && eng.pacer.mA >= eng.threshold) { st.bp = "104/62"; st.perfusing = true; } }, 2500); } }
     if (!cap && st.captureT != null && p.on) { st.captureT = null; logEv("Capture lost."); }
     var hr = eng.hr(); el("nHr").textContent = hr == null ? "---" : hr;
@@ -661,8 +668,44 @@
   }, 250);
 
   /* ------------------------------------------------------------------ public */
+  // Embedded device for the Code lab: the page drives the patient; the device reports what the student does.
+  function embed(container, init, host) {
+    HOST = host; root = container;
+    sc = { id: "embed", title: "", type: "embed", start: init.rhythm, pulse: !!init.pulse, bp: init.bp || null, shocksNeeded: 999, minJ: 99999, threshold: init.threshold || [55, 80] };
+    st = { i: -1, log: [], energyI: ENERGIES.indexOf(200), charging: false, charged: false, chargeP: 0, chargedAt: 0, sync: false, pendingSync: 0, cpr: false,
+      perfusing: !!init.pulse, bp: init.bp || null, rhythm: init.rhythm.r, converted: false, induced: false, firstShockT: null, sed: false, epi: 0, pulseChecks: [], leadI: 1,
+      captureT: null, pulseAfterCapture: false, done: false, analyzeUntil: 0, drugs: {}, drugT: {}, goodShocks: 0, nibpT: [], lastReady: -9, lastAlarm: -9, lastMedAlarm: -9, locked: true, popT: null };
+    stopChargeTone();
+    root.innerHTML = '<div class="df-embed">' + deviceHTML() + '</div>';
+    eng = new Engine(); eng.threshold = Math.round(rnd(sc.threshold[0], sc.threshold[1]) / 5) * 5;
+    eng.setRhythm(copy(init.rhythm), !!init.pulse); eng.listeners.push(onEvent);
+    bindKeys(); el("scPt").textContent = "ADULT";
+    setupCanvases(); updateScreen();
+    lastTs = performance.now(); x = { ecg: 0, pl: 0, co: 0 };
+    cancelAnimationFrame(raf); raf = requestAnimationFrame(frame);
+    var ctl = {
+      patient: function (p) {
+        if (p.rhythm) eng.setRhythm(copy(p.rhythm), !!p.pulse);
+        st.perfusing = !!p.pulse; st.bp = p.bp || null; st.converted = !!p.good;
+        setCpr(!!p.cpr, true); updateScreen();
+        if (p.bp) { el("nBp").textContent = p.bp; el("nBpT").textContent = stamp(); } else el("nBp").textContent = "---/---";
+      },
+      config: function (c) { if (c.minJ != null) sc.minJ = c.minJ; if (c.shocksNeeded != null) sc.shocksNeeded = c.shocksNeeded; st.goodShocks = 0;
+        if (c.threshold) eng.threshold = Math.round(rnd(c.threshold[0], c.threshold[1]) / 5) * 5; },
+      lock: function (on, why) { st.locked = !!on; st.lockMsg = why || ""; var d = el("dv"); if (d) d.classList.toggle("locked", !!on);
+        if (on) { if (eng.pacer.on) { eng.pacer.on = false; } st.charged = false; st.charging = false; st.pendingSync = 0; stopChargeTone(); updateScreen(); } },
+      reset: function () { st.shocks = []; st.syncNoQRS = false; st.captureT = null; st.capEver = false; st.sync = false; st.charged = false; st.charging = false; st.energyI = ENERGIES.indexOf(200);
+        eng.pacer.on = false; eng.pacer.mA = 0; eng.pacer.rate = 60; stopChargeTone(); updateScreen(); },
+      state: function () { var p = eng.pacer; return { sync: st.sync, J: ENERGIES[st.energyI], pacer: { on: p.on, rate: p.rate, mA: p.mA }, threshold: eng.threshold, captured: p.on && p.mA >= eng.threshold && eng.hasQRS() }; },
+      message: function (t, cls) { msg(t, cls); },
+      stop: function () { cancelAnimationFrame(raf); eng = null; stopChargeTone(); }
+    };
+    return ctl;
+  }
+
   window.DefibLab = {
     scenarios: SCEN,
+    embed: embed,
     render: function (container, host) {
       HOST = host; root = container; HOST.list = function () { window.DefibLab.list(); };
       window.DefibLab.list();

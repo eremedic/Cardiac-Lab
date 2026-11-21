@@ -141,6 +141,14 @@ Progress is kept in the student's browser. Using a different device or browser s
 - **It starts closed.** Open it from the **Field strips** card on the scoreboard (with **Preview**). Until then students don't see the tile and the server won't send the strips to anyone but the instructor. Results show in the scoreboard's practice-areas panel and CSV like the other areas.
 - Rebuild with `python3 tools/generator/build_field.py` (writes `lib/field-data.mjs`).
 
+**Code lab: the defibrillator and megacode together (opened by the instructor)**
+- A separate module (the existing Megacode and Defib lab are unchanged). The live monitor/defibrillator/pacer runs beside a case that unfolds step by step, written to the current AHA adult advanced life support algorithms (cardiac arrest, bradycardia, tachycardia with a pulse, post-cardiac arrest care).
+- Students pick one algorithm (VF/pulseless VT, asystole/PEA, bradycardia, SVT, VT with a pulse, atrial fibrillation, post-arrest care) or a **Megacode**, which runs pre-arrest → cardiac arrest → post-arrest care with at least three rhythms (e.g. unstable VT → VF → ROSC; complete heart block → PEA → ROSC; unstable AF → VF → asystole → ROSC).
+- **Adaptive coaching:** a wrong choice gets "Do you really want to do that?" with a prompt; students can **Rethink** (that choice is crossed out) or **Yes, do it** and see what happens to the patient, then the best choice and why.
+- **Device steps:** students do the shock, synchronized cardioversion or pacing themselves (the device is locked during question steps). Mistakes are coached live: SYNC left on in VF, too little energy, or an unsynchronized shock on a rhythm with a pulse (which causes VF; the patient is then rewound so they can try again). Pacing shows a live checklist (pacer on, rate 60–80, capture).
+- Scoring: full credit for a right first choice, half after rethinking or a second try; 80% passes. Results show on the scoreboard (Code lab chart, student detail, CSV).
+- **It starts closed.** Open it from the **Code lab** card on the scoreboard (instructors can be given this switch). Always teach alongside your local protocols and the current AHA provider manual.
+
 **Course survey**
 - The survey unlocks once a student has answered 10% of the strips and megacode decisions (17 of 168), on the Overview, Results and **Survey** tab. Students can update their answers later. The server checks the saved results before accepting it. The threshold is `SURVEY_UNLOCK_PCT` in `lib/api.mjs` (and the matching line in `public/index.html`).
 - Students can choose **Hide my name next to my answers**: the scoreboard then shows that they completed the survey, but lists their answers and comments as "Anonymous".

@@ -22,7 +22,7 @@ const req = (method, path, { body, auth } = {}) => new Request('http://x' + path
 
 test('config reports scoring and class-code settings', async () => {
   const r = await make({ CLASS_CODE: 'ACLS1' })(req('GET', '/api/config'));
-  assert.deepEqual(await r.json(), { scoring: true, requireCode: true, instructor: false, features: { twelveLead: false, defibLab: false, fieldStrips: false }, cohorts: [] });
+  assert.deepEqual(await r.json(), { scoring: true, requireCode: true, instructor: false, features: { twelveLead: false, defibLab: false, fieldStrips: false, codeLab: false }, cohorts: [] });
 });
 
 test('scores routes say so when no database is configured', async () => {
@@ -230,7 +230,7 @@ test('12-lead area stays closed until the instructor opens it', async () => {
   assert.equal((await api(req('PUT', '/api/settings', { auth: 'secret', body: { twelveLead: 'yes' } }))).status, 400);
   assert.equal((await api(req('PUT', '/api/settings', { auth: 'secret', body: { other: true } }))).status, 400);
   const on = await api(req('PUT', '/api/settings', { auth: 'secret', body: { twelveLead: true } }));
-  assert.deepEqual((await on.json()).settings, { twelveLead: true, defibLab: false, fieldStrips: false });
+  assert.deepEqual((await on.json()).settings, { twelveLead: true, defibLab: false, fieldStrips: false, codeLab: false });
   assert.equal((await (await api(req('GET', '/api/config'))).json()).features.twelveLead, true);
   assert.equal((await api(req('GET', '/api/areas/twelve'))).status, 200);
   // and close it again
@@ -338,4 +338,11 @@ test('owner sets the class code and saved cohorts from the scoreboard', async ()
   await api(req('PUT', '/api/cohorts', { auth: 'secret', body: { remove: 'acp fall' } }));
   await api(req('PUT', '/api/class-code', { auth: 'secret', body: { code: 'medic' } }));
   await api(req('PUT', '/api/cohorts', { auth: 'secret', body: { remove: 'PCP Spring' } }));
+});
+
+test('code lab: switch defaults off and case results are validated', async () => {
+  const api = make({ INSTRUCTOR_PASSWORD: 'secret' });
+  assert.equal((await (await api(req('GET', '/api/config'))).json()).features.codeLab, false);
+  const v = validateDoc({ ...doc(), code: { vf1: [17, 22, 1], mega2: [9, 40, 0], bad: [50, 20, 1], 'X!': [1, 2, 0] } });
+  assert.deepEqual(v.code, { vf1: [17, 22, 1], mega2: [9, 40, 0] });
 });
