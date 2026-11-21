@@ -5,9 +5,13 @@
   "private": true,
   "type": "module",
   "license": "UNLICENSED",
-  "engines": { "node": ">=20" },
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
-    "dev": "node tools/dev-server.mjs",
+    "dev": "vite dev",
+    "build": "vite build",
+    "preview": "vite preview",
     "test": "node --test test/*.test.mjs",
     "db:schema": "node tools/write-schema-sql.mjs"
   },
@@ -15,6 +19,11 @@
     "pg": "^8.23.1"
   },
   "devDependencies": {
-    "@electric-sql/pglite": "^0.5.8"
+    "@electric-sql/pglite": "^0.5.8",
+    "@sveltejs/adapter-netlify": "6.0.4",
+    "@sveltejs/kit": "2.70.3",
+    "@sveltejs/vite-plugin-svelte": "6.2.4",
+    "svelte": "5.57.3",
+    "vite": "7.3.7"
   }
 }

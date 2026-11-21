@@ -27,7 +27,7 @@ import area_hints  # noqa: E402
 import field_morph as FM  # noqa: E402  (real-patient P/QRS/T variation, delta waves, R-on-T)
 from practice_set import CAT  # noqa: E402
 
-PUB = os.path.normpath(os.path.join(HERE, "..", "..", "public"))
+PUB = os.path.normpath(os.path.join(HERE, "..", "..", "static"))
 OUT = os.path.normpath(os.path.join(HERE, "..", "..", "lib", "field-data.mjs"))
 t, DUR = areas.t, areas.DUR
 SEED = 20261119
