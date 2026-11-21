@@ -270,3 +270,48 @@ test('field strips stay closed until the instructor opens them', async () => {
   await api(req('PUT', '/api/settings', { auth: 'secret', body: { fieldStrips: false } }));
   assert.equal((await api(req('GET', '/api/areas/field'))).status, 403);
 });
+
+test('instructor accounts: cohort-scoped scores, permissions and per-cohort switches', async () => {
+  const api = make({ INSTRUCTOR_PASSWORD: 'secret' });
+  const put = (i, name, cohort) => api(req('PUT', '/api/scores/' + i, { body: { name, cohort, doc: doc() } }));
+  const A1 = 'aa000000-0000-4000-8000-000000000001', A2 = 'aa000000-0000-4000-8000-000000000002', B1 = 'bb000000-0000-4000-8000-000000000001';
+  await put(A1, 'Ann', 'PCP Spring'); await put(A2, 'Abe', ' pcp spring '); await put(B1, 'Bo', 'ACP Fall');
+  // only the owner manages instructors
+  assert.equal((await api(req('POST', '/api/instructors', { body: { name: 'X', cohorts: ['a'] } }))).status, 401);
+  assert.equal((await api(req('POST', '/api/instructors', { auth: 'secret', body: { name: 'X', cohorts: [] } }))).status, 400);
+  const made = await (await api(req('POST', '/api/instructors', { auth: 'secret', body: { name: 'Dana', cohorts: ['PCP Spring'], perms: { twelveLead: true, print: true, bogus: true } } }))).json();
+  assert.match(made.password, /^[a-z2-9]{5}-[a-z2-9]{5}-[a-z2-9]{5}$/);
+  assert.deepEqual(made.instructor.perms, { twelveLead: true, print: true });
+  const pw = made.password;
+  // the instructor sees only their cohort, without survey answers, and can't manage instructors
+  const me = await (await api(req('GET', '/api/me', { auth: pw.toUpperCase() }))).json();
+  assert.equal(me.me.role, 'instructor');
+  const mine = await (await api(req('GET', '/api/scores', { auth: pw }))).json();
+  assert.deepEqual(mine.rows.map((r) => r.name).sort(), ['Abe', 'Ann']);
+  assert.ok(mine.rows.every((r) => r.survey === null && r.surveyHidden));
+  assert.equal((await api(req('GET', '/api/instructors', { auth: pw }))).status, 403);
+  assert.equal((await api(req('DELETE', '/api/scores/' + A1, { auth: pw }))).status, 403);
+  // switches: only for their cohort and only the ones they were given
+  assert.equal((await api(req('PUT', '/api/settings', { auth: pw, body: { twelveLead: true } }))).status, 403);
+  assert.equal((await api(req('PUT', '/api/settings', { auth: pw, body: { cohort: 'ACP Fall', twelveLead: true } }))).status, 403);
+  assert.equal((await api(req('PUT', '/api/settings', { auth: pw, body: { cohort: 'PCP Spring', defibLab: true } }))).status, 403);
+  const set = await (await api(req('PUT', '/api/settings', { auth: pw, body: { cohort: 'PCP Spring', twelveLead: true } }))).json();
+  assert.equal(set.cohorts['PCP Spring'].twelveLead, true);
+  assert.equal(set.settings.twelveLead, false);
+  // students in that cohort get the 12-lead area; others don't
+  assert.equal((await (await api(req('GET', '/api/config?cohort=pcp%20spring'))).json()).features.twelveLead, true);
+  assert.equal((await (await api(req('GET', '/api/config?cohort=ACP%20Fall'))).json()).features.twelveLead, false);
+  assert.equal((await api(req('GET', '/api/areas/twelve?cohort=PCP%20Spring'))).status, 200);
+  assert.equal((await api(req('GET', '/api/areas/twelve?cohort=ACP%20Fall'))).status, 403);
+  // owner: give delete, reset the password (old one stops working), then remove the account
+  const upd = await (await api(req('PUT', '/api/instructors/' + made.instructor.id, { auth: 'secret', body: { perms: { delete: true }, resetPassword: true } }))).json();
+  assert.ok(upd.password && upd.password !== pw);
+  assert.equal((await api(req('GET', '/api/me', { auth: pw }))).status, 401);
+  assert.equal((await api(req('DELETE', '/api/scores/' + B1, { auth: upd.password }))).status, 200);
+  assert.equal((await (await api(req('GET', '/api/scores', { auth: 'secret' }))).json()).rows.filter((r) => r.id === B1).length, 1, 'out-of-cohort delete is a no-op');
+  assert.equal((await api(req('DELETE', '/api/scores/' + A2, { auth: upd.password }))).status, 200);
+  assert.equal((await (await api(req('GET', '/api/scores', { auth: 'secret' }))).json()).rows.filter((r) => r.id === A2).length, 0);
+  await api(req('DELETE', '/api/instructors/' + made.instructor.id, { auth: 'secret' }));
+  assert.equal((await api(req('GET', '/api/me', { auth: upd.password }))).status, 401);
+  await api(req('PUT', '/api/settings', { auth: 'secret', body: { cohort: 'PCP Spring', twelveLead: false } }));
+});
