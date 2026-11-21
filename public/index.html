@@ -1007,6 +1007,11 @@ html.ecgv-open,html.ecgv-open body{overflow:hidden}
 .pi-c{font-size:13px;color:var(--ink-2);overflow-wrap:anywhere}
 .pi-s{font:600 13px var(--f-mono);color:var(--ink)}
 @media (max-width:520px){.sb-pick-hd,.sb-pick-item{grid-template-columns:22px minmax(0,1fr) 46px}.pi-c,.sb-pick-hd span:nth-child(3){display:none}}
+.th-sort{all:unset;cursor:pointer;display:inline-flex;gap:5px;align-items:center;font:inherit;color:inherit;letter-spacing:inherit;text-transform:inherit;border-radius:5px;padding:2px 3px;margin:-2px -3px}
+.th-sort span{font-size:10px;opacity:.45}
+.th-sort.on{color:var(--ink)}.th-sort.on span{opacity:1}
+.th-sort:hover span{opacity:.9}
+.th-sort:focus-visible{outline:2px solid var(--chart-bar);outline-offset:1px}
 </style>
 </head>
 <body>
@@ -1990,7 +1995,7 @@ function renderBoard(){
     if(open) tr+='<tr class="detail"><td colspan="9">'+detailHTML(r)+'</td></tr>';
     return tr;
   }).join("");
-  h+='<div class="sb-grid"><div class="card panel"><h3>Students <span class="num">'+n+'</span></h3><div class="tablewrap"><table class="sbt"><thead><tr><th>Student</th><th>Strips</th><th>Megacode</th><th>Overall</th><th>Weakest family</th><th>Survey</th><th>Practice areas</th><th>Defib lab</th><th>Last active</th></tr></thead><tbody id="sbRows">'+body+'</tbody></table></div><p class="empty">Scores are correct out of answered, so unanswered items don\'t lower them. Select a student for detail.</p></div>'+
+  h+='<div class="sb-grid"><div class="card panel"><h3>Students <span class="num">'+n+'</span></h3><div class="tablewrap"><table class="sbt"><thead><tr>'+SORT_COLS.map(sortTh).join('')+'</tr></thead><tbody id="sbRows">'+body+'</tbody></table></div><p class="empty">Scores are correct out of answered, so unanswered items don\'t lower them. Select a student for detail.</p></div>'+
      '<div class="card panel"><h3>Most-missed strips</h3><div class="hard" id="sbHard">'+hardHTML(rows)+'</div></div></div>'+areasPanelHTML(rows)+defibPanelHTML(rows)+(can("survey")?surveyPanelHTML(rows):'');
   $("sbBody").innerHTML=h;
 }
@@ -2000,9 +2005,32 @@ var IC_PRINT='<svg viewBox="0 0 20 20" width="16" height="16" fill="none" stroke
 SB.sel = {};
 try{ (JSON.parse(localStorage.getItem("cl-sb-sel")||"[]")||[]).forEach(function(id){ SB.sel[id]=1; }); }catch(e){}
 function saveSel(){ try{ localStorage.setItem("cl-sb-sel", JSON.stringify(Object.keys(SB.sel))); }catch(e){} }
+/* ----- click a column heading to sort the student table (click again to reverse) ----- */
+function weakOf(r){ var wv=101, label=""; GROUPS.forEach(function(g){ var x=(r.groups||{})[g[0]]; if(x && x[1]>=3){ var p=pct(x[0],x[1]); if(p<wv){ wv=p; label=g[1]; } } }); return {p:wv<101?wv:null, label:label}; }
+var pctOr=function(c,a){ return a ? c/a : null; };
+var SORT_COLS = [
+  ["name","Student", function(r){ return (r.name||"").toLowerCase(); }, 1],
+  ["strips","Strips", function(r){ return pctOr(num(r.strips&&r.strips.c), num(r.strips&&r.strips.a)); }, -1],
+  ["mega","Megacode", function(r){ return pctOr(num(r.mega&&r.mega.c), num(r.mega&&r.mega.a)); }, -1],
+  ["overall","Overall", function(r){ return rowAnswered(r) ? rowOverall(r) : null; }, -1],
+  ["weak","Weakest family", function(r){ return weakOf(r).p; }, 1],
+  ["survey","Survey", function(r){ return r.survey ? 1 : 0; }, -1],
+  ["practice","Practice areas", function(r){ var t=areaTotals(r); return pctOr(t[0], t[1]); }, -1],
+  ["defib","Defib lab", function(r){ var d=defibCounts(r); return d[1] ? d[0] + d[0]/100 : null; }, -1],
+  ["recent","Last active", function(r){ return num(r.updatedAt); }, -1]
+];
+SB.tsort=null;
+function sortTh(c){
+  var on=SB.tsort && SB.tsort.key===c[0], dir=on ? SB.tsort.dir : 0;
+  return '<th aria-sort="'+(on?(dir>0?'ascending':'descending'):'none')+'"><button class="th-sort'+(on?' on':'')+'" data-tsort="'+c[0]+'">'+esc(c[1])+'<span aria-hidden="true">'+(on?(dir>0?'▲':'▼'):'↕')+'</span></button></th>';
+}
 function sortRows(list){
   var sort=$("sbSort").value;
   list.forEach(function(r){ r._name=r.name||"Unnamed student"; r._prog=num(r.strips&&r.strips.a)+num(r.mega&&r.mega.a); });
+  if(SB.tsort){ var col=SORT_COLS.filter(function(c){ return c[0]===SB.tsort.key; })[0], d=SB.tsort.dir;
+    if(col) return list.sort(function(a,b){ var x=col[2](a), y=col[2](b);
+      if(x==null && y==null) return a._name.localeCompare(b._name); if(x==null) return 1; if(y==null) return -1;   // blanks always last
+      var c = typeof x==="string" ? x.localeCompare(y) : x-y; return c*d || a._name.localeCompare(b._name); }); }
   return list.sort(function(a,b){
     if(sort==="score") return rowOverall(b)-rowOverall(a);
     if(sort==="name") return a._name.localeCompare(b._name);
@@ -2235,6 +2263,9 @@ function hardHTML(rows){
 }
 $("sbBody").addEventListener("click", function(e){
   var t=e.target;
+  var ts=t.closest("[data-tsort]"); if(ts){ var k=ts.getAttribute("data-tsort"), def=SORT_COLS.filter(function(c){ return c[0]===k; })[0][3];
+    SB.tsort = SB.tsort && SB.tsort.key===k ? {key:k, dir:-SB.tsort.dir} : {key:k, dir:def}; renderBoard();
+    var again=document.querySelector('[data-tsort="'+k+'"]'); if(again) again.focus(); return; }
   var pb=t.closest("[data-print]"); if(pb){ e.stopPropagation(); var pr=(SB.rows||[]).filter(function(x){ return x.id===pb.getAttribute("data-print"); }); if(pr.length) printScores(pr, pr[0].name||"Unnamed student", false); return; }
   var ps=t.closest("[data-print-sv]"); if(ps){ var sr1=(SB.rows||[]).filter(function(x){ return x.id===ps.getAttribute("data-print-sv"); }); if(sr1.length) printSurvey(sr1, sr1[0].name||"Unnamed student", true); return; }
   if(t.closest("#svPrint")){ var sr=selectedRows(); sr.forEach(function(r){ r._name=r.name||"Unnamed student"; }); printSurvey(sr, "Selected students", false); return; }
@@ -2251,7 +2282,7 @@ $("sbBody").addEventListener("click", function(e){
 });
 $("sbBody").addEventListener("keydown", function(e){ if((e.key==="Enter"||e.key===" ") && e.target.matches("tr.row")){ e.preventDefault(); e.target.click(); } });
 $("sbCohort").addEventListener("change", renderBoard);
-$("sbSort").addEventListener("change", renderBoard);
+$("sbSort").addEventListener("change", function(){ SB.tsort=null; renderBoard(); });
 $("sbRefresh").addEventListener("click", function(){ loadBoard(true); });
 $("sbOut").addEventListener("click", function(){ SB.pass=null; SB.admin=false; SB.rows=null; SB.settings=null; SB.me=null; SB.inst=null; SB.instPw=null; SB.instEdit=null; SB.cohortSet=null; renderWho(); AREA_META.forEach(function(x){ if(x.gated){ delete AREAS[x.key]; AREA_LOADING[x.key]=null; } }); renderAreaTiles(); defibNav(); stopPoll(); try{ sessionStorage.removeItem("cl-instructor"); }catch(e){} $("tabBoard").hidden=true; showLogin(""); });
 $("sbCsv").addEventListener("click", function(){
