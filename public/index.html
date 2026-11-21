@@ -917,6 +917,10 @@ body.df-focus .bar{position:relative}
   .pr-survey .sv-answers{font-size:12px}
   .pr-survey details{display:block}.pr-survey details>*{display:block}
 }
+.who{display:flex;align-items:center;gap:10px;justify-content:space-between}
+.sb-pr1{padding:4px 9px;font-size:12.5px;gap:5px;flex:none}
+.sb-pr1 svg,.detail .btn svg{vertical-align:-3px}
+@media (max-width:760px){.sb-pr1 span{display:none}}
 </style>
 </head>
 <body>
@@ -1762,7 +1766,8 @@ function renderBoard(){
   var body=rows.map(function(r){
     var s=r.strips||{}, m=r.mega||{}, open=SB.open===r.id;
     var weak="—", wv=101; GROUPS.forEach(function(g){ var x=(r.groups||{})[g[0]]; if(x && x[1]>=3){ var p=pct(x[0],x[1]); if(p<wv){wv=p; weak=g[1]+" ("+p+"%)";} } });
-    var tr='<tr class="row'+(open?' open':'')+'" data-id="'+esc(r.id)+'" tabindex="0" aria-expanded="'+open+'"><td><div class="who"><div><b>'+esc(r._name)+'</b>'+(r.cohort?'<small>'+esc(r.cohort)+'</small>':'')+'</div></div></td>'+
+    var tr='<tr class="row'+(open?' open':'')+'" data-id="'+esc(r.id)+'" tabindex="0" aria-expanded="'+open+'"><td><div class="who"><div><b>'+esc(r._name)+'</b>'+(r.cohort?'<small>'+esc(r.cohort)+'</small>':'')+'</div>'+
+      '<button class="btn btn-ghost sb-pr1" data-print="'+esc(r.id)+'" title="Print '+esc(r._name)+'\'s report" aria-label="Print '+esc(r._name)+'\'s report">'+IC_PRINT+'<span>Print</span></button></div></td>'+
       '<td class="mono">'+num(s.c)+' / '+num(s.a)+'<br><small style="color:var(--muted)">of '+N+' answered</small></td>'+
       '<td class="mono">'+num(m.c)+' / '+num(m.a)+'<br><small style="color:var(--muted)">of '+TOTAL_Q+' answered</small></td>'+
       '<td>'+(rowAnswered(r)?mini(num(s.c)+num(m.c), rowAnswered(r)):'—')+'</td><td>'+esc(weak)+'</td>'+(r.survey?'<td class="sv-cell"><span class="sv-done">✓ Done</span></td>':'<td class="sv-cell">—</td>')+'<td class="mono">'+practiceCell(r)+'</td><td class="mono">'+defibCell(r)+'</td><td class="mono">'+ago(r.updatedAt)+'</td></tr>';
@@ -1774,6 +1779,7 @@ function renderBoard(){
   $("sbBody").innerHTML=h;
 }
 
+var IC_PRINT='<svg viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5.5 7.5V3h9v4.5M5.5 14.5H4a1.5 1.5 0 0 1-1.5-1.5V9A1.5 1.5 0 0 1 4 7.5h12A1.5 1.5 0 0 1 17.5 9v4a1.5 1.5 0 0 1-1.5 1.5h-1.5"/><path d="M5.5 11.5h9V17h-9z"/></svg>';
 /* ================= SCOREBOARD: choose students, charts of strong / weak areas, printable reports ================= */
 SB.sel = {};
 try{ (JSON.parse(localStorage.getItem("cl-sb-sel")||"[]")||[]).forEach(function(id){ SB.sel[id]=1; }); }catch(e){}
@@ -1898,10 +1904,14 @@ function printReports(){
   msg.hidden=true;
   rows.forEach(function(r){ r._name=r.name||"Unnamed student"; });
   if((document.querySelector("input[name=prKind]:checked")||{}).value==="survey"){ printSurvey(rows, title, mode==="one"); return; }
+  printScores(rows, title, rows.length>1 && $("prSummary").checked);
+}
+function printScores(rows, title, withSummary){
+  rows.forEach(function(r){ r._name=r.name||"Unnamed student"; });
   var area=$("printArea"); if(!area){ area=document.createElement("div"); area.id="printArea"; document.body.appendChild(area); }
   var when=new Date().toLocaleDateString(undefined, {year:"numeric", month:"long", day:"numeric"});
   var h='';
-  if(rows.length>1 && $("prSummary").checked) h+=printSummaryHTML(rows, title, when);
+  if(withSummary) h+=printSummaryHTML(rows, title, when);
   h+=rows.map(function(r){ return printStudentHTML(r, when); }).join("");
   area.innerHTML=h;
   window.print();
@@ -1972,6 +1982,7 @@ function detailHTML(r){
   var del = SB.confirmDel===r.id
     ? '<div class="confirm"><span>Remove '+esc(r._name)+'\'s results permanently?</span><button class="btn btn-primary" data-del-yes="'+esc(r.id)+'">Remove</button><button class="btn btn-ghost" data-del-no="1">Cancel</button></div>'
     : '<button class="btn btn-ghost" data-del="'+esc(r.id)+'">Remove this student</button>';
+  del = '<button class="btn btn-ghost" data-print="'+esc(r.id)+'">'+IC_PRINT+' Print report</button> <button class="btn btn-ghost" data-print-sv="'+esc(r.id)+'">'+IC_PRINT+' Print survey answers</button> '+del;
   var ap=AREA_META.map(function(x){ var v=(r.areas||{})[x.key]||[0,0,x.size||AREA_SIZE]; return '<div class="barrow"><span>'+esc(x.short)+'</span><span class="track"><i style="width:'+pct(v[0],v[1])+'%;background:'+x.color+'"></i></span><b>'+(v[1]?v[0]+'/'+v[1]:'—')+'</b></div>'; }).join("");
   return '<div class="inner"><div><h4>Strips by rhythm family · correct / answered</h4><div class="bars">'+g+'</div><h4 style="margin-top:14px">Practice areas · correct / answered</h4><div class="bars">'+ap+'</div><div style="margin-top:14px">'+del+'</div></div><div><h4>Missed strips ('+missed.length+')</h4><div class="tags">'+ml+'</div><h4 style="margin-top:14px">Megacode cases</h4><div class="tags">'+cs+'</div>'+defibDetailHTML(r)+surveyDetailHTML(r)+'</div></div>';
 }
@@ -1983,6 +1994,8 @@ function hardHTML(rows){
 }
 $("sbBody").addEventListener("click", function(e){
   var t=e.target;
+  var pb=t.closest("[data-print]"); if(pb){ e.stopPropagation(); var pr=(SB.rows||[]).filter(function(x){ return x.id===pb.getAttribute("data-print"); }); if(pr.length) printScores(pr, pr[0].name||"Unnamed student", false); return; }
+  var ps=t.closest("[data-print-sv]"); if(ps){ var sr1=(SB.rows||[]).filter(function(x){ return x.id===ps.getAttribute("data-print-sv"); }); if(sr1.length) printSurvey(sr1, sr1[0].name||"Unnamed student", true); return; }
   if(t.closest("#svPrint")){ var sr=selectedRows(); sr.forEach(function(r){ r._name=r.name||"Unnamed student"; }); printSurvey(sr, "Selected students", false); return; }
   if(t.closest("#svCsv")){ downloadCsv(surveyCsv(selectedRows()), "cardiac-lab-survey-"+new Date().toISOString().slice(0,10)+".csv"); return; }
   if(t.closest(".sv-board")) return;

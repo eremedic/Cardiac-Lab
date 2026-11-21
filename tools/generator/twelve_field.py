@@ -4,8 +4,8 @@ While installed, ECG.build keeps the noise-free waveform (`clean`) exactly as be
 measured and rule-checked on it, but the displayed tracing (`noisy`) gets:
   * beat-to-beat amplitude variation and breathing-related amplitude change (every lead, every beat);
   * baseline wander that differs from lead to lead;
-  * on some ECGs a burst of muscle tremor in the limb leads (shivering or a tense patient), a brief electrode
-    bump in one lead placed between beats, or a trace of 60-cycle interference.
+  * on some ECGs a burst of muscle tremor in the limb leads (shivering or a tense patient) or a trace of
+    60-cycle interference. No electrode bumps: a sharp transient can look like an extra beat.
 """
 import numpy as np
 import twelve as T
@@ -47,7 +47,7 @@ def field_build(self):
                 if all(abs(c - b) > 0.42 for b in centers):
                     m = t >= c
                     d = t[m] - c
-                    y[m] += r.uniform(0.15, 0.35) * r.choice([-1, 1]) * np.exp(-d / 0.12) * np.cos(2 * np.pi * 5 * d)
+                    r.uniform(0.15, 0.35); r.choice([-1, 1])   # draws kept so set 3 stays the same; no bump is added (it looked like an extra beat)
                     break
         self.noisy[ld] = y
     return self

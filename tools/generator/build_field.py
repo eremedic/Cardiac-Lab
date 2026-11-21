@@ -10,15 +10,10 @@ Only then is real-world artifact layered on top:
 
   * respiratory baseline wander and breathing-related amplitude change (every strip)
   * road vibration (every strip; light on flat-line rhythms)
-  * bumps and potholes: sharp motion transients with a ringing recovery
   * shivering / muscle tremor (EMG) bursts
-  * patient movement: a slow, large swing for a second or so
-  * electrode "pops" from a loose or tugged lead
   * 60-cycle (inverter) interference
+No bumps, electrode pops or movement swings: anything shaped like a beat could be mistaken for ectopy.
 
-Bumps, movement and pops are placed away from P waves and QRS complexes, so the features that define the
-rhythm stay readable; on AV blocks they keep an extra-wide berth around every P wave. Flat-line and fine-VF
-strips get only light wander and vibration, so they aren't mistaken for something else.
 The data is served by the API (GET /api/areas/field), not as a public file, so it stays closed to students
 until the instructor opens it from the scoreboard.
 """
@@ -66,7 +61,7 @@ def field_mess(s, rng, cat):
     wa = rng.uniform(0.03, 0.06) if quiet else rng.uniform(0.05, 0.14)
     y = y * (1 + am * np.sin(2 * np.pi * fr * t + ph)) + wa * np.sin(2 * np.pi * fr * t + ph + 0.6) + 0.3 * wa * np.sin(4 * np.pi * fr * t + ph)
     # irregular drift (sweat, cable sway): a smoothed random walk
-    walk = np.cumsum(rng.normal(0, 1, t.size)); walk = np.convolve(walk - walk.mean(), np.ones(400) / 400, mode="same")
+    walk = np.cumsum(rng.normal(0, 1, t.size)); walk = np.convolve(walk - walk.mean(), np.ones(1500) / 1500, mode="same")  # slow drift only, nothing P- or T-wave sized
     walk = walk / (np.abs(walk).max() or 1)
     y += walk * (rng.uniform(0.02, 0.04) if quiet else rng.uniform(0.03, 0.09))
     notes.append("baseline wander with breathing")
@@ -76,21 +71,8 @@ def field_mess(s, rng, cat):
     y += vib * road * (0.35 if quiet else rng.uniform(0.5, 1.1))
     notes.append("road vibration")
     if not quiet:
-        # bumps / potholes
-        nb = int(rng.choice([0, 0, 1, 1, 1, 2]))
-        hits = 0
-        for _ in range(nb):
-            c = free_spot(rng, s, cat, 0.35)
-            if c is None:
-                continue
-            a = rng.uniform(0.18, 0.45) * rng.choice([-1, 1])
-            tau, f = rng.uniform(0.09, 0.22), rng.uniform(3.5, 7)
-            m = t >= c
-            d = t[m] - c
-            y[m] += a * np.exp(-d / tau) * np.cos(2 * np.pi * f * d) + 0.25 * a * np.exp(-d / 0.015)
-            hits += 1
-        if hits:
-            notes.append(f"{hits} motion spike{'s' if hits > 1 else ''} from bumps in the road")
+        # No bumps, electrode pops or patient-movement swings: their sharp or rounded shapes can look like an extra
+        # beat (a PVC, PAC or PJC) or a P/T wave on a strip whose answer has no ectopy. Only smooth or fuzzy artifact here.
         # shivering / muscle tremor
         if rng.random() < 0.35:
             c, w = rng.uniform(1, 5), rng.uniform(0.8, 2.0)
@@ -98,19 +80,6 @@ def field_mess(s, rng, cat):
             emg = np.convolve(emg, np.ones(3) / 3, mode="same")
             y += (rng.uniform(0.015, 0.03) if cat in BLOCKS else rng.uniform(0.02, 0.05)) * emg * env(c, w)
             notes.append("muscle tremor (shivering)")
-        # patient moving
-        if rng.random() < 0.2:
-            c = free_spot(rng, s, cat, 0.6)
-            if c is not None:
-                y += rng.uniform(0.1, 0.22) * np.sin(2 * np.pi * rng.uniform(0.9, 1.6) * (t - c)) * env(c, 1.2)
-                notes.append("patient movement")
-        # loose electrode
-        if rng.random() < 0.1:
-            c = free_spot(rng, s, cat, 0.4)
-            if c is not None:
-                m = t >= c
-                y[m] += rng.uniform(0.2, 0.4) * rng.choice([-1, 1]) * np.exp(-(t[m] - c) / rng.uniform(0.25, 0.5))
-                notes.append("an electrode pop")
         # inverter / AC interference
         if rng.random() < 0.12:
             y += rng.uniform(0.008, 0.02) * np.sin(2 * np.pi * 60 * t)
