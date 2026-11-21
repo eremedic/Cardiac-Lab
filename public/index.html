@@ -810,13 +810,14 @@ body.df-focus .bar{position:relative}
 @keyframes mkIn{from{opacity:0}to{opacity:1}}
 .mk{position:absolute;transform:translate(-50%,calc(-100% - 5px));font:700 10.5px/1.25 var(--f-mono);padding:1px 5px;border-radius:5px;background:#0A738B;color:#FFFFFF;white-space:nowrap;box-shadow:0 1px 3px rgba(0,0,0,.25)}
 .mk::after{content:"";position:absolute;left:50%;bottom:-4px;margin-left:-4px;border:4px solid transparent;border-bottom:0;border-top-color:inherit}
-.mk-p{background:#0A738B;border-color:#0A738B}
-.mk.bad{background:#D9121A;border-color:#D9121A}
-.mk-w{background:#7A1FA2;border-color:#7A1FA2}
-.mk-s{top:14%;background:#C25400;border-color:#C25400;transform:translate(-50%,0)}
+.mk-p{background:#2E8B00;border-color:#2E8B00}
+.mk.bad{background:#5F6B7A;border-color:#5F6B7A}
+.mk-w{background:#00838F;border-color:#00838F}
+.mk-s{top:14%;background:#3949AB;border-color:#3949AB;transform:translate(-50%,0)}
 .mk-s::after{display:none}
 .mk-w.ront{background:#D9121A;border-color:#D9121A}
-.mk-d{background:#0A738B;border-color:#0A738B;font-size:9.5px}
+.mk-s.bad{background:#5F6B7A;border-color:#5F6B7A}
+.mk-d{background:#C2185B;border-color:#C2185B;font-size:9.5px}
 .mk-band{position:absolute;top:30%;height:40%;background:rgba(10,111,221,.16);border:1.5px solid #0A6FDD;border-radius:4px}
 .mk.under{transform:translate(-50%,6px)}
 .mk.under::after{bottom:auto;top:-4px;border-bottom:4px solid;border-top:0;border-bottom-color:inherit;border-left-color:transparent;border-right-color:transparent}
@@ -828,7 +829,7 @@ body.df-focus .bar{position:relative}
 .mk-br b{position:absolute;left:50%;transform:translateX(-50%);font:700 10px var(--f-mono);white-space:nowrap;padding:0 3px;border-radius:4px;background:var(--surface)}
 .mk-br.rr{top:3px;border-top:0;border-color:#02245D;color:#02245D}
 .mk-br.rr b{top:-2px}
-.mk-br.pr{bottom:24%;border-bottom:0;border-color:#0A738B;color:#0A738B}
+.mk-br.pr{bottom:24%;border-bottom:0;border-color:#2E8B00;color:#2E8B00}
 .mk-br.pr b{top:8px}
 .mk-note{position:absolute;right:8px;bottom:8px;max-width:60%;font:600 12px/1.3 var(--f-sans,inherit);background:#02245D;color:#FFFFFF;padding:4px 9px;border-radius:7px;box-shadow:0 2px 6px rgba(0,0,0,.25)}
 .mk-hint{display:flex;gap:8px;align-items:flex-start;background:var(--navy-soft);border-radius:10px;padding:8px 10px}
@@ -941,6 +942,12 @@ html.ecgv-open,html.ecgv-open body{overflow:hidden}
 .ecgv-inner{position:absolute;left:0;top:0;transform-origin:0 0;background:var(--paper);border-radius:6px;box-shadow:0 10px 40px rgba(0,0,0,.5)}
 .ecgv-inner svg{display:block;width:100%;height:100%;min-width:0!important}
 @media (max-width:600px){.ecgv-help{display:none}.ecgv-bar{padding:8px 10px}}
+.ecg-tip{display:flex;gap:8px;align-items:flex-start;margin:0 0 8px;padding:7px 11px;border-radius:9px;background:var(--navy-soft);color:var(--ink-2);font-size:13px}
+.ecg-tip svg{flex:none;margin-top:2px;color:var(--navy)}
+.vessel-q{margin-top:14px;border-left:5px solid #D9121A}
+.vessel-q h4{font-size:17px;margin:2px 0 12px}
+.vessel-q .opts{grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+.vessel-q .fb{margin-top:12px}
 </style>
 </head>
 <body>
@@ -1346,8 +1353,8 @@ function markStrip(host, key, cat, item){
   if(c(".mk-d")) said.push("delta waves (slurred QRS start)");
   if(c(".mk-band")) said.push("ST depression (blue)");
   // color key under the strip
-  var KEY=[[".mk-p:not(.bad)","#0A738B","P waves"],[".mk-p.bad","#D9121A","P not conducted"],[".mk-br.pr","#0A738B","PR interval"],[".mk-br.rr","#02245D","R–R interval (s)"],
-    [".mk-w:not(.ront)","#7A1FA2","wide QRS"],[".mk-w.ront","#D9121A","R on T: PVC lands on the T wave"],[".mk-s:not(.bad)","#C25400","pacer spike that captures"],[".mk-s.bad","#D9121A","pacer spike that doesn't"],[".mk-d","#0A738B","delta wave"],[".mk-band","#0A6FDD","ST depression"]];
+  var KEY=[[".mk-p:not(.bad)",MKC.p,"P waves"],[".mk-br.pr",MKC.p,"PR interval"],[".mk-p.bad",MKC.miss,"P not conducted"],[".mk-br.rr",MKC.rr,"R–R interval (s)"],
+    [".mk-w:not(.ront)",MKC.qrs,"wide QRS"],[".mk-w.ront",MKC.ste,"R on T: PVC lands on the T wave"],[".mk-s:not(.bad)",MKC.pace,"pacer spike that captures"],[".mk-s.bad",MKC.miss,"pacer spike that doesn't"],[".mk-d",MKC.delta,"delta wave"],[".mk-band",MKC.std,"ST depression"]];
   var paper=box.closest(".paper"), keyEl=paper && paper.parentNode.querySelector(".mk-legend"); if(keyEl) keyEl.remove();
   if(paper){ var leg=document.createElement("div"); leg.className="mk-legend";
     leg.innerHTML='<b>Why it\'s '+esc(cat)+':</b>'+KEY.filter(function(k){ return c(k[0]); }).map(function(k){ return '<span><i style="background:'+k[1]+'"></i>'+k[2]+'</span>'; }).join("")+(note?'<span>'+esc(note)+'</span>':'');
@@ -1358,12 +1365,14 @@ function markStrip(host, key, cat, item){
 }
 
 /* ----- 12-lead teaching marks (after a wrong answer): colored by what they show ----- */
-var MK12_COLOR = {stu:"#D9121A", j:"#D9121A", brug:"#D9121A", rec:"#0A6FDD", dw:"#0A6FDD", q:"#E05F00", tpk:"#7A1FA2", tinv:"#7A1FA2", tbi:"#7A1FA2",
-  u:"#B07A00", qt:"#B07A00", rsr:"#0A738B", sw:"#0A738B", qs:"#0A738B", notch:"#0A738B", delta:"#0A738B", volt:"#0A738B", tallr:"#0A738B", pr:"#2E9A00"};
-var MK12_KEY = [["#D9121A","ST elevation (and its shape)",["stu","j","brug"]], ["#0A6FDD","ST depression: reciprocal, diffuse or upsloping",["rec","dw"]],
-  ["#E05F00","Q waves",["q"]], ["#7A1FA2","T-wave changes: peaked, inverted, biphasic",["tpk","tinv","tbi"]],
-  ["#0A738B","QRS and conduction: rSR′, QS, notched R, delta wave, voltage",["rsr","sw","qs","notch","delta","volt","tallr"]],
-  ["#2E9A00","PR segment",["pr"]], ["#B07A00","QT interval and U waves",["u","qt"]]];
+/* One color per kind of finding, the same on rhythm strips, 12-leads and every color key. */
+var MKC = {ste:"#D9121A", std:"#0A6FDD", q:"#E05F00", t:"#8E24AA", qrs:"#00838F", delta:"#C2185B", volt:"#8D5B00", p:"#2E8B00", qt:"#B07A00", rr:"#02245D", pace:"#3949AB", miss:"#5F6B7A"};
+var MK12_COLOR = {stu:MKC.ste, j:MKC.ste, brug:MKC.ste, rec:MKC.std, dw:MKC.std, q:MKC.q, tpk:MKC.t, tinv:MKC.t, tbi:MKC.t,
+  u:MKC.qt, qt:MKC.qt, rsr:MKC.qrs, sw:MKC.qrs, qs:MKC.qrs, notch:MKC.qrs, delta:MKC.delta, volt:MKC.volt, tallr:MKC.volt, pr:MKC.p};
+var MK12_KEY = [[MKC.ste,"ST elevation (and its shape)",["stu","j","brug"]], [MKC.std,"ST depression: reciprocal, diffuse or upsloping",["rec","dw"]],
+  [MKC.q,"Q waves",["q"]], [MKC.t,"T-wave changes: peaked, inverted, biphasic",["tpk","tinv","tbi"]],
+  [MKC.qrs,"QRS width and bundle branch patterns (rSR′, QS, notched R)",["rsr","sw","qs","notch"]], [MKC.delta,"Delta wave (pre-excitation)",["delta"]],
+  [MKC.volt,"Voltage and tall R waves",["volt","tallr"]], [MKC.p,"PR segment",["pr"]], [MKC.qt,"QT interval and U waves",["u","qt"]]];
 function svgEl(tag, at){ var e=document.createElementNS("http://www.w3.org/2000/svg", tag); for(var k in at) e.setAttribute(k, at[k]); return e; }
 function markECG12(host, q){
   var svg=host && host.querySelector("svg.ecg12"), m=q.mk; if(!svg || !m) return;
@@ -1396,7 +1405,7 @@ function markECG12(host, q){
   if(m.qt){ var yq=3*1200+330, col=MK12_COLOR.qt; used.qt=1;
     g.appendChild(svgEl("path", {d:"M"+m.qt[0]+" "+(yq+60)+"V"+yq+"H"+m.qt[1]+"V"+(yq+60), fill:"none", stroke:col, "stroke-width":14}));
     var tq=svgEl("text", {x:(m.qt[0]+m.qt[1])/2, y:yq-30, fill:col, "class":"mk12-t", "text-anchor":"middle"}); tq.textContent=m.qt[2]; g.appendChild(tq); sum[m.qt[2]]=["II"]; }
-  if(m.spr){ var ts=svgEl("text", {x:330, y:3*1200+175, fill:"#0A738B", "class":"mk12-t"}); ts.textContent=m.spr; g.appendChild(ts); used.delta=1; sum[m.spr]=["II"]; }
+  if(m.spr){ var ts=svgEl("text", {x:330, y:3*1200+175, fill:MKC.delta, "class":"mk12-t"}); ts.textContent=m.spr; g.appendChild(ts); used.delta=1; sum[m.spr]=["II"]; }
   svg.appendChild(g);
   // color key under the ECG, then a plain-language summary in the feedback
   var keyEl=host.parentNode.querySelector(".mk-legend"); if(keyEl) keyEl.remove();
@@ -1892,6 +1901,8 @@ function chartData(rows){
   var cats={}; rows.forEach(function(r){ var p=r.p||{}; Object.keys(p).forEach(function(n){ var q=P[n-1]; if(!q) return; var x=cats[q.cat]=cats[q.cat]||{label:q.cat, c:0, a:0}; x.a++; if(canon(p[n])===q.cat) x.c++; }); });
   var cases=CASES.map(function(cs,ci){ var c=0,a=0; rows.forEach(function(r){ var k=(r.cases||[])[ci]; if(k){ c+=k[0]; a+=k[1]; } }); return {label:'Case '+cs.n+' · '+cs.title, c:c, a:a}; });
   var defib=DEFIB_LIST.map(function(x){ var p=0,t=0; rows.forEach(function(r){ var v=(r.defib||{})[x[0]]; if(v){ t++; if(v[2]===1) p++; } }); return {label:x[1], c:p, a:t}; });
+  var vc=0, va=0, vk=0; rows.forEach(function(r){ var v=(r.areas||{}).vessel; if(v && v[1]){ vc+=v[0]; va+=v[1]; vk++; } });
+  if(va) areas.push({label:"STEMI culprit vessel", c:vc, a:va, extra:vk+' student'+(vk===1?'':'s')});
   return {fam:fam, areas:areas, cats:Object.keys(cats).map(function(k){ return cats[k]; }).filter(function(x){ return x.a>=3; }), cases:cases, defib:defib};
 }
 function chartsHTML(rows){
@@ -1982,6 +1993,7 @@ function printStudentHTML(r, when){
   var s=r.strips||{}, m=r.mega||{}, t=areaTotals(r), d=defibCounts(r);
   var fam=GROUPS.map(function(g){ var v=(r.groups||{})[g[0]]||[0,0,0]; return {label:g[1], c:v[0], a:v[1]}; });
   var ar=AREA_META.map(function(x){ var v=(r.areas||{})[x.key]||[0,0,0]; return {label:x.short, c:v[0], a:v[1]}; });
+  if((r.areas||{}).vessel) ar.push({label:"STEMI vessel", c:r.areas.vessel[0], a:r.areas.vessel[1]});
   var missed=P.filter(function(q){ var x=canon((r.p||{})[q.n]); return x!=null && x!==q.cat; });
   var cases=CASES.map(function(cs,ci){ var k=(r.cases||[])[ci]; return k&&k[1] ? '<li>Case '+cs.n+' · '+esc(cs.title)+': <b>'+k[0]+'/'+k[1]+'</b></li>' : ''; }).join("");
   var df=DEFIB_LIST.filter(function(x){ return (r.defib||{})[x[0]]; }).map(function(x){ var v=r.defib[x[0]]; return '<li>'+(v[2]?'✓ ':'✗ ')+esc(x[1])+' · '+v[0]+'/'+v[1]+' steps</li>'; }).join("");
@@ -2004,6 +2016,7 @@ function detailHTML(r){
     : '<button class="btn btn-ghost" data-del="'+esc(r.id)+'">Remove this student</button>';
   del = '<button class="btn btn-ghost" data-print="'+esc(r.id)+'">'+IC_PRINT+' Print report</button> <button class="btn btn-ghost" data-print-sv="'+esc(r.id)+'">'+IC_PRINT+' Print survey answers</button> '+del;
   var ap=AREA_META.map(function(x){ var v=(r.areas||{})[x.key]||[0,0,x.size||AREA_SIZE]; return '<div class="barrow"><span>'+esc(x.short)+'</span><span class="track"><i style="width:'+pct(v[0],v[1])+'%;background:'+x.color+'"></i></span><b>'+(v[1]?v[0]+'/'+v[1]:'—')+'</b></div>'; }).join("");
+  var vv=(r.areas||{}).vessel; if(vv && vv[1]) ap+='<div class="barrow"><span>STEMI vessel</span><span class="track"><i style="width:'+pct(vv[0],vv[1])+'%;background:'+MKC.ste+'"></i></span><b>'+vv[0]+'/'+vv[1]+'</b></div>';
   return '<div class="inner"><div><h4>Strips by rhythm family · correct / answered</h4><div class="bars">'+g+'</div><h4 style="margin-top:14px">Practice areas · correct / answered</h4><div class="bars">'+ap+'</div><div style="margin-top:14px">'+del+'</div></div><div><h4>Missed strips ('+missed.length+')</h4><div class="tags">'+ml+'</div><h4 style="margin-top:14px">Megacode cases</h4><div class="tags">'+cs+'</div>'+defibDetailHTML(r)+surveyDetailHTML(r)+'</div></div>';
 }
 function hardHTML(rows){
@@ -2080,7 +2093,7 @@ function renderDefib(){
   if(!DEFIB_LOADING) DEFIB_LOADING=new Promise(function(res, rej){ var sc=document.createElement("script"); sc.src="/defib.js?v=6"; sc.onload=res; sc.onerror=function(){ DEFIB_LOADING=null; rej(); }; document.head.appendChild(sc); });
   DEFIB_LOADING.then(go, function(){ root.innerHTML='<div class="card panel problem"><h3>The Defib lab didn\'t load</h3><p>Check your connection and reload the page.</p></div>'; });
 }
-function areaTotals(r){ var c=0,a=0; Object.keys(r.areas||{}).forEach(function(k){ var v=r.areas[k]; if(v){ c+=v[0]; a+=v[1]; } }); return [c,a]; }
+function areaTotals(r){ var c=0,a=0; Object.keys(r.areas||{}).forEach(function(k){ if(k==="vessel") return; var v=r.areas[k]; if(v){ c+=v[0]; a+=v[1]; } }); return [c,a]; }
 function practiceCell(r){ var t=areaTotals(r); return t[1] ? t[0]+' / '+t[1]+'<br><small style="color:var(--muted)">'+pct(t[0],t[1])+'% correct</small>' : '—'; }
 function defibCell(r){ var c=defibCounts(r); return c[1] ? c[0]+' / '+c[1]+'<br><small style="color:var(--muted)">passed of '+DEFIB_LIST.length+'</small>' : '—'; }
 function newModulesStatsHTML(rows){
@@ -2174,7 +2187,7 @@ function renderArea(key){
   if(st.pi>total+1) st.pi=1;
   var sc=areaScore(key);
   var head='<div class="qhead"><div><div class="eyebrow">Practice area · '+esc(m.title)+'</div><h2>'+(st.pi>total?'Results':unit+' <span class="num">'+st.pi+'</span><span> / '+total+'</span>')+'</h2></div>'+
-    '<div class="qstats"><span>Answered <b class="num">'+sc.a+'</b></span><span>Correct <b class="num">'+sc.c+'</b></span><span>Score <b class="num">'+(sc.a?pct(sc.c,sc.a)+'%':'–')+'</b></span><a class="btn btn-ghost" href="#practice">All areas</a></div></div>'+
+    '<div class="qstats"><span>Answered <b class="num">'+sc.a+'</b></span><span>Correct <b class="num">'+sc.c+'</b></span><span>Score <b class="num">'+(sc.a?pct(sc.c,sc.a)+'%':'–')+'</b></span>'+(key==="twelve" && vesselScore().a ? '<span>Vessel <b class="num">'+vesselScore().c+'/'+vesselScore().a+'</b></span>' : '')+'<a class="btn btn-ghost" href="#practice">All areas</a></div></div>'+
     '<div class="progress" style="margin-bottom:16px"><i style="width:'+pct(sc.a,total)+'%"></i></div>';
   if(st.pi>total){ body.innerHTML=head+areaSummaryHTML(key); bindAreaSummary(key); return; }
   var q=data.items[st.pi-1], chosen=st.p[q.n], done=chosen!=null, letters="ABCD";
@@ -2184,15 +2197,18 @@ function renderArea(key){
   }).join("");
   var dots=data.items.map(function(it){ var x=st.p[it.n], c = x==null ? "" : (x===it.cat?"r":"w"); return '<button class="dot '+c+(it.n===st.pi?" cur":"")+'" data-n="'+it.n+'" aria-label="Strip '+it.n+'">'+it.n+'</button>'; }).join("");
   body.innerHTML=head+'<div class="card qcard"><div class="strip-top"><div class="stem"><span class="tag">'+esc(m.short)+'</span><p>'+(q.leads?'Interpret this 12-lead ECG.':'Identify this rhythm.')+'</p></div>'+(q.hints?cardioBtnHTML(q, st, done):'')+'</div>'+
+    (q.leads?'<p class="ecg-tip">'+IC_EXPAND+'<span><b>Tip:</b> click the ECG to open it full screen. Zoom with + / −, the mouse wheel or a pinch, double-click to zoom in on a spot, and drag to move around.</span></p>':'')+
     '<div><div class="paper">'+(q.leads?ecg12SVG(q):stripSVG(q.strip,"paper",false))+'</div><div class="paper-meta"><span>'+(q.leads?'12-lead · 25 mm/s · 10 mm/mV · bottom row: lead II rhythm strip'+(q.field?' · recorded on scene, real patient':'')+'</span><span><button class="btn btn-ghost ecg-expand" id="ecgExpand" type="button">'+IC_EXPAND+'Expand and zoom</button>':'Lead II · 25 mm/s · 6-second strip'+(key==="field"?' · recorded in a moving ambulance':''))+'</span><span class="scroll-hint"></span></div></div>'+
     '<div><div class="eyebrow" style="margin-bottom:10px">'+(q.leads?'What does it show?':'Identify the rhythm')+'</div><div class="opts" id="arOpts" role="group" aria-label="Answer choices">'+opts+'</div></div>'+
-    '<div aria-live="polite">'+(done?stripFeedback(q, chosen):'')+'</div>'+
+    '<div aria-live="polite">'+(done?stripFeedback(q, chosen):'')+'</div>'+(q.leads?vesselHTML(q, st):'')+
     '<div class="qnav"><button class="btn btn-ghost" id="arPrev" '+(st.pi===1?'disabled':'')+'>← Previous</button><button class="btn btn-primary" id="arNext">'+(st.pi===total?'See area results →':(done?'Next '+unit.toLowerCase()+' →':'Skip →'))+'</button></div></div>'+
     '<details class="card grid-nav"><summary>All '+total+' '+unit.toLowerCase()+'s in this area</summary><div class="dots" id="arDots">'+dots+'</div><div class="legend"><span><i style="background:var(--ok)"></i>Correct</span><span><i style="background:var(--bad)"></i>Incorrect</span><span><i style="background:var(--line-2)"></i>Not answered</span></div></details>';
   if($("arCardioBtn")) $("arCardioBtn").onclick=function(){ callCardiologist(key, q, st); };
   if($("arCardioShow")) $("arCardioShow").onclick=function(){ S.cmin=false; save(); renderCardioPop(q, st, done); };
   renderCardioPop(q.hints ? q : null, st, done);
   $("arOpts").onclick=function(e){ var b=e.target.closest(".opt"); if(!b||b.disabled) return; st.p[q.n]=b.getAttribute("data-o"); st.ok=st.ok||{}; st.ok[q.n]=st.p[q.n]===q.cat; save(); renderArea(key); };
+  if($("arVessel")) $("arVessel").onclick=function(e){ var b=e.target.closest(".opt"); if(!b||b.disabled) return; st.v=st.v||{}; st.v[q.n]=+b.getAttribute("data-v"); st.vok=st.vok||{}; st.vok[q.n]=st.v[q.n]===VESSEL_OF[q.cat][0]; save(); renderArea(key);
+    var vq=document.querySelector("#v-area .vessel-q .fb"); if(vq) vq.scrollIntoView({block:"nearest", behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth"}); };
   $("arPrev").onclick=function(){ if(st.pi>1){ st.pi--; save(); renderArea(key); scrollTop(); } };
   $("arNext").onclick=function(){ st.pi++; save(); renderArea(key); scrollTop(); };
   $("arDots").onclick=function(e){ var b=e.target.closest(".dot"); if(!b) return; st.pi=+b.getAttribute("data-n"); save(); renderArea(key); scrollTop(); };
@@ -2306,7 +2322,30 @@ function callCardiologist(key, q, st){
   if(used < 3) renderCardioPop(q, st, false, true);
   else { var el = document.querySelector("#v-area .fb"); if(el) el.scrollIntoView({behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "center"}); }
 }
-function areasDoc(){ var out={}; AREA_META.forEach(function(m){ var sc=areaScore(m.key); out[m.key]=[sc.c, sc.a, sc.t]; }); return out; }
+
+/* ----- 12-lead follow-up: which coronary artery? (STEMI and STEMI equivalents) ----- */
+var VESSELS = ["Right coronary artery (RCA)", "Left anterior descending (LAD), mid or distal", "Proximal LAD", "Left circumflex (LCx)", "Left main or multivessel disease"];
+var VESSEL_OF = {
+  "Inferior STEMI": [0, "Inferior STEMI is usually the RCA (about 80%); the rest are the circumflex. ST elevation bigger in III than II, with reciprocal depression in I and aVL, points to the RCA. Check V4R for right-ventricular involvement and be careful with nitrates."],
+  "Anterior STEMI": [1, "Anterior STEMI (V1–V4) is the left anterior descending artery, which supplies the front of the left ventricle and the septum."],
+  "Anterolateral STEMI": [2, "Elevation across the anterior and lateral leads (V2–V6, I, aVL) means a big territory: a proximal LAD occlusion before the diagonal branches. High risk of shock and arrhythmias."],
+  "Lateral STEMI": [3, "Lateral STEMI (I, aVL, V5, V6) is usually the left circumflex (sometimes a diagonal branch of the LAD). Reciprocal depression shows up inferiorly."],
+  "Posterior MI": [3, "Posterior MI is usually the left circumflex (sometimes the RCA's posterior descending branch). Confirm with posterior leads V7–V9."],
+  "Wellens syndrome": [2, "Wellens T waves mean a critical proximal LAD stenosis that has reperfused. It can occlude again at any time: no stress testing, urgent cath."],
+  "De Winter T waves": [2, "De Winter T waves are a STEMI equivalent from an acute proximal LAD occlusion: activate the cath lab."],
+  "ST elevation in aVR with diffuse ST depression": [4, "ST elevation in aVR with widespread depression suggests left main or severe multivessel (often three-vessel) ischemia, or global subendocardial ischemia from another cause."]
+};
+function vesselHTML(q, st){
+  var v=VESSEL_OF[q.cat]; if(!v || st.p[q.n]==null) return "";
+  st.v=st.v||{}; var picked=st.v[q.n], done=picked!=null, letters="ABCDE";
+  var opts=VESSELS.map(function(o,i){ var cls = done ? (i===v[0] ? "is-right" : (i===picked ? "is-wrong" : "is-dim")) : "";
+    return '<button class="opt '+cls+'" data-v="'+i+'" '+(done?"disabled":"")+'><span class="k">'+letters[i]+'</span><span>'+esc(o)+'</span></button>'; }).join("");
+  var fb = done ? '<div class="fb '+(picked===v[0]?'ok':'no')+'"><div class="verdict">'+(picked===v[0]?IC.ok+'Correct':IC.no+'Not quite: it\'s the '+esc(VESSELS[v[0]].replace(/ \(.*\)/,"").replace(/, mid or distal/,""))+'')+'</div><p class="fb-note">'+esc(v[1])+'</p></div>' : '';
+  return '<div class="card panel vessel-q"><div class="eyebrow">Follow-up question</div><h4>Which coronary artery is most likely involved?</h4><div class="opts" id="arVessel" role="group" aria-label="Culprit artery">'+opts+'</div><div aria-live="polite">'+fb+'</div></div>';
+}
+function vesselScore(){ var st=(S.ar||{}).twelve, data=AREAS.twelve, c=0, a=0; if(!st || !st.v) return {c:0, a:0};
+  Object.keys(st.v).forEach(function(n){ a++; var q=data && data.items[n-1], v=q && VESSEL_OF[q.cat]; if(v ? v[0]===st.v[n] : (st.vok||{})[n]) c++; }); return {c:c, a:a}; }
+function areasDoc(){ var out={}; AREA_META.forEach(function(m){ var sc=areaScore(m.key); out[m.key]=[sc.c, sc.a, sc.t]; }); var vs=vesselScore(); if(vs.a) out.vessel=[vs.c, vs.a, vs.a]; return out; }
 function areasPanelHTML(rows){
   var h='<div class="card panel ar-board"><div class="sv-board-head"><div><div class="eyebrow">Practice by rhythm family</div><h3>Practice areas</h3></div></div><div class="ar-board-grid">';
   h+=AREA_META.map(function(m){

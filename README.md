@@ -91,6 +91,13 @@ Progress is kept in the student's browser. Using a different device or browser s
 - Every marked ECG or strip gets a color key underneath ("Why it's Inferior STEMI: …") and a plain-language summary in the feedback, e.g. "ST ↑ in II, III, aVF · Q wave in III · reciprocal ST ↓ in I, aVL."
 - This works in the Strips module, every practice area, the field strips and the 12-leads. The beat timings and lead-by-lead findings come from the generators (measured on the noise-free waveform) and are saved with each strip.
 
+**One color per kind of finding**
+- The same colors are used on rhythm strips, 12-leads and every color key: red ST elevation (and R-on-T), blue ST depression, orange Q waves, purple T-wave changes, teal QRS width and bundle branch patterns (including wide beats), magenta delta waves, brown voltage and tall R waves, green P waves and PR, amber QT and U waves, navy R–R intervals, indigo pacer spikes, and gray for what's missing (a P that isn't conducted, a spike that doesn't capture).
+
+**Culprit vessel (12-lead STEMIs)**
+- After answering a STEMI or STEMI-equivalent 12-lead (inferior, anterior, lateral, anterolateral, posterior, Wellens, de Winter, aVR pattern), students get a follow-up: which coronary artery is most likely involved (RCA, mid/distal LAD, proximal LAD, circumflex, or left main / multivessel), with an explanation. The vessel score shows in the 12-lead header, the scoreboard charts and student detail, and printed reports; it doesn't change the 12-lead score.
+- A note above every 12-lead tells students they can click it to open the zoomable viewer.
+
 **Calipers**
 - Every ECG has a **Calipers** button: the Strips module, every practice area, the 12-lead printouts and the megacode monitor. The Defib lab monitor doesn't have them. They look like a real steel divider: two tapered legs on a hinge with an adjustment knob, held in a band that opens above the ECG so the tracing stays clear, with the needle points at the top edge and a faint guide line from each point down through the tracing, with a readout of the interval in seconds, small boxes and the matching rate per minute. **March** repeats the interval across the strip (useful for P–P and R–R regularity and hidden P waves).
 - Drag a needle point to open or close the calipers, or drag the hinge to move them. With a keyboard: Tab to a leg or the hinge, then arrow keys move one small box (0.04 s); Shift + arrow moves 0.01 s, Page Up/Down moves one large box, Home/End jumps to either end, and Escape closes the calipers. The legs are labeled sliders that announce their position and the interval to screen readers.
