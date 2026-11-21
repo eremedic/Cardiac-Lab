@@ -72,6 +72,7 @@ Progress is kept in the student's browser. Using a different device or browser s
 - **Strengths and weak areas:** bar charts for the selected students: strips by rhythm family and practice areas (with the strongest and the one that needs work tagged), the most-missed rhythm types, the hardest megacode cases and the Defib lab scenarios with the lowest pass rate. Hover or tab to a bar for the counts behind it.
 - **Print reports:** print one student, the selected students, or a whole cohort. Each student gets their own page (scores, charts, missed strips, megacode cases, Defib lab); for a group or cohort you can add a class summary page with the charts and a table of everyone. Use the print dialog's Save as PDF to keep a copy.
 - **Download CSV** exports the selected students.
+- **Course survey report:** a separate printable report. In **Print reports** choose **Course survey report**, then one student, the selected students, a cohort or everyone. A group report has the response count, overall rating, Net Promoter Score, confidence gain, willingness to pay, every statement and answer breakdown, all comments and a list of who responded. One student's report lists their answers. Anonymous answers are never printed under a name: they appear only in group reports, as "Anonymous". The on-screen **Course survey** panel also has a **Print survey report** button for the selected students, and its CSV now follows the selection.
 - To change the password, update `INSTRUCTOR_PASSWORD` in Netlify and redeploy.
 
 **How scores are calculated**

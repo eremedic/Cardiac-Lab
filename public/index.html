@@ -860,7 +860,12 @@ body.df-focus .bar{position:relative}
 .sb-print .pr-modes{border:0;padding:0;margin:8px 0;display:grid;grid-template-columns:auto minmax(0,1fr);gap:8px 10px;align-items:center}
 .pr-opt{display:flex;gap:8px;align-items:center;font-size:14px;cursor:pointer}.pr-opt input{accent-color:var(--chart-bar)}
 .pr-modes select{font:inherit;font-size:13.5px;padding:6px 8px;border-radius:8px;border:1px solid var(--line-2);background:var(--surface);color:var(--ink);min-width:0;width:100%}
-.pr-modes label:nth-of-type(2){grid-column:1/-1}
+.pr-modes label:nth-of-type(2),.pr-modes label:nth-of-type(4){grid-column:1/-1}
+.pr-kind{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 4px}
+.pr-kind label{display:flex;gap:6px;align-items:center;font-size:13.5px;font-weight:600;padding:6px 10px;border:1px solid var(--line-2);border-radius:999px;cursor:pointer}
+.pr-kind label:has(input:checked){border-color:var(--chart-bar);background:color-mix(in srgb,var(--chart-bar) 10%,var(--surface))}
+.pr-kind input{accent-color:var(--chart-bar)}
+.pr-kind-note{font-size:12.5px;color:var(--muted);margin:4px 0 8px}
 .pr-chk{display:flex;gap:8px;align-items:flex-start;font-size:13px;color:var(--ink-2);margin:6px 0 10px}
 .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 .sb-charts{margin:4px 0 18px}
@@ -902,6 +907,15 @@ body.df-focus .bar{position:relative}
   #printArea .sv-board-head .eyebrow{display:none}
   #printArea .hb-t i{background:#0A6AD6}
   #printArea .hb-axis{margin-right:52px}
+}
+.sv-head-tools{display:flex;gap:8px;flex-wrap:wrap}
+@media print{
+  .pr-survey .sv-board{border:0;padding:0}
+  .pr-survey .sv-board-head .eyebrow,.pr-survey .sv-board-head h3{display:none}
+  .pr-survey .sv-cols{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .pr-survey .stats{grid-template-columns:repeat(4,1fr)}
+  .pr-survey .sv-answers{font-size:12px}
+  .pr-survey details{display:block}.pr-survey details>*{display:block}
 }
 </style>
 </head>
@@ -1786,11 +1800,14 @@ function renderPicker(){
         '<div class="sb-pick-tools"><input type="search" id="sbSearch" placeholder="Search names or cohorts" aria-label="Search students"><button class="btn btn-ghost" id="sbSelAll">Select all</button><button class="btn btn-ghost" id="sbSelNone">Clear</button></div></div>'+
         '<p class="sb-pick-note" id="sbPickNote"></p><div class="sb-pick-list" id="sbPickList" role="group" aria-label="Students to show"></div></div>'+
       '<div class="card panel sb-print" id="sbPrintCard"><div class="eyebrow">Paper copies</div><h3>Print reports</h3>'+
-        '<fieldset class="pr-modes"><legend class="sr-only">What to print</legend>'+
+        '<div class="pr-kind" role="radiogroup" aria-label="Report"><label><input type="radio" name="prKind" value="scores" checked><span>Scores report</span></label><label><input type="radio" name="prKind" value="survey"><span>Course survey report</span></label></div>'+
+        '<fieldset class="pr-modes"><legend class="sr-only">Who to include</legend>'+
           '<label class="pr-opt"><input type="radio" name="prMode" value="one" checked><span>One student</span></label><select id="prOne" aria-label="Student to print"></select>'+
           '<label class="pr-opt"><input type="radio" name="prMode" value="sel"><span>Selected students <b class="num" id="prSelN"></b></span></label>'+
-          '<label class="pr-opt"><input type="radio" name="prMode" value="cohort"><span>Cohort</span></label><select id="prCohort" aria-label="Cohort to print"></select></fieldset>'+
-        '<label class="pr-chk"><input type="checkbox" id="prSummary" checked><span>Add a class summary page with charts (for a group or cohort)</span></label>'+
+          '<label class="pr-opt"><input type="radio" name="prMode" value="cohort"><span>Cohort</span></label><select id="prCohort" aria-label="Cohort to print"></select>'+
+          '<label class="pr-opt"><input type="radio" name="prMode" value="all"><span>Everyone</span></label></fieldset>'+
+        '<label class="pr-chk" id="prSumWrap"><input type="checkbox" id="prSummary" checked><span>Add a class summary page with charts (for a group or cohort)</span></label>'+
+        '<p class="pr-kind-note" id="prKindNote" hidden>The survey report summarizes everyone included: ratings, Net Promoter Score, confidence, every answer breakdown, willingness to pay and all comments. Anonymous answers stay anonymous.</p>'+
         '<p class="login-msg" id="prMsg" role="alert" hidden></p><button class="btn btn-primary" id="prGo">Print</button>'+
         '<p class="empty">Each student prints on their own page. Use your browser\'s print dialog to choose a printer or Save as PDF.</p></div></div>';
     $("sbPickList").addEventListener("change", function(e){ var c=e.target.closest("input[data-sel]"); if(!c) return; var id=c.getAttribute("data-sel"); if(c.checked) SB.sel[id]=1; else delete SB.sel[id]; saveSel(); renderBoard(); });
@@ -1798,6 +1815,7 @@ function renderPicker(){
     $("sbSelAll").onclick=function(){ pickVisible().forEach(function(r){ SB.sel[r.id]=1; }); saveSel(); renderBoard(); };
     $("sbSelNone").onclick=function(){ SB.sel={}; saveSel(); renderBoard(); };
     $("prGo").onclick=printReports;
+    box.addEventListener("change", function(e){ if(e.target.name==="prKind"){ var sv=e.target.value==="survey"; $("prSumWrap").hidden=sv; $("prKindNote").hidden=!sv; } });
     box.addEventListener("change", function(e){ if(e.target.id==="prOne") document.querySelector('input[name=prMode][value=one]').checked=true; if(e.target.id==="prCohort") document.querySelector('input[name=prMode][value=cohort]').checked=true; });
   }
   renderPickList();
@@ -1874,10 +1892,12 @@ function printReports(){
   var mode=(document.querySelector("input[name=prMode]:checked")||{}).value, rows=[], title="", msg=$("prMsg");
   if(mode==="one"){ var id=$("prOne").value; rows=(SB.rows||[]).filter(function(r){ return r.id===id; }); title=rows[0] ? (rows[0].name||"Unnamed student") : ""; }
   else if(mode==="sel"){ rows=(SB.rows||[]).filter(function(r){ return SB.sel[r.id]; }).sort(byName); title="Selected students"; }
+  else if(mode==="all"){ rows=(SB.rows||[]).slice().sort(byName); title="All students"; }
   else { var c=$("prCohort").value; rows=(SB.rows||[]).filter(function(r){ return c && (r.cohort||"")===c; }).sort(byName); title="Cohort: "+c; }
   if(!rows.length){ msg.textContent = mode==="sel" ? "No students are selected yet. Tick some in the list first." : "There's no one to print for that choice."; msg.hidden=false; return; }
   msg.hidden=true;
   rows.forEach(function(r){ r._name=r.name||"Unnamed student"; });
+  if((document.querySelector("input[name=prKind]:checked")||{}).value==="survey"){ printSurvey(rows, title, mode==="one"); return; }
   var area=$("printArea"); if(!area){ area=document.createElement("div"); area.id="printArea"; document.body.appendChild(area); }
   var when=new Date().toLocaleDateString(undefined, {year:"numeric", month:"long", day:"numeric"});
   var h='';
@@ -1890,6 +1910,31 @@ function prHead(title, sub, when){
   return '<header class="pr-head"><div><b class="pr-brand">CSHealthED</b><span>ECG &amp; Megacode Lab</span></div><div class="pr-when">Printed '+esc(when)+'</div></header><h1>'+esc(title)+'</h1>'+(sub?'<p class="pr-sub">'+esc(sub)+'</p>':'');
 }
 function prStat(label, val, sub){ return '<div class="pr-stat"><small>'+esc(label)+'</small><b>'+val+'</b>'+(sub?'<span>'+esc(sub)+'</span>':'')+'</div>'; }
+
+/* ----- course survey report (separate from the scores report) ----- */
+function printSurvey(rows, title, single){
+  loadSurveyDef().then(function(){
+    var area=$("printArea"); if(!area){ area=document.createElement("div"); area.id="printArea"; document.body.appendChild(area); }
+    var when=new Date().toLocaleDateString(undefined, {year:"numeric", month:"long", day:"numeric"});
+    area.innerHTML = single ? surveyStudentPage(rows[0], when) : surveyGroupPage(rows, title, when);
+    window.print();
+  }, function(){ var m=$("prMsg"); if(m){ m.textContent="The survey questions didn't load. Check your connection and try again."; m.hidden=false; } });
+}
+function surveyGroupPage(rows, title, when){
+  var resp=rows.filter(function(r){ return r.survey && r.survey.answers; });
+  var panel=surveyPanelHTML(rows).replace(/<button class="btn btn-ghost" id="svCsv">[^<]*<\/button>/, "").replace(/<button class="btn btn-ghost" id="svPrint">[^<]*<\/button>/, "");
+  var list=resp.slice().sort(function(a,b){ return num(b.surveyAt)-num(a.surveyAt); }).map(function(r){ var a=r.survey.answers;
+    return '<tr><td>'+(r.surveyAnonymous?'Anonymous':esc(r.name||"Unnamed student"))+'</td><td>'+esc(r.cohort||"")+'</td><td>'+(r.surveyAt?new Date(r.surveyAt).toLocaleDateString():'—')+'</td><td>'+(a.overall!=null?a.overall+' / 5':'—')+'</td><td>'+(a.recommend!=null?a.recommend+' / 10':'—')+'</td></tr>'; }).join("");
+  return '<section class="pr-page pr-survey">'+prHead(title+' · course survey', rows.length+' student'+(rows.length===1?'':'s')+' included · '+resp.length+' response'+(resp.length===1?'':'s'), when)+panel+
+    (resp.length?'<h4>Responses</h4><table class="pr-table"><thead><tr><th>Student</th><th>Cohort</th><th>Submitted</th><th>Overall</th><th>Would recommend</th></tr></thead><tbody>'+list+'</tbody></table>':'')+'</section>';
+}
+function surveyStudentPage(r, when){
+  var body;
+  if(!r.survey || !r.survey.answers) body='<p>'+esc(r.name||"This student")+' hasn\'t submitted the course survey'+(rowEligible(r)?' yet (it\'s unlocked).':'. It opens at '+SURVEY_UNLOCK_PCT+'% of the course.')+'</p>';
+  else if(r.surveyAnonymous) body='<p>'+esc(r.name||"This student")+' submitted the survey on '+new Date(r.surveyAt).toLocaleDateString()+' and chose to share the answers anonymously, so they aren\'t printed under their name. They appear, without a name, in the group survey report.</p>';
+  else body=surveyDetailHTML(r).replace(/<h4[^>]*>[^<]*<\/h4>/, '<h4>Submitted '+new Date(r.surveyAt).toLocaleDateString()+'</h4>');
+  return '<section class="pr-page pr-survey">'+prHead((r.name||"Unnamed student")+' · course survey', r.cohort?'Cohort: '+r.cohort:'', when)+body+'</section>';
+}
 function printSummaryHTML(rows, title, when){
   var avg=function(list, f){ return list.length ? Math.round(list.reduce(function(a,r){ return a+f(r); },0)/list.length)+'%' : '—'; };
   var any=rows.filter(function(r){ return rowAnswered(r)>0; }), sR=rows.filter(function(r){ return num(r.strips&&r.strips.a)>0; }), mR=rows.filter(function(r){ return num(r.mega&&r.mega.a)>0; });
@@ -1938,7 +1983,8 @@ function hardHTML(rows){
 }
 $("sbBody").addEventListener("click", function(e){
   var t=e.target;
-  if(t.closest("#svCsv")){ downloadCsv(surveyCsv(boardRows()), "cardiac-lab-survey-"+new Date().toISOString().slice(0,10)+".csv"); return; }
+  if(t.closest("#svPrint")){ var sr=selectedRows(); sr.forEach(function(r){ r._name=r.name||"Unnamed student"; }); printSurvey(sr, "Selected students", false); return; }
+  if(t.closest("#svCsv")){ downloadCsv(surveyCsv(selectedRows()), "cardiac-lab-survey-"+new Date().toISOString().slice(0,10)+".csv"); return; }
   if(t.closest(".sv-board")) return;
   var hb=t.closest(".hard button"); if(hb){ S.pi=+hb.getAttribute("data-n"); save(); location.hash="strips"; return; }
   var d=t.closest("[data-del]"); if(d){ SB.confirmDel=d.getAttribute("data-del"); renderBoard(); return; }
@@ -2431,7 +2477,7 @@ function surveyPanelHTML(rows){
   var finished=rows.filter(rowEligible);
   var resp=rows.filter(function(r){ return r.survey && r.survey.answers; });
   var A=function(id){ return resp.map(function(r){ return r.survey.answers[id]; }).filter(function(v){ return v!==undefined && v!==null && v!==""; }); };
-  var head='<div class="sv-board-head"><div><div class="eyebrow">End-of-course survey</div><h3>Course survey</h3></div>'+(resp.length?'<button class="btn btn-ghost" id="svCsv">Download survey CSV</button>':'')+'</div>';
+  var head='<div class="sv-board-head"><div><div class="eyebrow">End-of-course survey</div><h3>Course survey</h3></div>'+(resp.length?'<div class="sv-head-tools"><button class="btn btn-ghost" id="svPrint">Print survey report</button><button class="btn btn-ghost" id="svCsv">Download survey CSV</button></div>':'')+'</div>';
   if(!resp.length) return '<div class="card panel sv-board">'+head+'<p class="empty">No survey responses yet. Students see the survey once they\'ve answered '+SURVEY_UNLOCK_PCT+'% of the strips and megacode decisions'+(finished.length?' ('+finished.length+' student'+(finished.length===1?' has':'s have')+' unlocked it so far)':'')+'.</p></div>';
   var stars=avg(A("overall")), npsV=A("recommend"), prom=npsV.filter(function(v){return v>=9}).length, det=npsV.filter(function(v){return v<=6}).length, pas=npsV.length-prom-det;
   var nps = npsV.length ? Math.round(100*(prom-det)/npsV.length) : null;
