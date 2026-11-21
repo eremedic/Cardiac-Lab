@@ -68,7 +68,10 @@ Progress is kept in the student's browser. Using a different device or browser s
 - Click **Instructor sign-in** at the bottom of any page (or go to `/#scoreboard`) and enter the instructor password. The **Scoreboard** tab then appears in the top bar.
 - The scoreboard refreshes every 30 seconds. Filter by cohort, sort by recent activity, score, name or progress, and click a student to see their score in each rhythm family, missed strips and case scores.
 - Every module is tracked. Under the main score cards, a second row shows class results for the **practice areas**, the **12-lead ECGs**, the **Defib lab** and the **course survey**. The student table has **Practice areas** and **Defib lab** columns, and each module has its own panel lower down.
-- **Download CSV** exports the current view.
+- **Choose who to view:** the scoreboard starts with no students selected. Tick students in the list (search by name or cohort, narrow it with the Cohort filter), or press **Select all** to pick everyone in the list; **Clear** empties it. The stats, charts, table and CSV cover only the selected students, and your browser remembers the selection.
+- **Strengths and weak areas:** bar charts for the selected students: strips by rhythm family and practice areas (with the strongest and the one that needs work tagged), the most-missed rhythm types, the hardest megacode cases and the Defib lab scenarios with the lowest pass rate. Hover or tab to a bar for the counts behind it.
+- **Print reports:** print one student, the selected students, or a whole cohort. Each student gets their own page (scores, charts, missed strips, megacode cases, Defib lab); for a group or cohort you can add a class summary page with the charts and a table of everyone. Use the print dialog's Save as PDF to keep a copy.
+- **Download CSV** exports the selected students.
 - To change the password, update `INSTRUCTOR_PASSWORD` in Netlify and redeploy.
 
 **How scores are calculated**

@@ -840,6 +840,69 @@ body.df-focus .bar{position:relative}
 .mk-legend b{font-weight:700;color:var(--ink)}
 .mk-legend span{display:inline-flex;align-items:center;gap:6px}
 .mk-legend i{width:12px;height:12px;border-radius:3px;flex:none}
+/* ---------- scoreboard: picker, charts, print ---------- */
+:root{--chart-bar:#0A6AD6}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--chart-bar:#4C95EE}}
+:root[data-theme="dark"]{--chart-bar:#4C95EE}
+.sb-top{display:grid;grid-template-columns:minmax(0,2fr) minmax(280px,1fr);gap:14px;margin-bottom:18px;align-items:start}
+@media (max-width:900px){.sb-top{grid-template-columns:minmax(0,1fr)}}
+.sb-pick-head{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:flex-end}
+.sb-pick-head h3 span{font-size:14px;color:var(--muted);font-weight:500;margin-left:6px}
+.sb-pick-tools{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.sb-pick-tools input{font:inherit;padding:8px 12px;border-radius:10px;border:1px solid var(--line-2);background:var(--surface);color:var(--ink);min-width:200px}
+.sb-pick-note{font-size:13px;color:var(--muted);margin:8px 0}
+.sb-pick-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:6px;max-height:300px;overflow:auto;padding:2px}
+.sb-pick-item{display:flex;gap:9px;align-items:center;padding:7px 10px;border:1px solid var(--line);border-radius:10px;cursor:pointer;background:var(--surface)}
+.sb-pick-item.on{border-color:var(--chart-bar);background:color-mix(in srgb,var(--chart-bar) 9%,var(--surface))}
+.sb-pick-item input{width:17px;height:17px;accent-color:var(--chart-bar);flex:none}
+.sb-pick-item span{display:grid;min-width:0}.sb-pick-item b{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sb-pick-item small{font-size:12px;color:var(--muted);font-family:var(--f-mono)}
+.sb-print .pr-modes{border:0;padding:0;margin:8px 0;display:grid;grid-template-columns:auto minmax(0,1fr);gap:8px 10px;align-items:center}
+.pr-opt{display:flex;gap:8px;align-items:center;font-size:14px;cursor:pointer}.pr-opt input{accent-color:var(--chart-bar)}
+.pr-modes select{font:inherit;font-size:13.5px;padding:6px 8px;border-radius:8px;border:1px solid var(--line-2);background:var(--surface);color:var(--ink);min-width:0;width:100%}
+.pr-modes label:nth-of-type(2){grid-column:1/-1}
+.pr-chk{display:flex;gap:8px;align-items:flex-start;font-size:13px;color:var(--ink-2);margin:6px 0 10px}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.sb-charts{margin:4px 0 18px}
+.hb-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px}
+.hb-card h4{font-size:15px;margin:0}
+.hb-sub{font-size:12.5px;color:var(--muted);margin:2px 0 12px}
+.hb{display:grid;gap:7px}
+.hb-row{display:grid;grid-template-columns:minmax(0,46%) minmax(0,1fr) 42px;gap:10px;align-items:center;border-radius:6px;outline:none;padding:1px 0}
+.hb-row:focus-visible{box-shadow:0 0 0 2px var(--chart-bar)}
+.hb-l{font-size:13px;line-height:1.25;color:var(--ink);overflow-wrap:anywhere}
+.hb-tag{display:table;margin-top:2px;font-style:normal;font-size:10.5px;font-family:var(--f-mono);padding:0 5px;border-radius:4px;border:1px solid var(--line-2);color:var(--ink-2)}
+.hb-tag.good::before{content:"▲ "}.hb-tag.weak::before{content:"▼ "}
+.hb-t{position:relative;height:12px;background:repeating-linear-gradient(90deg,transparent 0 calc(25% - 1px),var(--line) calc(25% - 1px) 25%)}
+.hb-t i{position:absolute;left:0;top:0;bottom:0;background:var(--chart-bar);border-radius:0 4px 4px 0}
+.hb-row:hover .hb-t i{filter:brightness(1.12)}
+.hb-v{font-size:12.5px;color:var(--ink);text-align:right}
+.hb-axis{display:flex;justify-content:space-between;margin:6px 52px 0 calc(40% + 10px);font:11px var(--f-mono);color:var(--muted)}
+.hb-tip{position:fixed;z-index:60;max-width:320px;padding:7px 10px;border-radius:8px;background:var(--ink);color:var(--surface);font-size:12.5px;pointer-events:none;box-shadow:0 6px 18px rgba(0,0,0,.25)}
+#printArea{display:none}
+@media print{
+  body>*:not(#printArea){display:none!important}
+  body{background:#FFFFFF}
+  #printArea{display:block!important;color:#111}
+  #printArea *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  @page{margin:14mm}
+  .pr-page{break-after:page;page-break-after:always}
+  .pr-page:last-child{break-after:auto;page-break-after:auto}
+  .pr-head{display:flex;justify-content:space-between;align-items:baseline;border-bottom:2px solid #02245D;padding-bottom:6px;margin-bottom:10px;font-size:12px;color:#444}
+  .pr-brand{color:#02245D;font-size:16px;margin-right:8px}
+  #printArea h1{font-size:24px;margin:4px 0 2px}#printArea h4{font-size:13px;margin:10px 0 6px}
+  .pr-sub{color:#555;font-size:12.5px;margin:0 0 10px}
+  .pr-stats{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin:8px 0 12px}
+  .pr-stat{border:1px solid #CCD;border-radius:6px;padding:6px 8px}.pr-stat small{display:block;font-size:10px;text-transform:uppercase;color:#555}.pr-stat b{font-size:17px}.pr-stat span{display:block;font-size:10px;color:#666}
+  .pr-cols{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:8px}
+  .pr-list{margin:0;padding-left:16px;font-size:11.5px;columns:1}
+  .pr-table{width:100%;border-collapse:collapse;font-size:11px;margin-top:10px}.pr-table th,.pr-table td{border-bottom:1px solid #DDD;padding:3px 5px;text-align:left}
+  #printArea .card{box-shadow:none;border:1px solid #CCD;break-inside:avoid}
+  #printArea .hb-grid{grid-template-columns:1fr 1fr;gap:8px}
+  #printArea .sv-board-head .eyebrow{display:none}
+  #printArea .hb-t i{background:#0A6AD6}
+  #printArea .hb-axis{margin-right:52px}
+}
 </style>
 </head>
 <body>
@@ -1007,14 +1070,15 @@ body.df-focus .bar{position:relative}
     <div class="qhead">
       <div><div class="eyebrow">Instructor view · refreshes every 30 s</div><h2>Class scoreboard</h2></div>
       <div class="sb-tools">
-        <label class="sel" for="sbCohort"><span>Cohort</span><select id="sbCohort"><option value="">All</option></select></label>
+        <label class="sel" for="sbCohort"><span>Cohort (student list)</span><select id="sbCohort"><option value="">All</option></select></label>
         <label class="sel" for="sbSort"><span>Sort</span><select id="sbSort"><option value="recent">Last active</option><option value="score">Overall score</option><option value="name">Name</option><option value="progress">Progress</option></select></label>
         <button class="btn btn-ghost" id="sbRefresh" hidden>Refresh</button>
-        <button class="btn btn-ghost" id="sbCsv" hidden>Download CSV</button>
+        <button class="btn btn-ghost" id="sbCsv" hidden>Download CSV (selected)</button>
         <button class="btn btn-ghost" id="sbOut" hidden>Sign out</button>
       </div>
     </div>
     <div id="sbSettings"></div>
+    <div id="sbPick"></div>
     <div id="sbBody"></div>
   </section>
 
@@ -1590,6 +1654,7 @@ function renderSettings(msg, which){
 function showLogin(msg){
   ["sbCsv","sbRefresh","sbOut"].forEach(function(i){ $(i).hidden=true; });
   if($("sbSettings")) $("sbSettings").innerHTML="";
+  if($("sbPick")) $("sbPick").innerHTML="";
   $("sbBody").innerHTML=loginHTML(msg);
   $("sbLogin").addEventListener("submit", function(e){ e.preventDefault(); SB.pass=$("sbPass").value; loadBoard(false); });
   setTimeout(function(){ var p=$("sbPass"); if(p) p.focus(); }, 30);
@@ -1657,10 +1722,15 @@ function renderBoard(){
   var cohorts={}; all.forEach(function(r){ if(r.cohort) cohorts[r.cohort]=1; });
   var sel=$("sbCohort"), cur=sel.value;
   sel.innerHTML='<option value="">All</option>'+Object.keys(cohorts).sort().map(function(c){return '<option'+(c===cur?' selected':'')+'>'+esc(c)+'</option>'}).join("");
-  var rows=boardRows();
+  renderPicker();
+  var rows=selectedRows();
   $("sbCsv").hidden = !rows.length;
-  if(!rows.length){
+  if(!(SB.rows||[]).length){
     $("sbBody").innerHTML='<div class="card panel"><h3>No results yet</h3><p class="empty">Send your students this site\'s link'+'. When they enter their name on the Overview page'+', their scores appear here as they answer. The page refreshes every 30 seconds.</p></div>';
+    return;
+  }
+  if(!rows.length){
+    $("sbBody").innerHTML='<div class="card panel sb-empty-sel"><h3>No students selected</h3><p class="empty">Tick the students you want to see in the list above, or press <b>Select all</b>. The stats, charts and table below cover only the students you select. Printing a single student or a cohort works without selecting anyone.</p></div>';
     return;
   }
   var n=rows.length, avgOf=function(list, f){ return list.length ? Math.round(list.reduce(function(a,r){ return a+f(r); },0)/list.length) : null; };
@@ -1668,12 +1738,13 @@ function renderBoard(){
   var avg=avgOf(withAny, rowOverall), sAvg=avgOf(withS, function(r){ return pct(num(r.strips.c), num(r.strips.a)); }), mAvg=avgOf(withM, function(r){ return pct(num(r.mega.c), num(r.mega.a)); });
   var done=rows.filter(function(r){ return num(r.strips&&r.strips.a)>=N && num(r.mega&&r.mega.a)>=TOTAL_Q; }).length;
   var h='<div class="stats">'+
-    '<div class="card stat"><small>Students</small><b class="num">'+n+'</b><span>with saved results</span></div>'+
+    '<div class="card stat"><small>Students</small><b class="num">'+n+'</b><span>selected</span></div>'+
     '<div class="card stat"><small>Average score</small><b class="num">'+(avg==null?'—':avg+'%')+'</b><span>correct of answered</span></div>'+
     '<div class="card stat"><small>Strips</small><b class="num">'+(sAvg==null?'—':sAvg+'%')+'</b><span>class average, of answered</span></div>'+
     '<div class="card stat"><small>Megacode</small><b class="num">'+(mAvg==null?'—':mAvg+'%')+'</b><span>class average, of answered</span></div>'+
     '<div class="card stat"><small>Finished</small><b class="num">'+done+'</b><span>completed both modules</span></div></div>';
   h+=newModulesStatsHTML(rows);
+  h+=chartsHTML(rows);
   var body=rows.map(function(r){
     var s=r.strips||{}, m=r.mega||{}, open=SB.open===r.id;
     var weak="—", wv=101; GROUPS.forEach(function(g){ var x=(r.groups||{})[g[0]]; if(x && x[1]>=3){ var p=pct(x[0],x[1]); if(p<wv){wv=p; weak=g[1]+" ("+p+"%)";} } });
@@ -1687,6 +1758,166 @@ function renderBoard(){
   h+='<div class="sb-grid"><div class="card panel"><h3>Students <span class="num">'+n+'</span></h3><div class="tablewrap"><table class="sbt"><thead><tr><th>Student</th><th>Strips</th><th>Megacode</th><th>Overall</th><th>Weakest family</th><th>Survey</th><th>Practice areas</th><th>Defib lab</th><th>Last active</th></tr></thead><tbody id="sbRows">'+body+'</tbody></table></div><p class="empty">Scores are correct out of answered, so unanswered items don\'t lower them. Select a student for detail.</p></div>'+
      '<div class="card panel"><h3>Most-missed strips</h3><div class="hard" id="sbHard">'+hardHTML(rows)+'</div></div></div>'+areasPanelHTML(rows)+defibPanelHTML(rows)+surveyPanelHTML(rows);
   $("sbBody").innerHTML=h;
+}
+
+/* ================= SCOREBOARD: choose students, charts of strong / weak areas, printable reports ================= */
+SB.sel = {};
+try{ (JSON.parse(localStorage.getItem("cl-sb-sel")||"[]")||[]).forEach(function(id){ SB.sel[id]=1; }); }catch(e){}
+function saveSel(){ try{ localStorage.setItem("cl-sb-sel", JSON.stringify(Object.keys(SB.sel))); }catch(e){} }
+function sortRows(list){
+  var sort=$("sbSort").value;
+  list.forEach(function(r){ r._name=r.name||"Unnamed student"; r._prog=num(r.strips&&r.strips.a)+num(r.mega&&r.mega.a); });
+  return list.sort(function(a,b){
+    if(sort==="score") return rowOverall(b)-rowOverall(a);
+    if(sort==="name") return a._name.localeCompare(b._name);
+    if(sort==="progress") return b._prog-a._prog;
+    return num(b.updatedAt)-num(a.updatedAt);
+  });
+}
+function selectedRows(){ return sortRows((SB.rows||[]).filter(function(r){ return SB.sel[r.id]; })); }
+function byName(a,b){ return (a.name||"").localeCompare(b.name||""); }
+function cohortsOf(){ var c={}; (SB.rows||[]).forEach(function(r){ if(r.cohort) c[r.cohort]=(c[r.cohort]||0)+1; }); return c; }
+function renderPicker(){
+  var box=$("sbPick"); if(!box) return;
+  if(!SB.admin || !(SB.rows||[]).length){ box.innerHTML=""; return; }
+  if(!$("sbPickCard")){
+    box.innerHTML='<div class="sb-top">'+
+      '<div class="card panel sb-pick" id="sbPickCard"><div class="sb-pick-head"><div><div class="eyebrow">Choose who to view</div><h3>Students <span class="num" id="sbSelCount"></span></h3></div>'+
+        '<div class="sb-pick-tools"><input type="search" id="sbSearch" placeholder="Search names or cohorts" aria-label="Search students"><button class="btn btn-ghost" id="sbSelAll">Select all</button><button class="btn btn-ghost" id="sbSelNone">Clear</button></div></div>'+
+        '<p class="sb-pick-note" id="sbPickNote"></p><div class="sb-pick-list" id="sbPickList" role="group" aria-label="Students to show"></div></div>'+
+      '<div class="card panel sb-print" id="sbPrintCard"><div class="eyebrow">Paper copies</div><h3>Print reports</h3>'+
+        '<fieldset class="pr-modes"><legend class="sr-only">What to print</legend>'+
+          '<label class="pr-opt"><input type="radio" name="prMode" value="one" checked><span>One student</span></label><select id="prOne" aria-label="Student to print"></select>'+
+          '<label class="pr-opt"><input type="radio" name="prMode" value="sel"><span>Selected students <b class="num" id="prSelN"></b></span></label>'+
+          '<label class="pr-opt"><input type="radio" name="prMode" value="cohort"><span>Cohort</span></label><select id="prCohort" aria-label="Cohort to print"></select></fieldset>'+
+        '<label class="pr-chk"><input type="checkbox" id="prSummary" checked><span>Add a class summary page with charts (for a group or cohort)</span></label>'+
+        '<p class="login-msg" id="prMsg" role="alert" hidden></p><button class="btn btn-primary" id="prGo">Print</button>'+
+        '<p class="empty">Each student prints on their own page. Use your browser\'s print dialog to choose a printer or Save as PDF.</p></div></div>';
+    $("sbPickList").addEventListener("change", function(e){ var c=e.target.closest("input[data-sel]"); if(!c) return; var id=c.getAttribute("data-sel"); if(c.checked) SB.sel[id]=1; else delete SB.sel[id]; saveSel(); renderBoard(); });
+    $("sbSearch").addEventListener("input", renderPickList);
+    $("sbSelAll").onclick=function(){ pickVisible().forEach(function(r){ SB.sel[r.id]=1; }); saveSel(); renderBoard(); };
+    $("sbSelNone").onclick=function(){ SB.sel={}; saveSel(); renderBoard(); };
+    $("prGo").onclick=printReports;
+    box.addEventListener("change", function(e){ if(e.target.id==="prOne") document.querySelector('input[name=prMode][value=one]').checked=true; if(e.target.id==="prCohort") document.querySelector('input[name=prMode][value=cohort]').checked=true; });
+  }
+  renderPickList();
+  var one=$("prOne"), keep=one.value, list=(SB.rows||[]).slice().sort(byName);
+  one.innerHTML=list.map(function(r){ return '<option value="'+esc(r.id)+'"'+(r.id===keep?' selected':'')+'>'+esc(r.name||"Unnamed student")+(r.cohort?' · '+esc(r.cohort):'')+'</option>'; }).join("");
+  var co=$("prCohort"), keepC=co.value, cs=cohortsOf(), names=Object.keys(cs).sort();
+  co.innerHTML=names.length ? names.map(function(c){ return '<option'+(c===keepC?' selected':'')+' value="'+esc(c)+'">'+esc(c)+' ('+cs[c]+')</option>'; }).join("") : '<option value="">No cohorts yet</option>';
+  co.disabled=!names.length;
+}
+function pickVisible(){
+  var q=($("sbSearch")||{value:""}).value.trim().toLowerCase(), co=$("sbCohort").value;
+  return (SB.rows||[]).filter(function(r){ return (!co || (r.cohort||"")===co) && (!q || ((r.name||"")+" "+(r.cohort||"")).toLowerCase().indexOf(q)>=0); }).sort(byName);
+}
+function renderPickList(){
+  var vis=pickVisible(), all=SB.rows||[], nSel=all.filter(function(r){ return SB.sel[r.id]; }).length;
+  $("sbSelCount").textContent=nSel+" of "+all.length+" selected";
+  $("prSelN").textContent="("+nSel+")";
+  var co=$("sbCohort").value, q=$("sbSearch").value.trim();
+  $("sbPickNote").textContent = (co||q) ? "Showing "+vis.length+" of "+all.length+(co?" in "+co:"")+(q?' matching "'+q+'"':"")+". Select all picks just these." : "Select all picks everyone in the list. Narrow the list with the Cohort filter or the search box.";
+  $("sbPickList").innerHTML = vis.length ? vis.map(function(r){ var on=!!SB.sel[r.id], sc=rowAnswered(r)?rowOverall(r)+'%':'—';
+    return '<label class="sb-pick-item'+(on?' on':'')+'"><input type="checkbox" data-sel="'+esc(r.id)+'"'+(on?' checked':'')+'><span><b>'+esc(r.name||"Unnamed student")+'</b><small>'+(r.cohort?esc(r.cohort)+' · ':'')+sc+'</small></span></label>'; }).join("")
+    : '<p class="empty">No students match.</p>';
+}
+
+/* ----- bar charts: one series, one color, sorted, value on every bar, counts on hover ----- */
+function hbarHTML(title, sub, items, opts){
+  sub = sub + " · gridlines every 25%";
+  opts=opts||{};
+  var list=items.filter(function(x){ return x.a>0; }).map(function(x){ x.p=pct(x.c,x.a); return x; });
+  if(opts.asc) list.sort(function(a,b){ return a.p-b.p || b.a-a.a; }); else list.sort(function(a,b){ return b.p-a.p || b.a-a.a; });
+  if(opts.limit) list=list.slice(0, opts.limit);
+  var body;
+  if(!list.length) body='<p class="empty">No answers yet from the selected students.</p>';
+  else {
+    var hi=Math.max.apply(null, list.map(function(x){ return x.p; })), lo=Math.min.apply(null, list.map(function(x){ return x.p; }));
+    body='<div class="hb" role="list">'+list.map(function(x){
+      var tag = opts.tags && list.length>1 && hi!==lo ? (x.p===hi?'<em class="hb-tag good">Strongest</em>':(x.p===lo?'<em class="hb-tag weak">Needs work</em>':'')) : '';
+      var tip=x.label+': '+x.p+'% '+(opts.verb||'correct')+' · '+x.c+' of '+x.a+' '+(opts.noun||'answered')+(x.extra?' · '+x.extra:'');
+      return '<div class="hb-row" role="listitem" tabindex="0" data-tip="'+esc(tip)+'" aria-label="'+esc(tip)+'"><span class="hb-l">'+esc(x.label)+tag+'</span>'+
+        '<span class="hb-t"><i style="width:'+Math.max(x.p,1)+'%"></i></span><b class="hb-v num">'+x.p+'%</b></div>'; }).join("")+'</div>'+
+      '';
+  }
+  return '<div class="card panel hb-card"><h4>'+esc(title)+'</h4><p class="hb-sub">'+esc(sub)+'</p>'+body+'</div>';
+}
+function chartData(rows){
+  var fam=GROUPS.map(function(g){ var c=0,a=0; rows.forEach(function(r){ var v=(r.groups||{})[g[0]]; if(v){ c+=v[0]; a+=v[1]; } }); return {label:g[1], c:c, a:a}; });
+  var areas=AREA_META.map(function(m){ var c=0,a=0,k=0; rows.forEach(function(r){ var v=(r.areas||{})[m.key]; if(v && v[1]){ c+=v[0]; a+=v[1]; k++; } }); return {label:m.short, c:c, a:a, extra:k+' student'+(k===1?'':'s')}; });
+  var cats={}; rows.forEach(function(r){ var p=r.p||{}; Object.keys(p).forEach(function(n){ var q=P[n-1]; if(!q) return; var x=cats[q.cat]=cats[q.cat]||{label:q.cat, c:0, a:0}; x.a++; if(canon(p[n])===q.cat) x.c++; }); });
+  var cases=CASES.map(function(cs,ci){ var c=0,a=0; rows.forEach(function(r){ var k=(r.cases||[])[ci]; if(k){ c+=k[0]; a+=k[1]; } }); return {label:'Case '+cs.n+' · '+cs.title, c:c, a:a}; });
+  var defib=DEFIB_LIST.map(function(x){ var p=0,t=0; rows.forEach(function(r){ var v=(r.defib||{})[x[0]]; if(v){ t++; if(v[2]===1) p++; } }); return {label:x[1], c:p, a:t}; });
+  return {fam:fam, areas:areas, cats:Object.keys(cats).map(function(k){ return cats[k]; }).filter(function(x){ return x.a>=3; }), cases:cases, defib:defib};
+}
+function chartsHTML(rows){
+  var d=chartData(rows);
+  return '<section class="sb-charts" aria-labelledby="sbChartsT"><div class="sv-board-head"><div><div class="eyebrow">Selected students</div><h3 id="sbChartsT">Strengths and weak areas</h3></div></div><div class="hb-grid">'+
+    hbarHTML("Strips by rhythm family", "Class accuracy on answered strips, strongest first", d.fam, {tags:true})+
+    hbarHTML("Practice areas", "Accuracy on answered practice strips and 12-leads", d.areas, {tags:true})+
+    hbarHTML("Most-missed rhythm types", "Lowest accuracy first (rhythms answered 3 or more times)", d.cats, {asc:true, limit:10})+
+    hbarHTML("Hardest megacode cases", "Lowest share of correct decisions first", d.cases, {asc:true, limit:10, noun:'decisions'})+
+    hbarHTML("Defib lab scenarios", "Pass rate among students who ran each scenario, lowest first", d.defib, {asc:true, limit:10, verb:'passed', noun:'students who tried'})+
+  '</div></section>';
+}
+(function(){
+  var tip=document.createElement("div"); tip.className="hb-tip"; tip.setAttribute("role","tooltip"); tip.hidden=true; document.body.appendChild(tip);
+  var show=function(row, x, y){ tip.textContent=row.getAttribute("data-tip"); tip.hidden=false;
+    var w=tip.offsetWidth, h=tip.offsetHeight; tip.style.left=Math.min(window.innerWidth-w-8, Math.max(8, x+14))+"px"; tip.style.top=Math.max(8, y-h-12)+"px"; };
+  document.addEventListener("mousemove", function(e){ var row=e.target.closest && e.target.closest(".hb-row"); if(row) show(row, e.clientX, e.clientY); else tip.hidden=true; });
+  document.addEventListener("focusin", function(e){ var row=e.target.closest && e.target.closest(".hb-row"); if(row){ var r=row.getBoundingClientRect(); show(row, r.left+r.width*0.4, r.top); } else tip.hidden=true; });
+  document.addEventListener("scroll", function(){ tip.hidden=true; }, true);
+})();
+
+/* ----- printable reports ----- */
+function printReports(){
+  var mode=(document.querySelector("input[name=prMode]:checked")||{}).value, rows=[], title="", msg=$("prMsg");
+  if(mode==="one"){ var id=$("prOne").value; rows=(SB.rows||[]).filter(function(r){ return r.id===id; }); title=rows[0] ? (rows[0].name||"Unnamed student") : ""; }
+  else if(mode==="sel"){ rows=(SB.rows||[]).filter(function(r){ return SB.sel[r.id]; }).sort(byName); title="Selected students"; }
+  else { var c=$("prCohort").value; rows=(SB.rows||[]).filter(function(r){ return c && (r.cohort||"")===c; }).sort(byName); title="Cohort: "+c; }
+  if(!rows.length){ msg.textContent = mode==="sel" ? "No students are selected yet. Tick some in the list first." : "There's no one to print for that choice."; msg.hidden=false; return; }
+  msg.hidden=true;
+  rows.forEach(function(r){ r._name=r.name||"Unnamed student"; });
+  var area=$("printArea"); if(!area){ area=document.createElement("div"); area.id="printArea"; document.body.appendChild(area); }
+  var when=new Date().toLocaleDateString(undefined, {year:"numeric", month:"long", day:"numeric"});
+  var h='';
+  if(rows.length>1 && $("prSummary").checked) h+=printSummaryHTML(rows, title, when);
+  h+=rows.map(function(r){ return printStudentHTML(r, when); }).join("");
+  area.innerHTML=h;
+  window.print();
+}
+function prHead(title, sub, when){
+  return '<header class="pr-head"><div><b class="pr-brand">CSHealthED</b><span>ECG &amp; Megacode Lab</span></div><div class="pr-when">Printed '+esc(when)+'</div></header><h1>'+esc(title)+'</h1>'+(sub?'<p class="pr-sub">'+esc(sub)+'</p>':'');
+}
+function prStat(label, val, sub){ return '<div class="pr-stat"><small>'+esc(label)+'</small><b>'+val+'</b>'+(sub?'<span>'+esc(sub)+'</span>':'')+'</div>'; }
+function printSummaryHTML(rows, title, when){
+  var avg=function(list, f){ return list.length ? Math.round(list.reduce(function(a,r){ return a+f(r); },0)/list.length)+'%' : '—'; };
+  var any=rows.filter(function(r){ return rowAnswered(r)>0; }), sR=rows.filter(function(r){ return num(r.strips&&r.strips.a)>0; }), mR=rows.filter(function(r){ return num(r.mega&&r.mega.a)>0; });
+  var done=rows.filter(function(r){ return num(r.strips&&r.strips.a)>=N && num(r.mega&&r.mega.a)>=TOTAL_Q; }).length;
+  return '<section class="pr-page">'+prHead(title+' · class summary', rows.length+' students', when)+
+    '<div class="pr-stats">'+prStat("Average score", avg(any, rowOverall), "correct of answered")+prStat("Strips", avg(sR, function(r){ return pct(r.strips.c, r.strips.a); }), "class average")+
+      prStat("Megacode", avg(mR, function(r){ return pct(r.mega.c, r.mega.a); }), "class average")+prStat("Finished", done+' of '+rows.length, "both modules")+'</div>'+
+    chartsHTML(rows)+
+    '<table class="pr-table"><thead><tr><th>Student</th><th>Cohort</th><th>Strips</th><th>Megacode</th><th>Score</th><th>Practice</th><th>Defib</th><th>Survey</th></tr></thead><tbody>'+
+    rows.map(function(r){ var s=r.strips||{}, m=r.mega||{}, t=areaTotals(r), d=defibCounts(r);
+      return '<tr><td>'+esc(r._name)+'</td><td>'+esc(r.cohort||'')+'</td><td>'+num(s.c)+'/'+num(s.a)+'</td><td>'+num(m.c)+'/'+num(m.a)+'</td><td>'+(rowAnswered(r)?rowOverall(r)+'%':'—')+'</td><td>'+(t[1]?pct(t[0],t[1])+'% of '+t[1]:'—')+'</td><td>'+(d[1]?d[0]+'/'+d[1]+' passed':'—')+'</td><td>'+(r.survey?'Done':'—')+'</td></tr>'; }).join("")+
+    '</tbody></table></section>';
+}
+function printStudentHTML(r, when){
+  var s=r.strips||{}, m=r.mega||{}, t=areaTotals(r), d=defibCounts(r);
+  var fam=GROUPS.map(function(g){ var v=(r.groups||{})[g[0]]||[0,0,0]; return {label:g[1], c:v[0], a:v[1]}; });
+  var ar=AREA_META.map(function(x){ var v=(r.areas||{})[x.key]||[0,0,0]; return {label:x.short, c:v[0], a:v[1]}; });
+  var missed=P.filter(function(q){ var x=canon((r.p||{})[q.n]); return x!=null && x!==q.cat; });
+  var cases=CASES.map(function(cs,ci){ var k=(r.cases||[])[ci]; return k&&k[1] ? '<li>Case '+cs.n+' · '+esc(cs.title)+': <b>'+k[0]+'/'+k[1]+'</b></li>' : ''; }).join("");
+  var df=DEFIB_LIST.filter(function(x){ return (r.defib||{})[x[0]]; }).map(function(x){ var v=r.defib[x[0]]; return '<li>'+(v[2]?'✓ ':'✗ ')+esc(x[1])+' · '+v[0]+'/'+v[1]+' steps</li>'; }).join("");
+  return '<section class="pr-page">'+prHead(r._name, (r.cohort?'Cohort: '+r.cohort+' · ':'')+'Last active '+(r.updatedAt?new Date(r.updatedAt).toLocaleDateString():'—'), when)+
+    '<div class="pr-stats">'+prStat("Score", rowAnswered(r)?rowOverall(r)+'%':'—', "correct of answered")+prStat("Strips", num(s.c)+'/'+num(s.a), "of "+N+" answered")+
+      prStat("Megacode", num(m.c)+'/'+num(m.a), "of "+TOTAL_Q+" decisions")+prStat("Practice areas", t[1]?pct(t[0],t[1])+'%':'—', t[1]?t[0]+' of '+t[1]+' correct':'not started')+
+      prStat("Defib lab", d[1]?d[0]+'/'+d[1]:'—', d[1]?'scenarios passed':'not started')+prStat("Survey", r.survey?'Done':'—', "")+'</div>'+
+    '<div class="pr-cols">'+hbarHTML("Strips by rhythm family", "Correct of answered", fam, {tags:true})+hbarHTML("Practice areas", "Correct of answered", ar, {tags:true})+'</div>'+
+    '<div class="pr-cols"><div><h4>Missed strips ('+missed.length+')</h4>'+(missed.length?'<ul class="pr-list">'+missed.map(function(q){ return '<li>#'+q.n+' '+esc(q.name)+'</li>'; }).join("")+'</ul>':'<p>None missed.</p>')+'</div>'+
+      '<div><h4>Megacode cases</h4>'+(cases?'<ul class="pr-list">'+cases+'</ul>':'<p>No cases started.</p>')+'<h4>Defib lab</h4>'+(df?'<ul class="pr-list">'+df+'</ul>':'<p>No scenarios run.</p>')+'</div></div>'+
+    '</section>';
 }
 function detailHTML(r){
   var g=GROUPS.map(function(x){ var v=(r.groups||{})[x[0]]||[0,0,0]; return '<div class="barrow"><span>'+esc(x[1])+'</span><span class="track"><i style="width:'+pct(v[0],v[1])+'%"></i></span><b>'+(v[1]?v[0]+'/'+v[1]:'—')+'</b></div>'; }).join("");
@@ -1724,7 +1955,7 @@ $("sbSort").addEventListener("change", renderBoard);
 $("sbRefresh").addEventListener("click", function(){ loadBoard(true); });
 $("sbOut").addEventListener("click", function(){ SB.pass=null; SB.admin=false; SB.rows=null; SB.settings=null; AREA_META.forEach(function(x){ if(x.gated){ delete AREAS[x.key]; AREA_LOADING[x.key]=null; } }); renderAreaTiles(); defibNav(); stopPoll(); try{ sessionStorage.removeItem("cl-instructor"); }catch(e){} $("tabBoard").hidden=true; showLogin(""); });
 $("sbCsv").addEventListener("click", function(){
-  var rows=boardRows();
+  var rows=selectedRows();
   var head=["Student","Cohort","Strips correct","Strips answered","Strips total","Megacode correct","Megacode answered","Megacode total","Score % (correct of answered)"].concat(GROUPS.map(function(g){return g[1]+" %"})).concat(AREA_META.map(function(x){ return x.short+" practice answered"; })).concat(AREA_META.map(function(x){ return x.short+" practice %"; })).concat(["Defib scenarios passed","Defib scenarios attempted"]).concat(DEFIB_LIST.map(function(x){ return "Defib: "+x[1]; })).concat(["Survey submitted","Last active"]);
   var lines=[head].concat(rows.map(function(r){ var s=r.strips||{}, m=r.mega||{};
     return [r._name, r.cohort||"", num(s.c), num(s.a), N, num(m.c), num(m.a), TOTAL_Q, rowAnswered(r)?rowOverall(r):""].concat(GROUPS.map(function(g){ var v=(r.groups||{})[g[0]]; return v&&v[1]?pct(v[0],v[1]):""; })).concat(AREA_META.map(function(x){ var v=(r.areas||{})[x.key]; return v?v[1]:0; })).concat(AREA_META.map(function(x){ var v=(r.areas||{})[x.key]; return v&&v[1]?pct(v[0],v[1]):""; })).concat(defibCounts(r)).concat(DEFIB_LIST.map(function(x){ var v=(r.defib||{})[x[0]]; return v ? (v[2]?"Passed ":"Review ")+v[0]+"/"+v[1] : ""; })).concat([r.surveyAt? new Date(r.surveyAt).toISOString():"", r.updatedAt? new Date(r.updatedAt).toISOString():""]); }));
