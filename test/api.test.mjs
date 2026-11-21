@@ -343,6 +343,6 @@ test('owner sets the class code and saved cohorts from the scoreboard', async ()
 test('code lab: switch defaults off and case results are validated', async () => {
   const api = make({ INSTRUCTOR_PASSWORD: 'secret' });
   assert.equal((await (await api(req('GET', '/api/config'))).json()).features.codeLab, false);
-  const v = validateDoc({ ...doc(), code: { vf1: [17, 22, 1], mega2: [9, 40, 0], bad: [50, 20, 1], 'X!': [1, 2, 0] } });
-  assert.deepEqual(v.code, { vf1: [17, 22, 1], mega2: [9, 40, 0] });
+  const v = validateDoc({ ...doc(), code: { vf1: [17, 22, 1], mega2: [9, 40, 0], mega1: [20, 28, 0, 2], bad: [50, 20, 1], lv: [1, 2, 0, 5], 'X!': [1, 2, 0] } });
+  assert.deepEqual(v.code, { vf1: [17, 22, 1], mega2: [9, 40, 0], mega1: [20, 28, 0, 2] });
 });

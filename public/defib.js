@@ -46,16 +46,16 @@
     { id: "sbf", title: "Atropine won't work here", type: "pace", start: { r: "sinus", rate: 34 }, pulse: true, conscious: true, bp: "72/40", threshold: [50, 75], atropine: "fails", atroFirst: true,
       text: "A 79-year-old heart-transplant recipient, confused, BP 72/40. Narrow rhythm in the low 30s. Nothing has been given yet.", lesson: "Atropine is usually first, but a transplanted heart has no vagal nerve supply, so it won't respond. Don't wait: pace at 60–80 ppm, confirm capture and a pulse, and treat the pain." },
     { id: "chb", title: "The slow, confused patient", type: "pace", start: { r: "chb" }, pulse: true, conscious: true, bp: "70/38", threshold: [60, 80],
-      text: "An 81-year-old, confused and pale. BP 70/38. Atropine didn't help.", lesson: "Unstable complete heart block: pace at 60–80/min, raise the current until every spike captures, confirm a femoral pulse, and give analgesia or sedation." },
+      text: "An 81-year-old, confused and pale. BP 70/38. Nothing has been given yet.", lesson: "Unstable complete heart block: atropine isn't indicated for 2nd- or 3rd-degree block, so go straight to pacing. Pace at 60–80/min, raise the current until every spike captures, confirm a femoral pulse, and give analgesia or sedation." },
     { id: "b21", title: "Dizzy with a wide, slow rhythm", type: "pace", start: { r: "b21" }, pulse: true, conscious: true, bp: "76/40", threshold: [55, 75],
-      text: "A 76-year-old with an anterior MI, dizzy and clammy. BP 76/40.", lesson: "High-grade block with a wide QRS won't respond to atropine: pace, confirm mechanical capture, treat the pain." },
+      text: "A 76-year-old with an anterior MI, dizzy and clammy. BP 76/40.", lesson: "Atropine isn't indicated for 2nd- or 3rd-degree AV block: pace, confirm mechanical capture, treat the pain." },
     /* non-shockable */
     { id: "asy", title: "Found down at home", type: "noshock", start: { r: "asystole" }, pulse: false,
       text: "An 84-year-old found unresponsive in bed. No pulse, not breathing. Pads are on.", lesson: "Asystole isn't shockable and pacing doesn't help: high-quality CPR, epinephrine 1 mg as soon as possible, look for reversible causes." },
     { id: "pea", title: "Organized, but no pulse", type: "noshock", start: { r: "sinus", rate: 72 }, pulse: false, pea: true,
       text: "A 67-year-old dialysis patient, unresponsive. The monitor shows an organized rhythm, but you can't feel a pulse.", lesson: "PEA isn't shockable: CPR, epinephrine as soon as possible, and treat the cause (here, think hyperkalemia: calcium and bicarbonate)." }
   ];
-  var GROUPS = [["defib", "Shockable rhythms: defibrillate"], ["sync", "Unstable tachycardias: synchronized cardioversion"], ["stable", "Stable tachycardias: no shock"], ["brady", "Symptomatic bradycardias: atropine and pacing"], ["noshock", "Non-shockable arrests"]];
+  var GROUPS = [["defib", "Shockable rhythms: defibrillate"], ["sync", "Unstable tachycardias: synchronized cardioversion"], ["stable", "Stable tachycardias: no shock"], ["brady", "Symptomatic bradycardias: atropine (sinus only) and pacing"], ["noshock", "Non-shockable arrests"]];
   function groupOf(s) { return s.type === "pace" || s.type === "atro" ? "brady" : s.type; }
 
   /* ------------------------------------------------------------------ sound (Web Audio, generated, no files) */
@@ -416,7 +416,8 @@
       else later(2200, function () { logEv("No conversion after adenosine."); });
     }
     if (k === "atro") {
-      if (r === "sinus" && st.perfusing && sc.atropine === "works") later(3000, function () { st.bp = "112/70"; eng.setRhythm({ r: "sinus", rate: 76 }, true); st.converted = true; logEv("Heart rate rising after atropine."); updateScreen(); });
+      if ((r === "chb" || r === "b21") && st.perfusing) later(3000, function () { logEv("No change in heart rate after atropine: it can't get impulses through a 2nd- or 3rd-degree block."); });
+      else if (r === "sinus" && st.perfusing && sc.atropine === "works") later(3000, function () { st.bp = "112/70"; eng.setRhythm({ r: "sinus", rate: 76 }, true); st.converted = true; logEv("Heart rate rising after atropine."); updateScreen(); });
       else if (st.perfusing) later(3000, function () { logEv("No change in heart rate after atropine."); });
       else logEv("Atropine isn't recommended in cardiac arrest.");
     }
@@ -641,7 +642,9 @@
       add("Patient converted", st.converted, st.converted ? "The rhythm converted and blood pressure improved." : "The rhythm didn't convert" + (st.induced ? " and VF was induced." : "."));
     } else if (sc.type === "pace") {
       if (sc.atroFirst) add("Tried atropine without delaying pacing", st.drugs.atro > 0, st.drugs.atro ? "Reasonable: atropine is first-line, but it can't work in a transplanted heart, so moving on to pacing was right." : "Atropine is normally tried first while the pacer is set up. Here it wouldn't have worked (a transplanted heart has no vagal supply), so pacing is the definitive treatment.");
-      add("Turned the pacer on", !!st.everPaced, st.everPaced ? "Transcutaneous pacing is the treatment for unstable bradycardia that doesn't respond to atropine." : "This patient needed transcutaneous pacing.", true);
+      var avb = sc.start.r === "chb" || sc.start.r === "b21";
+      if (avb) add("No atropine for the AV block", !st.drugs.atro, st.drugs.atro ? "Atropine isn't indicated for 2nd- or 3rd-degree AV block: the block is at or below the AV node, so atropine can't get impulses through and can make it worse. Go straight to pacing." : "Correct: atropine isn't indicated for 2nd- or 3rd-degree AV block.");
+      add("Turned the pacer on", !!st.everPaced, st.everPaced ? (avb ? "Transcutaneous pacing is the treatment for unstable 2nd- or 3rd-degree AV block." : "Transcutaneous pacing is the treatment for unstable bradycardia that doesn't respond to atropine.") : "This patient needed transcutaneous pacing.", true);
       add("Rate 60–80 ppm", st.maxRate >= 60 && st.maxRate <= 80 || (st.rateAtCapture >= 60 && st.rateAtCapture <= 80), "Your pacing rate was " + (st.rateAtCapture || st.maxRate || 0) + " ppm. Set 60–80 ppm for an adult.");
       add("Achieved electrical capture", st.capEver, st.capEver ? "Capture at " + st.capmA + " mA (this patient's threshold was " + eng.threshold + " mA). Set the current about 10% above the capture threshold." : "The current never reached this patient's capture threshold (" + eng.threshold + " mA): spikes without wide QRS complexes don't pump blood.", true);
       add("Confirmed mechanical capture with a pulse check", st.pulseAfterCapture, st.pulseAfterCapture ? "Good: a femoral pulse matching the pacer rate confirms mechanical capture." : "After electrical capture, confirm a pulse (femoral, not carotid) that matches the pacing rate.");
@@ -782,6 +785,17 @@
         eng.pacer.on = false; eng.pacer.mA = 0; eng.pacer.rate = 60; stopChargeTone(); updateScreen(); },
       state: function () { var p = eng.pacer; return { sync: st.sync, J: ENERGIES[st.energyI], pacer: { on: p.on, rate: p.rate, mA: p.mA }, threshold: eng.threshold, captured: p.on && p.mA >= eng.threshold && eng.hasQRS() }; },
       message: function (t, cls) { msg(t, cls); },
+      // scale the device to fit the window height (Code lab full screen, two-column layout)
+      fit: function () {
+        var dv = el("dv"); if (!dv || !eng) return;
+        dv.style.zoom = 1;
+        if (window.innerWidth <= 1000) { setupCanvases(); return; }
+        var r = dv.getBoundingClientRect(), top = root.getBoundingClientRect().top;
+        var zh = (window.innerHeight - Math.max(0, top) - 16) / r.height, zw = (window.innerWidth - 32 - 360 - 16) / r.width;
+        var z = Math.max(0.5, Math.min(1.35, zh, zw));
+        dv.style.zoom = Math.abs(z - 1) > 0.005 ? z.toFixed(3) : 1;
+        setupCanvases();
+      },
       stop: function () { cancelAnimationFrame(raf); eng = null; stopChargeTone(); var t = document.querySelector('.t12'); if (t) t.remove(); }
     };
     return ctl;
