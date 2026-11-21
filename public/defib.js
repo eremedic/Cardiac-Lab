@@ -244,7 +244,7 @@
       '          <div class="kpair"><span>CURRENT</span><button class="key mini" id="kCdn" aria-label="Pacing current down">▼</button><button class="key mini" id="kCup" aria-label="Pacing current up">▲</button></div>' +
       '          <button class="key soft" id="kPause">PAUSE</button>' +
       '        </div>' +
-      '        <div class="kgrp row"><button class="key soft" id="kLead">LEAD</button><button class="key soft" id="kNibp">NIBP</button></div>' +
+      '        <div class="kgrp row"><button class="key soft" id="kLead">LEAD</button><button class="key soft" id="kNibp">NIBP</button><button class="key soft" id="k12">12-LEAD</button></div>' +
       '      </div>' +
       '    </div>' +
       '    <div class="dv-grill" aria-hidden="true"></div>' +
@@ -313,7 +313,7 @@
 
   /* ------------------------------------------------------------------ controls */
   function bindKeys() {
-    var FREE = { kLead: 1, kNibp: 1 };
+    var FREE = { kLead: 1, kNibp: 1, k12: 1 };
     var on = function (id, fn) { var b = el(id); if (b) b.onclick = function () { if (st.done) return; if (st.locked && !FREE[id]) { msg(st.lockMsg || "Answer the question first", "warn"); return; } fn(); }; };
     on("kEup", function () { changeEnergy(1); }); on("kEdn", function () { changeEnergy(-1); });
     on("kCharge", charge); on("kShock", shock);
@@ -334,7 +334,7 @@
     on("aMag", function () { drug("mag", "Magnesium sulfate 2 g IV given."); });
     on("aCa", function () { drug("ca", "Calcium chloride 1 g IV given."); });
     on("aVagal", function () { drug("vagal", "Modified Valsalva maneuver performed."); });
-    on("a12", function () { drug("twelve", "12-lead ECG acquired: " + describe() + "."); });
+    on("a12", twelveLead); on("k12", twelveLead);
     var snd = el("kSound"); if (snd) snd.onclick = function () { setSound(!AU.on); };
   }
   function changeEnergy(d) {
@@ -667,6 +667,90 @@
     if (p.on && p.mA >= eng.threshold && eng.hasQRS() && !st.capEver) { st.capEver = true; st.capmA = p.mA; st.rateAtCapture = p.rate; }
   }, 250);
 
+  /* ------------------------------------------------------------------ 12-LEAD key: a printed 12-lead that matches the monitor rhythm */
+  var T12 = null, T12P = null;
+  function t12Lib() {
+    if (T12) return Promise.resolve(T12);
+    if (!T12P) T12P = fetch("/twelve-rhythms.json?v=1").then(function (r) { if (!r.ok) throw new Error("load"); return r.json(); }).then(function (d) { T12 = d; return d; }, function (e) { T12P = null; throw e; });
+    return T12P;
+  }
+  // Which 12-lead matches what the monitor shows right now (null + reason when one shouldn't be acquired)
+  function t12Key() {
+    var r = eng.rh.r, hr = eng.hr(), p = eng.pacer;
+    if (st.cpr) return { why: "Stop CPR first: a 12-lead can't be read through compressions." };
+    if (!st.perfusing || r === "vf" || r === "torsades" || r === "asystole") return { why: "No pulse: this is cardiac arrest. Don't delay CPR and defibrillation for a 12-lead. Get one after ROSC." };
+    if (p.on && !p.paused && p.mA >= eng.threshold && eng.hasQRS()) return { key: "paced", rate: p.rate };
+    if (st.twelve && r === "sinus") return { key: st.twelve, rate: hr };
+    if (r === "sinus") return { key: hr < 60 ? "sbrady" : (hr > 100 ? "stach" : "nsr"), rate: hr };
+    if (r === "flutter") return { key: "flutter", rate: 150 };
+    return { key: r, rate: hr };
+  }
+  function t12SVG(e) {
+    var COLS = [["I", "II", "III"], ["aVR", "aVL", "aVF"], ["V1", "V2", "V3"], ["V4", "V5", "V6"]], RH = 1200, BASE = 760, lines = "", labels = "";
+    function dec(d) { var v = [], cur = 0, i = 0; while (i < d.length) { var ch = d[i]; if (ch === "|") { var j = d.indexOf("|", i + 1); cur = parseInt(d.slice(i + 1, j), 10); v.push(cur); i = j + 1; } else { cur += d.charCodeAt(i) - 80; v.push(cur); i++; } } return v; }
+    function pts(arr, x0, y0) { var o = new Array(arr.length); for (var i = 0; i < arr.length; i++) { var v = Math.max(-110, Math.min(185, arr[i])); o[i] = (x0 + i * 2) + "," + (y0 - v * 4).toFixed(1); } return o.join(" "); }
+    COLS.forEach(function (col, ci) { col.forEach(function (ld, ri) {
+      var y0 = ri * RH + BASE, x0 = ci * 2500;
+      lines += '<polyline points="' + pts(dec(e.leads[ld]), x0, y0) + '"/>';
+      labels += '<text x="' + (x0 + 50) + '" y="' + (ri * RH + 190) + '">' + ld + '</text>';
+      if (ci > 0) lines += '<polyline points="' + x0 + ',' + (y0 - 170) + ' ' + x0 + ',' + (y0 + 170) + '"/>';
+    }); });
+    lines += '<polyline points="' + pts(dec(e.leads.rhythm), 0, 3 * RH + BASE) + '"/>';
+    labels += '<text x="50" y="' + (3 * RH + 190) + '">II</text>';
+    return '<svg class="ecg12" viewBox="0 0 10000 4800" role="img" aria-label="12-lead ECG from the monitor"><rect width="10000" height="4800" fill="url(#pMajor)"/>' +
+      '<g fill="none" stroke="var(--trace)" stroke-width="1.9" stroke-linejoin="round" vector-effect="non-scaling-stroke">' + lines + '</g><g class="ldl" fill="var(--trace)">' + labels + '</g></svg>';
+  }
+  function shuffle(a) { for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)), t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
+  function twelveLead() {
+    if (st.t12Open) return;
+    var k = t12Key();
+    if (!k.key) { msg("12-LEAD NOT ACQUIRED", "warn"); pop("12-LEAD", "", k.why.split(":")[0]); logEv("12-LEAD pressed: " + k.why); el("ptStatus") && (el("ptStatus").innerHTML = '<b>12-lead</b> ' + H(k.why)); return; }
+    st.t12Open = true; msg("ACQUIRING 12-LEAD…", "info"); pop("12-LEAD", "ACQUIRING", "Hold still · 10 seconds", true);
+    var me = st;
+    t12Lib().then(function (lib) {
+      if (st !== me || !eng) return;
+      var list = lib.ecgs[k.key] || [], e = list.slice().sort(function (a, b) { return Math.abs(a.rate - (k.rate || a.rate)) - Math.abs(b.rate - (k.rate || b.rate)); })[0];
+      var x = el("scPop"); if (x) x.hidden = true;
+      if (!e) { st.t12Open = false; msg("12-LEAD UNAVAILABLE", "warn"); return; }
+      st.drugs.twelve = (st.drugs.twelve || 0) + 1; if (st.drugT.twelve == null) st.drugT.twelve = now();
+      logEv("12-lead ECG acquired.");
+      msg("12-LEAD ACQUIRED · INTERPRET IT", "info");
+      t12Show(lib, k.key, e);
+    }, function () { st.t12Open = false; var x = el("scPop"); if (x) x.hidden = true; msg("12-LEAD COULDN'T LOAD · TRY AGAIN", "warn"); });
+  }
+  function t12Show(lib, key, e) {
+    var h = e.h, d = new Date(), f = function (v, u) { return v == null ? "---" : v + (u ? " " + u : ""); };
+    var opts = shuffle([key].concat(lib.distract[key] || []).slice(0, 4)), me = st;
+    var row = function (l, v) { return '<div><dt>' + l + '</dt><dd>' + v + '</dd></div>'; };
+    var wrap = document.createElement("div");
+    wrap.className = "t12"; wrap.setAttribute("role", "dialog"); wrap.setAttribute("aria-modal", "true"); wrap.setAttribute("aria-label", "12-lead ECG");
+    wrap.innerHTML = '<div class="t12-box"><div class="t12-top"><b>12-lead ECG · from the monitor</b><button class="btn t12-x" id="t12X" type="button">✕ Close</button></div>' +
+      '<div class="t12-print"><div class="t12-hd">' +
+        '<div class="t12-id"><b>ID: ' + (sc.peds ? 'PEDIATRIC' : 'ADULT') + ' · EMS</b><span>' + d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) + '</span><span>Room: Unit · Loc: field</span></div>' +
+        '<dl class="t12-meas">' + row("Vent. rate", f(h.vent, "BPM")) + row("Atrial rate", f(h.atrial, "BPM")) + row("PR interval", f(h.pr, "ms")) + row("QRS duration", f(h.qrs, "ms")) +
+          row("QT/QTc", f(h.qt) + "/" + f(h.qtc, "ms")) + row("P-R-T axes", f(h.paxis) + " " + f(h.raxis) + " " + f(h.taxis)) + '</dl>' +
+        '<div class="t12-int"><b>Interpretation</b><span>Not printed. Read it yourself below.</span></div>' +
+      '</div><div class="paper">' + t12SVG(e) + '</div>' +
+      '<div class="t12-ft"><span>25 mm/s · 10 mm/mV · 0.05–150 Hz · 60 Hz filter</span><span>Bottom row: lead II rhythm strip, 10 s · tap the tracing to zoom</span></div></div>' +
+      '<div class="t12-q" id="t12Q"><h3>Interpret this 12-lead</h3><div class="t12-opts">' + opts.map(function (o) { return '<button class="btn btn-ghost t12-o" type="button" data-k="' + o + '">' + H(lib.labels[o][0]) + '</button>'; }).join("") + '</div><div id="t12Fb"></div></div></div>';
+    document.body.appendChild(wrap);
+    var close = function () { wrap.remove(); document.removeEventListener("keydown", esc); if (st === me) st.t12Open = false; };
+    var esc = function (ev) { if (ev.key === "Escape" && !document.querySelector(".ecgv")) close(); };
+    document.addEventListener("keydown", esc);
+    wrap.querySelector("#t12X").onclick = close;
+    wrap.addEventListener("click", function (ev) { if (ev.target === wrap) close(); });
+    wrap.querySelectorAll(".t12-o").forEach(function (b) { b.onclick = function () {
+      var pick = b.getAttribute("data-k"), ok = pick === key;
+      wrap.querySelectorAll(".t12-o").forEach(function (x) { x.disabled = true; var xk = x.getAttribute("data-k"); if (xk === key) x.classList.add("right"); else if (xk === pick) x.classList.add("wrong"); });
+      wrap.querySelector("#t12Fb").innerHTML = '<div class="t12-fb ' + (ok ? 'ok' : 'bad') + '"><b>' + (ok ? 'Correct: ' : 'Not quite. This is ') + H(lib.labels[key][0]) + '</b><p>' + H(lib.labels[key][1]) + '</p>' +
+        (ok ? '' : '<p class="t12-why"><b>' + H(lib.labels[pick][0]) + '</b> would look like this: ' + H(lib.labels[pick][1]) + '</p>') + '<button class="btn btn-primary" id="t12Done" type="button">Back to the monitor</button></div>';
+      wrap.querySelector("#t12Done").onclick = close; wrap.querySelector("#t12Done").focus();
+      if (st === me) { st.t12Reads = (st.t12Reads || []); st.t12Reads.push({ key: key, pick: pick, ok: ok }); logEv("12-lead read as " + lib.labels[pick][0] + (ok ? " (correct)." : " (it's " + lib.labels[key][0] + ").")); }
+      if (HOST.onDevice) HOST.onDevice("twelve", { key: key, pick: pick, ok: ok });
+    }; });
+    wrap.querySelector("#t12X").focus();
+  }
+
   /* ------------------------------------------------------------------ public */
   // Embedded device for the Code lab: the page drives the patient; the device reports what the student does.
   function embed(container, init, host) {
@@ -685,7 +769,7 @@
     cancelAnimationFrame(raf); raf = requestAnimationFrame(frame);
     var ctl = {
       patient: function (p) {
-        if (p.rhythm) eng.setRhythm(copy(p.rhythm), !!p.pulse);
+        if (p.rhythm) eng.setRhythm(copy(p.rhythm), !!p.pulse); st.twelve = p.twelve || null;
         st.perfusing = !!p.pulse; st.bp = p.bp || null; st.converted = !!p.good;
         setCpr(!!p.cpr, true); updateScreen();
         if (p.bp) { el("nBp").textContent = p.bp; el("nBpT").textContent = stamp(); } else el("nBp").textContent = "---/---";
@@ -698,7 +782,7 @@
         eng.pacer.on = false; eng.pacer.mA = 0; eng.pacer.rate = 60; stopChargeTone(); updateScreen(); },
       state: function () { var p = eng.pacer; return { sync: st.sync, J: ENERGIES[st.energyI], pacer: { on: p.on, rate: p.rate, mA: p.mA }, threshold: eng.threshold, captured: p.on && p.mA >= eng.threshold && eng.hasQRS() }; },
       message: function (t, cls) { msg(t, cls); },
-      stop: function () { cancelAnimationFrame(raf); eng = null; stopChargeTone(); }
+      stop: function () { cancelAnimationFrame(raf); eng = null; stopChargeTone(); var t = document.querySelector('.t12'); if (t) t.remove(); }
     };
     return ctl;
   }
@@ -711,11 +795,11 @@
       window.DefibLab.list();
     },
     list: function () {
-      cancelAnimationFrame(raf); eng = null; document.body.classList.remove("df-focus");
+      cancelAnimationFrame(raf); eng = null; document.body.classList.remove("df-focus"); var t = document.querySelector(".t12"); if (t) t.remove();
       root.innerHTML = scenarioListHTML();
       root.querySelectorAll(".df-case").forEach(function (b) { b.onclick = function () { startScenario(+b.getAttribute("data-i")); }; });
     },
-    stop: function () { cancelAnimationFrame(raf); eng = null; stopChargeTone(); document.body.classList.remove("df-focus"); },
+    stop: function () { cancelAnimationFrame(raf); eng = null; stopChargeTone(); document.body.classList.remove("df-focus"); var t = document.querySelector(".t12"); if (t) t.remove(); },
     resize: function () { if (eng) fit(false); }
   };
   var rT; window.addEventListener("resize", function () { if (!eng) return; clearTimeout(rT); rT = setTimeout(function () { if (eng) fit(false); }, 120); });

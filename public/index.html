@@ -746,6 +746,7 @@ body.df-focus .bar{position:relative}
 @media (max-width:420px){.kpair{grid-template-columns:1fr 40px 40px}}
 .kgrp{display:grid;gap:5px;background:#1C1F23;border-radius:12px;padding:8px;box-shadow:inset 0 1px 2px rgba(0,0,0,.5)}
 .kgrp.row{grid-template-columns:1fr 1fr}
+.kgrp.row #k12{grid-column:1/-1;color:#8FD3FF}
 .klab{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.08em;color:#C9D0D6;display:flex;align-items:center;gap:6px}
 .klab i{font-style:normal;width:17px;height:17px;border-radius:50%;background:#E8ECEF;color:#1C1F23;display:grid;place-items:center;font-weight:700;font-size:10.5px}
 .krow{display:grid;grid-template-columns:1fr 1fr;gap:6px}
@@ -1032,6 +1033,32 @@ html.ecgv-open,html.ecgv-open body{overflow:hidden}
 #v-home .hero{align-items:start}
 #v-home .hero-copy .logo-badge{margin-top:0}
 /* ---------- Code lab ---------- */
+.t12{position:fixed;inset:0;z-index:75;display:flex;align-items:flex-start;justify-content:center;overflow:auto;padding:max(14px,env(safe-area-inset-top,0px)) 12px 24px;background:rgba(6,14,32,.72)}
+.t12-box{width:min(1180px,100%);background:var(--surface);border-radius:14px;box-shadow:0 18px 50px rgba(0,0,0,.35);overflow:hidden}
+.t12-top{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--line)}
+.t12-top b{font-size:15px}
+.t12-x{background:var(--surface-2);border:1px solid var(--line);font-weight:700}
+.t12-print{background:var(--paper);padding:10px 12px 6px}
+.t12-hd{display:grid;grid-template-columns:minmax(150px,1fr) minmax(250px,1.3fr) minmax(170px,1fr);gap:8px 18px;font-family:var(--f-mono);font-size:12.5px;color:var(--trace);padding-bottom:8px;border-bottom:1px solid var(--grid-minor);margin-bottom:6px}
+.t12-id{display:grid;gap:2px;align-content:start}.t12-id span{color:var(--trace);opacity:.8}
+.t12-meas{display:grid;grid-template-columns:1fr 1fr;gap:1px 16px;margin:0}
+.t12-meas div{display:flex;justify-content:space-between;gap:8px}.t12-meas dt{opacity:.8}.t12-meas dd{margin:0;font-weight:700}
+.t12-int{display:grid;gap:2px;align-content:start}.t12-int span{font-style:italic;opacity:.75}
+.t12 .paper{overflow-x:auto}.t12 .paper svg.ecg12{display:block;width:100%;min-width:900px;height:auto;cursor:zoom-in}
+.t12-ft{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font:11.5px var(--f-mono);color:var(--trace);opacity:.8;padding-top:4px}
+.t12-q{padding:14px 16px 18px;display:grid;gap:10px}.t12-q h3{margin:0;font-size:17px}
+.t12-opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:8px}
+.t12-o{justify-content:flex-start;text-align:left;white-space:normal}
+.t12-o.right{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 14%,var(--surface));color:var(--ink);opacity:1}
+.t12-o.wrong{border-color:var(--bad);background:var(--red-soft);color:var(--ink);opacity:1}
+.t12-fb{border-left:4px solid var(--ok);padding:10px 12px;border-radius:8px;background:var(--surface-2)}.t12-fb.bad{border-left-color:var(--bad)}
+.t12-fb p{margin:4px 0 10px}.t12-why{color:var(--ink-2);font-size:14px}
+@media (max-width:760px){.t12-hd{grid-template-columns:1fr}.t12-meas{grid-template-columns:1fr}}
+body.cl-full{overflow:hidden}
+.cl-run.full{position:fixed;inset:0;z-index:70;overflow:auto;background:var(--bg);padding:max(12px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) 24px max(16px,env(safe-area-inset-left,0px))}
+.cl-run.full .runner-head{position:sticky;top:calc(-1 * max(12px,env(safe-area-inset-top,0px)));z-index:5;background:var(--bg);padding:8px 0;margin-bottom:10px;border-bottom:1px solid var(--line);align-items:center}
+.cl-exit{display:inline-flex;align-items:center;gap:6px;border:2px solid var(--bad);color:var(--bad);background:var(--surface);font-weight:700}
+.cl-exit:hover{background:var(--red-soft)}
 .cl-cat{margin:18px 0 6px}.cl-cat.mega{padding:14px;border-radius:16px;background:linear-gradient(120deg,var(--red-soft),var(--surface) 70%);border:1px solid var(--line)}
 .cl-cat-h{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap;margin-bottom:8px}.cl-cat-h h3{font-size:18px}.cl-cat-h span{color:var(--muted);font-size:13.5px}
 .cl-run .runner-head{display:flex;justify-content:space-between;align-items:flex-end;gap:14px;flex-wrap:wrap;margin-bottom:14px}
@@ -2388,7 +2415,7 @@ function renderDefib(){
   }); if(!defibOpen()) root.insertAdjacentHTML("afterbegin", '<p class="df-preview">Instructor preview: students can\'t see the Defib lab until you open it on the scoreboard.</p>'); };
   if(window.DefibLab){ go(); return; }
   root.innerHTML='<div class="card panel"><p class="empty">Loading the Defib lab…</p></div>';
-  if(!DEFIB_LOADING) DEFIB_LOADING=new Promise(function(res, rej){ var sc=document.createElement("script"); sc.src="/defib.js?v=7"; sc.onload=res; sc.onerror=function(){ DEFIB_LOADING=null; rej(); }; document.head.appendChild(sc); });
+  if(!DEFIB_LOADING) DEFIB_LOADING=new Promise(function(res, rej){ var sc=document.createElement("script"); sc.src="/defib.js?v=8"; sc.onload=res; sc.onerror=function(){ DEFIB_LOADING=null; rej(); }; document.head.appendChild(sc); });
   DEFIB_LOADING.then(go, function(){ root.innerHTML='<div class="card panel problem"><h3>The Defib lab didn\'t load</h3><p>Check your connection and reload the page.</p></div>'; });
 }
 function areaTotals(r){ var c=0,a=0; Object.keys(r.areas||{}).forEach(function(k){ if(k==="vessel") return; var v=r.areas[k]; if(v){ c+=v[0]; a+=v[1]; } }); return [c,a]; }
@@ -2445,7 +2472,7 @@ function renderCodeLab(){
   }); if(!codeOpen()) root.insertAdjacentHTML("afterbegin", '<p class="df-preview">Instructor preview: students can\'t see the Code lab until you open it on the scoreboard.</p>'); };
   if(window.CodeLab && window.DefibLab){ go(); return; }
   root.innerHTML='<div class="card panel"><p class="empty">Loading the Code lab…</p></div>';
-  if(!CODE_LOADING) CODE_LOADING=(window.DefibLab ? Promise.resolve() : (DEFIB_LOADING || loadScript("/defib.js?v=7"))).then(function(){ return window.CodeLab ? null : loadScript("/codelab.js?v=1"); });
+  if(!CODE_LOADING) CODE_LOADING=(window.DefibLab ? Promise.resolve() : (DEFIB_LOADING || loadScript("/defib.js?v=8"))).then(function(){ return window.CodeLab ? null : loadScript("/codelab.js?v=2"); });
   CODE_LOADING.then(go, function(){ CODE_LOADING=null; root.innerHTML='<div class="card panel problem"><h3>The Code lab didn\'t load</h3><p>Check your connection and reload the page.</p></div>'; });
 }
 function codeTileHTML(){

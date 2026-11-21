@@ -141,12 +141,19 @@ Progress is kept in the student's browser. Using a different device or browser s
 - **It starts closed.** Open it from the **Field strips** card on the scoreboard (with **Preview**). Until then students don't see the tile and the server won't send the strips to anyone but the instructor. Results show in the scoreboard's practice-areas panel and CSV like the other areas.
 - Rebuild with `python3 tools/generator/build_field.py` (writes `lib/field-data.mjs`).
 
+**12-LEAD key on the monitor (Defib lab and Code lab)**
+- Pressing **12-LEAD** on the device (or **12-lead ECG** in a Defib lab scenario) prints a full 12-lead that matches the rhythm on the monitor: sinus rhythm, sinus bradycardia or tachycardia by the current rate, SVT, atrial fibrillation, atrial flutter, monomorphic VT, complete heart block, 2:1 block, or a ventricular paced rhythm once the pacer has capture. In the Code lab's STEMI post-arrest steps it prints the anterior STEMI.
+- The printout has the header measurements a real cart prints (vent. rate, atrial rate, PR, QRS, QT/QTc, P-R-T axes; "---" when there's none) but **no interpretation**. Students pick the interpretation from four choices and get the explanation. The tracing can be tapped to zoom, and calipers work on it.
+- In cardiac arrest (no pulse) or during CPR the device refuses, with a reminder not to delay CPR and defibrillation for a 12-lead.
+- The tracings come from `tools/generator/build_twelve_rhythms.py`, which writes `public/twelve-rhythms.json`.
+
 **Code lab: the defibrillator and megacode together (opened by the instructor)**
 - A separate module (the existing Megacode and Defib lab are unchanged). The live monitor/defibrillator/pacer runs beside a case that unfolds step by step, written to the current AHA adult advanced life support algorithms (cardiac arrest, bradycardia, tachycardia with a pulse, post-cardiac arrest care).
 - Students pick one algorithm (VF/pulseless VT, asystole/PEA, bradycardia, SVT, VT with a pulse, atrial fibrillation, post-arrest care) or a **Megacode**, which runs pre-arrest → cardiac arrest → post-arrest care with at least three rhythms (e.g. unstable VT → VF → ROSC; complete heart block → PEA → ROSC; unstable AF → VF → asystole → ROSC).
 - **Adaptive coaching:** a wrong choice gets "Do you really want to do that?" with a prompt; students can **Rethink** (that choice is crossed out) or **Yes, do it** and see what happens to the patient, then the best choice and why.
 - **Device steps:** students do the shock, synchronized cardioversion or pacing themselves (the device is locked during question steps). Mistakes are coached live: SYNC left on in VF, too little energy, or an unsynchronized shock on a rhythm with a pulse (which causes VF; the patient is then rewound so they can try again). Pacing shows a live checklist (pacer on, rate 60–80, capture).
 - Scoring: full credit for a right first choice, half after rethinking or a second try; 80% passes. Results show on the scoreboard (Code lab chart, student detail, CSV).
+- A case opens **full screen** (the browser's full-screen mode where it's supported) with a red **✕ Exit case** button at the top right. Exiting part-way asks first, because that case's progress isn't saved.
 - **It starts closed.** Open it from the **Code lab** card on the scoreboard (instructors can be given this switch). Always teach alongside your local protocols and the current AHA provider manual.
 
 **Course survey**
@@ -210,6 +217,10 @@ python3 tools/generator/build_areas.py
 
 ```bash
 python3 tools/generator/build_twelve.py
+```
+
+```bash
+python3 tools/generator/build_twelve_rhythms.py
 ```
 
 The page design and app logic are in `public/index.html`. If you change `lib/schema.mjs`, run `npm run db:schema` to update `supabase/schema.sql`.

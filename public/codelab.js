@@ -16,6 +16,7 @@
     nsr: { r: "sinus", rate: 92 }, stach: { r: "sinus", rate: 108 }, brady: { r: "sinus", rate: 38 }, chb: { r: "chb" }, pea: { r: "sinus", rate: 64 }
   };
   // a patient state: rhythm, pulse, blood pressure, CPR in progress
+  var P0 = P;
   function P(rh, pulse, bp, cpr, good) { return { rhythm: RH[rh], pulse: !!pulse, bp: bp || null, cpr: !!cpr, good: !!good }; }
 
   /* ------------------------------------------------------------------ step builders
@@ -97,6 +98,7 @@
   }
   // --- post-cardiac arrest care (Adult Post-Cardiac Arrest Care Algorithm)
   function postCare(stemi) {
+    var P = function (rh, pulse, bp, cpr, good) { var p = P0(rh, pulse, bp, cpr, good); if (stemi) p.twelve = "antstemi"; return p; };
     return [
       Q(P("nsr", true, "84/50", false, true), "ROSC. Pulse 104, BP 84/50, SpO₂ 99% on 100% oxygen, advanced airway in place.", "What are your ventilation and oxygen targets?", [
         ["Titrate oxygen to SpO₂ 92–98%, ventilate about 10 breaths/min, and aim for a normal PaCO₂ (35–45 mmHg)", true, "After ROSC avoid both hypoxia and hyperoxia (SpO₂ 92–98%) and avoid hyperventilation: start at 10 breaths/min and titrate to a normal PaCO₂/ETCO₂."],
@@ -110,7 +112,7 @@
         ["Give epinephrine 1 mg IV push", false, "The 1 mg arrest dose is for pulseless patients. A pulse is present: use an infusion and titrate.", "Is the arrest bolus dose right for a patient with a pulse?", "A sudden surge in pressure and heart rate; risk of re-arrest."],
         ["Give nitroglycerin for possible ischemia", false, "Nitroglycerin would drop an already low pressure.", "What does nitroglycerin do to blood pressure?", "Further hypotension."]
       ]),
-      Q(P("nsr", true, "102/64", false, true), stemi ? "Blood pressure is improving. The 12-lead ECG shows ST elevation in V1–V4." : "Blood pressure is improving. The 12-lead ECG shows no ST elevation.", "What's the next priority?",
+      Q(P("nsr", true, "102/64", false, true), stemi ? "Blood pressure is improving. Press 12-LEAD on the monitor and read the ECG: it shows ST elevation in V1–V4." : "Blood pressure is improving. Press 12-LEAD on the monitor: the 12-lead shows no ST elevation.", "What's the next priority?",
         stemi ? [
           ["Activate the cath lab: ST elevation after ROSC needs emergent coronary angiography", true, "Get a 12-lead ECG as soon as possible after ROSC. STEMI → emergent angiography/PCI."],
           ["Repeat the 12-lead tomorrow; it's probably post-arrest changes", false, "STEMI after ROSC should be treated as STEMI.", "What should ST elevation after ROSC trigger?", "Delayed reperfusion for an occluded coronary artery."],
@@ -354,15 +356,30 @@
     stopDevice(); root.innerHTML = listHTML();
     root.querySelectorAll(".cl-case").forEach(function (b) { b.onclick = function () { start(b.getAttribute("data-case")); window.scrollTo(0, 0); }; });
   }
-  function stopDevice() { clearInterval(timer); if (dev) { dev.stop(); dev = null; } }
+  function stopDevice() { clearInterval(timer); if (dev) { dev.stop(); dev = null; } unfull(); }
+  // A running case fills the screen; the Exit button (or the browser's own Esc) brings the page back.
+  function full() {
+    document.body.classList.add("cl-full");
+    var d = document.documentElement;
+    try { if (d.requestFullscreen && !document.fullscreenElement) d.requestFullscreen().catch(function () {}); } catch (e) {}
+  }
+  function unfull() {
+    document.body.classList.remove("cl-full");
+    try { if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(function () {}); } catch (e) {}
+  }
+  function exitCase() {
+    var mid = cur && cur.phase !== "done" && cur.marks.some(function (m) { return m != null; });
+    if (mid && !window.confirm("Exit this case? Your progress on it won't be saved.")) return;
+    list(); window.scrollTo(0, 0);
+  }
 
   function start(id) {
     var c = CASES.filter(function (x) { return x.id === id; })[0];
     cur = { c: c, i: 0, marks: [], tries: 0, struck: {}, phase: "ask" };
-    root.innerHTML = '<div class="cl-run"><div class="runner-head"><div><div class="eyebrow">' + H(CATS.filter(function (k) { return k[0] === c.cat; })[0][1]) + ' · Code lab</div><h2>' + H(c.title) + '</h2></div>' +
-      '<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><div class="steps" id="clSteps"></div><button class="btn btn-ghost" id="clBack">All cases</button></div></div>' +
+    root.innerHTML = '<div class="cl-run full"><div class="runner-head"><div><div class="eyebrow">' + H(CATS.filter(function (k) { return k[0] === c.cat; })[0][1]) + ' · Code lab</div><h2>' + H(c.title) + '</h2></div>' +
+      '<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><div class="steps" id="clSteps"></div><button class="btn cl-exit" id="clBack" type="button" aria-label="Exit this case and return to all cases">✕ Exit case</button></div></div>' +
       '<div class="cl-grid"><div id="clDev"></div><div class="cl-side"><div class="card scenario cl-story"><p>' + H(c.text) + '</p></div><div id="clStep"></div></div></div></div>';
-    root.querySelector("#clBack").onclick = list;
+    root.querySelector("#clBack").onclick = exitCase; full();
     var p0 = c.steps[0].p;
     dev = window.DefibLab.embed(root.querySelector("#clDev"), { rhythm: p0.rhythm, pulse: p0.pulse, bp: p0.bp }, { esc: HOST.esc, onDevice: onDevice });
     step();
