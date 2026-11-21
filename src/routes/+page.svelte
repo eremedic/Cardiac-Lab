@@ -1,7 +1,15 @@
 <script>
   import { onMount } from 'svelte';
-  import { show } from '$lib/app/client.js';
-  onMount(() => { show('home'); });
+  import { show, app } from '$lib/app/client.js';
+  import { connect } from '$lib/app/live.svelte.js';
+  import SignIn from '$lib/components/SignIn.svelte';
+
+  let hero = $state('');
+  onMount(async () => {
+    connect();
+    show('home');
+    hero = (await app()).heroSVG();
+  });
 </script>
 
 <svelte:head><title>CSHealthED Cardiac Lab · ECG &amp; Megacode Training</title></svelte:head>
@@ -17,7 +25,7 @@
       <div class="monitor" aria-label="Animated monitor showing normal sinus rhythm">
         <div class="mon-top"><span class="live">Lead II · Monitor</span><span>25 mm/s · 10 mm/mV</span></div>
         <div class="mon-body">
-          <div class="mon-screen" id="heroScreen"></div>
+          <div class="mon-screen" id="heroScreen">{@html hero}</div>
           <div class="vitals">
             <div class="vital hr"><small>HR</small><b class="num">75</b></div>
             <div class="vital bp"><small>NIBP</small><b class="num">124/78</b></div>
@@ -26,14 +34,7 @@
           </div>
         </div>
       </div>
-    <div class="card share-card signin-card">
-      <div class="share-l"><div class="eyebrow">Student sign-in</div><p id="shareMsg">Your progress is saved on this device.</p></div>
-      <div class="share-f">
-        <label class="cohort" for="stuName"><span>Your name</span><input id="stuName" type="text" maxlength="60" placeholder="First and last name" autocomplete="name"></label>
-        <label class="cohort" for="cohort"><span>Class or cohort (optional)</span><input id="cohort" type="text" maxlength="40" placeholder="e.g. PCP Spring 2026" autocomplete="off" list="cohortList"><datalist id="cohortList"></datalist></label>
-        <label class="cohort" for="classCode" id="codeWrap"><span>Class code</span><input id="classCode" type="text" maxlength="60" placeholder="From your instructor" autocomplete="off"></label>
-      </div>
-    </div>
+    <SignIn />
         <a class="btn btn-primary go-course" href="/course">Go to the course →</a>
       </div>
     </div>

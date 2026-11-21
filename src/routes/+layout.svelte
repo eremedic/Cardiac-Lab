@@ -1,20 +1,24 @@
 <script>
   import '../app.css';
+  import { onMount } from 'svelte';
   import { page } from '$app/state';
+  import { live, connect } from '$lib/app/live.svelte.js';
 
   let { children } = $props();
+  onMount(() => { connect(); });
+  const snap = $derived(live.snap);
 
-  // Defib lab and Code lab tabs start hidden; the engine shows them when the instructor opens those modules.
+  // Defib lab and Code lab tabs show when the instructor has opened them (or an instructor is signed in).
   const TABS = [
     { href: '/', v: 'home', label: 'Home' },
     { href: '/course', v: 'course', label: 'Course' },
     { href: '/practice', v: 'practice', label: 'Practice' },
     { href: '/megacode', v: 'megacode', label: 'Megacode' },
-    { href: '/defib', v: 'defib', label: 'Defib lab', id: 'tabDefib', hidden: true },
-    { href: '/codelab', v: 'codelab', label: 'Code lab', id: 'tabCode', hidden: true },
+    { href: '/defib', v: 'defib', label: 'Defib lab', gate: 'showDefib' },
+    { href: '/codelab', v: 'codelab', label: 'Code lab', gate: 'showCode' },
     { href: '/results', v: 'results', label: 'Results' },
     { href: '/survey', v: 'survey', label: 'Survey' },
-    { href: '/instructor', v: 'instructor', label: 'Instructor sign-in', id: 'tabBoard' }
+    { href: '/instructor', v: 'instructor', label: 'Instructor sign-in' }
   ];
   // The strips and each practice area live under Practice.
   const tab = $derived.by(() => {
@@ -42,13 +46,15 @@
     </a>
     <nav class="tabs" aria-label="Sections">
       {#each TABS as t (t.href)}
-        <a href={t.href} id={t.id} hidden={t.hidden} aria-current={tab === t.v ? 'page' : undefined}>{t.label}</a>
+        {#if !t.gate || snap?.[t.gate]}
+          <a href={t.href} aria-current={tab === t.v ? 'page' : undefined}>{t.v === 'instructor' && snap?.admin ? 'Scoreboard' : t.label}</a>
+        {/if}
       {/each}
     </nav>
     <div class="tally" aria-live="polite">
-      <span class="chip">Strips <b class="num" id="tStrips">0/0</b></span>
-      <span class="chip sync" id="tSync" data-s="local">Saved on this device</span>
-      <span class="chip">Megacode <b class="num" id="tMega">0/0</b></span>
+      <span class="chip">Strips <b class="num">{snap ? snap.strips.c + '/' + snap.strips.a : '0/0'}</b></span>
+      <span class="chip sync" data-s={snap?.sync.kind ?? 'local'}>{snap?.sync.chip ?? 'Saved on this device'}</span>
+      <span class="chip">Megacode <b class="num">{snap ? snap.mega.c + '/' + snap.mega.a : '0/0'}</b></span>
     </div>
   </div>
 </header>

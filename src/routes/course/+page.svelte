@@ -1,7 +1,15 @@
 <script>
   import { onMount } from 'svelte';
   import { show } from '$lib/app/client.js';
-  onMount(() => { show('course'); });
+  import { live, connect } from '$lib/app/live.svelte.js';
+  import ProgressRing from '$lib/components/ProgressRing.svelte';
+  import AreaTile from '$lib/components/AreaTile.svelte';
+
+  onMount(() => { connect(); show('course'); });
+  const snap = $derived(live.snap);
+  const pct = (c, t) => (t ? Math.round((100 * c) / t) : 0);
+  // Rings show progress (how much is answered), not the score.
+  const stripsLabel = $derived(!snap ? 'Start strips' : snap.strips.a === 0 ? 'Start strips' : snap.strips.a === snap.strips.n ? 'Review strips' : 'Resume at strip ' + snap.strips.pi);
 </script>
 
 <svelte:head><title>Course · Cardiac Lab</title></svelte:head>
@@ -13,20 +21,20 @@
         <div class="band">
           <div class="band-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 13h4l2-6 3 12 3-9 2 3h6"/></svg></div>
           <div class="band-t"><div class="eyebrow">Module 1</div><h2>Random ECG Practice Strips</h2></div>
-          <svg class="ring" viewBox="0 0 64 64" id="ringStrips"></svg>
+          <ProgressRing frac={snap ? snap.strips.a / snap.strips.n : 0} label="{snap ? pct(snap.strips.a, snap.strips.n) : 0}%" />
         </div>
         <div class="module-b">
           <p>Choose the rhythm, then see the full interpretation: rate, regularity, P waves, PR, QRS and the field action.</p>
           <ul class="families"><li class="f-sinus">Sinus</li><li class="f-atrial">Atrial</li><li class="f-junc">Junctional</li><li class="f-vent">Ventricular</li><li class="f-block">AV blocks</li><li class="f-paced">Paced</li></ul>
           <p class="small">17 unique strips in each family. When you're wrong, a side-by-side shows how your choice differs.</p>
-          <div class="actions"><a class="btn btn-primary" href="/strips" id="goStrips">Start strips</a></div>
+          <div class="actions"><a class="btn btn-primary" href="/strips">{stripsLabel}</a></div>
         </div>
       </article>
       <article class="card module m-mega">
         <div class="band">
           <div class="band-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg></div>
           <div class="band-t"><div class="eyebrow">Module 2</div><h2>20 ACLS megacodes</h2></div>
-          <svg class="ring" viewBox="0 0 64 64" id="ringMega"></svg>
+          <ProgressRing frac={snap ? snap.mega.a / snap.mega.n : 0} label="{snap ? pct(snap.mega.a, snap.mega.n) : 0}%" />
         </div>
         <div class="module-b">
           <p>Each case unfolds on a live monitor. Read the rhythm and vitals, choose the next treatment, and get the rationale for every option.</p>
@@ -37,9 +45,10 @@
     </div>
     <section class="area-sec" aria-labelledby="areasTitle">
       <div class="area-head"><div><div class="eyebrow">Practice by rhythm family</div><h2 id="areasTitle">Six practice areas, 50 strips each</h2></div><p>Drill one family at a time. Every strip is different and follows the rules of the rhythm it shows.</p></div>
-      <div class="area-grid" id="homeAreas"></div>
+      <div class="area-grid">
+        {#each snap?.tiles ?? [] as t (t.key)}<AreaTile {t} />{/each}
+      </div>
     </section>
-    <div id="homeDefib"></div>
     <div class="card sv-home" id="homeSurvey"></div>
     <div class="card method">
       <div class="lab">Use the same five steps on every strip</div>

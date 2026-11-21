@@ -18,7 +18,9 @@ var RENAMED = {"Premature atrial contractions (PACs)": "Sinus rhythm with PACs",
 function canon(x){ return (x!=null && RENAMED[x]) || x; }
 (function(){ var fix=function(p){ if(p) Object.keys(p).forEach(function(n){ if(RENAMED[p[n]]) p[n]=RENAMED[p[n]]; }); };
   fix(S.p); if(S.ar) Object.keys(S.ar).forEach(function(k){ fix(S.ar[k] && S.ar[k].p); }); })();
-function save(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} if(window.__push) window.__push(); }
+var LISTENERS = [];
+function emit(){ LISTENERS.forEach(function(f){ try{ f(); }catch(e){ console.error(e); } }); }
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} if(window.__push) window.__push(); emit(); }
 var $ = function(id){return document.getElementById(id)};
 function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
 
@@ -74,7 +76,6 @@ function ring(el, frac, label){
 function updateTally(){
   if(typeof renderSurveyPrompts==="function") renderSurveyPrompts();
   var s=stripScore(), m=megaScore();
-  $("tStrips").textContent = s.c+"/"+s.a; $("tMega").textContent = m.c+"/"+m.a;
   if($("ringStrips")) ring($("ringStrips"), s.a/N, pct(s.a,N)+"%");   // course rings show progress (answered), not score
   if($("ringMega")) ring($("ringMega"), m.a/TOTAL_Q, pct(m.a,TOTAL_Q)+"%");
   if($("goStrips")) $("goStrips").textContent = s.a===0 ? "Start strips" : (s.a===N ? "Review strips" : "Resume at strip "+S.pi);
@@ -427,8 +428,7 @@ function heroKey(){ for(var i=0;i<P.length;i++) if(P[i].cat==="Normal sinus rhyt
 function show(v, areaKey){
   VIEW=v; VIEW_AREA = v==="area" ? areaKey : null;
   document.querySelectorAll(".nStrips").forEach(function(e){e.textContent=N});
-  if(v==="home"){ bindSignin(); var hs=$("heroScreen"); if(hs) hs.innerHTML = stripSVG(D.strips.p1 ? heroKey() : Object.keys(D.strips)[0], "monitor", "loop", 3000); }
-  if(v==="strips") bindStrips();
+    if(v==="strips") bindStrips();
   if(v==="megacode") bindMega();
   if(v==="scoreboard") bindBoard();
   if(v==="area") renderArea(areaKey); else { CUR_AREA=null; renderCardioPop(null); }
@@ -458,7 +458,7 @@ var SHARE_TXT = {
   saving:"Saving your latest answer for your instructor…",
   badcode:"That class code doesn't match. Check it with your instructor. Your progress is still saved on this device.",
   error:"Your last answer couldn't reach the scoreboard. It's saved on this device and will sync on your next answer."};
-function setSync(st){ SB.state=st; var c=$("tSync"); c.setAttribute("data-s", st==="synced"?"synced":(st==="saving"?"saving":(st==="badcode"||st==="error"?"error":"local"))); c.textContent=SYNC_TXT[st]; if($("shareMsg")) $("shareMsg").textContent=SHARE_TXT[st]; }
+function setSync(st){ SB.state=st; emit(); }
 function uuid(){
   if(window.crypto && crypto.randomUUID) return crypto.randomUUID();
   var b=new Uint8Array(16); crypto.getRandomValues(b); b[6]=(b[6]&15)|64; b[8]=(b[8]&63)|128;
@@ -490,26 +490,15 @@ window.__push=function(){ if(!SB.online) return; clearTimeout(SB.timer); SB.time
 function flush(){ if(SB.timer){ clearTimeout(SB.timer); SB.timer=null; pushNow(); } }
 window.addEventListener("pagehide", flush);
 document.addEventListener("visibilitychange", function(){ if(document.visibilityState==="hidden") flush(); });
-function bindSignin(){
-if(!$("stuName")) return;
-$("stuName").value = S.name || ""; $("cohort").value = S.cohort || ""; $("classCode").value = S.code || "";
-$("stuName").addEventListener("change", function(){ S.name=this.value.trim().slice(0,60); save(); if(SB.online) pushNow(); });
-$("cohort").addEventListener("change", function(){ S.cohort=this.value.trim().slice(0,40); save(); if(SB.online) pushNow();
-  // switches can differ by cohort: refresh what this student can see
-  fetch(API+"/config?cohort="+encodeURIComponent(S.cohort||""), {cache:"no-store"}).then(function(r){ return r.ok?r.json():null; }).then(function(cfg){ if(cfg && !SB.admin){ SB.features=cfg.features||{}; AREA_META.forEach(function(x){ if(x.gated){ delete AREAS[x.key]; AREA_LOADING[x.key]=null; } }); renderAreaTiles(); defibNav(); } }, function(){}); });
-$("classCode").addEventListener("change", function(){ S.code=this.value.trim().slice(0,60); SB.last=""; save(); if(SB.online) pushNow(); });
-if($("codeWrap")) $("codeWrap").hidden=!SB.requireCode;
-if($("cohortList") && SB.cohortOpts) $("cohortList").innerHTML=SB.cohortOpts;
-}
 
 function initShared(){
   fetch(API+"/config?cohort="+encodeURIComponent(S.cohort||""), {cache:"no-store"}).then(function(r){ return r.ok ? r.json() : null; }).then(function(cfg){
     SB.configDone=true;
     SB.features=(cfg && cfg.features) || {};
-    if(cfg && cfg.cohorts) SB.cohortOpts=cfg.cohorts.map(function(c){ return '<option value="'+esc(c)+'">'; }).join("");
+    if(cfg && cfg.cohorts) SB.cohortArr=cfg.cohorts; if(cfg && cfg.cohorts) SB.cohortOpts=cfg.cohorts.map(function(c){ return '<option value="'+esc(c)+'">'; }).join("");
     renderAreaTiles(); defibNav(); if(VIEW==="area" || VIEW==="defib" || VIEW==="codelab") rerender();
     if(!cfg || !cfg.scoring){ setSync("offline"); if(VIEW==="survey") renderSurvey(); return; }
-    SB.online=true; SB.requireCode=!!cfg.requireCode; if($("codeWrap")) $("codeWrap").hidden=!SB.requireCode; if($("cohortList") && SB.cohortOpts) $("cohortList").innerHTML=SB.cohortOpts;
+    SB.online=true; SB.requireCode=!!cfg.requireCode; emit();
     pushNow();
     if(VIEW==="survey") renderSurvey();
   }).catch(function(){ SB.configDone=true; setSync("offline"); if(VIEW==="survey") renderSurvey(); });
@@ -696,7 +685,7 @@ function showProblem(title, detail){
 function loadBoard(silent){
   if(!SB.pass) return;
   fetch(API+"/scores", {headers:{authorization:"Bearer "+SB.pass}, cache:"no-store"}).then(function(r){
-    if(r.status===401){ SB.pass=null; SB.admin=false; try{ sessionStorage.removeItem("cl-instructor"); }catch(e){} $("tabBoard").textContent="Instructor sign-in"; if(!silent || VIEW==="scoreboard") showLogin("That password didn't work. Try again."); return null; }
+    if(r.status===401){ SB.pass=null; SB.admin=false; try{ sessionStorage.removeItem("cl-instructor"); }catch(e){} emit(); if(!silent || VIEW==="scoreboard") showLogin("That password didn't work. Try again."); return null; }
     var isJson=(r.headers.get("content-type")||"").indexOf("application/json")>=0;
     if(r.status===404 || !isJson){
       if(VIEW==="scoreboard" && !(silent && SB.rows)) showProblem("The score API isn't running on this site", "The page loaded, but /api/scores wasn't found (HTTP "+r.status+"). In Netlify, open Logs → Functions and check that a function named \"api\" is listed. If it isn't, open the latest deploy log, fix any build error, and trigger a new deploy. If you opened this page from a file or a different host, open it from your Netlify address instead.");
@@ -711,7 +700,7 @@ function loadBoard(silent){
     return r.json();
   }).then(function(data){
     if(!data) return;
-    SB.admin=true; SB.rows=data.rows||[]; SB.me=data.me||{role:"owner", perms:{}}; $("tabBoard").textContent="Scoreboard"; defibNav();
+    SB.admin=true; SB.rows=data.rows||[]; SB.me=data.me||{role:"owner", perms:{}}; defibNav();
     if(SB.me.role==="owner" && !SB.inst) loadInstructors();
     renderWho();
     if(!SB.settings) loadSettings();
@@ -1077,7 +1066,7 @@ $("sbBody").addEventListener("keydown", function(e){ if((e.key==="Enter"||e.key=
 $("sbCohort").addEventListener("change", renderBoard);
 $("sbSort").addEventListener("change", function(){ SB.tsort=null; renderBoard(); });
 $("sbRefresh").addEventListener("click", function(){ loadBoard(true); });
-$("sbOut").addEventListener("click", function(){ SB.pass=null; SB.admin=false; SB.rows=null; SB.settings=null; SB.me=null; SB.inst=null; SB.instPw=null; SB.instEdit=null; SB.cohortSet=null; renderWho(); AREA_META.forEach(function(x){ if(x.gated){ delete AREAS[x.key]; AREA_LOADING[x.key]=null; } }); renderAreaTiles(); defibNav(); stopPoll(); try{ sessionStorage.removeItem("cl-instructor"); }catch(e){} $("tabBoard").textContent="Instructor sign-in"; showLogin(""); });
+$("sbOut").addEventListener("click", function(){ SB.pass=null; SB.admin=false; SB.rows=null; SB.settings=null; SB.me=null; SB.inst=null; SB.instPw=null; SB.instEdit=null; SB.cohortSet=null; renderWho(); AREA_META.forEach(function(x){ if(x.gated){ delete AREAS[x.key]; AREA_LOADING[x.key]=null; } }); renderAreaTiles(); defibNav(); stopPoll(); try{ sessionStorage.removeItem("cl-instructor"); }catch(e){} emit(); showLogin(""); });
 $("sbCsv").addEventListener("click", function(){
   var rows=selectedRows();
   var head=["Student","Cohort","Strips correct","Strips answered","Strips total","Megacode correct","Megacode answered","Megacode total","Score % (correct of answered)"].concat(GROUPS.map(function(g){return g[1]+" %"})).concat(AREA_META.map(function(x){ return x.short+" practice answered"; })).concat(AREA_META.map(function(x){ return x.short+" practice %"; })).concat(["Defib scenarios passed","Defib scenarios attempted","Code lab cases passed","Code lab cases attempted"]).concat(DEFIB_LIST.map(function(x){ return "Defib: "+x[1]; })).concat(["Survey submitted","Last active"]);
@@ -1098,9 +1087,7 @@ var DEFIB_LIST = [["vf","VF"],["pvt","Pulseless VT"],["tdp","Torsades"],["fvf","
 var DEFIB_LOADING = null;
 function defibOpen(){ return (SB.features||{}).defibLab===true; }
 function defibNav(){
-  $("tabCode").hidden = !(codeOpen() || SB.admin);
-  var show = defibOpen() || SB.admin;
-  $("tabDefib").hidden = !show;
+  emit();
   var h=$("homeDefib"); if(!h) return;
   h.innerHTML=""; if(typeof renderAreaTiles==="function") renderAreaTiles(); return;
   var c=defibCounts({defib:defibDoc()});
@@ -1602,8 +1589,8 @@ function renderSurvey(){
 function setSvMsg(t){ SV.msg=t; var m=$("svMsg"); if(m) m.textContent=t; }
 function submitSurvey(retried){
   if(SV.sending) return;
-  if($("svName")){ var nm=$("svName").value.trim().slice(0,60); if(!nm){ setSvMsg("Enter your name at the top of the survey."); $("svName").focus(); return; } S.name=nm; $("stuName").value=nm; }
-  if($("svCode")){ var cd=$("svCode").value.trim().slice(0,60); if(!cd){ setSvMsg("Enter the class code from your instructor at the top of the survey."); $("svCode").focus(); return; } S.code=cd; $("classCode").value=cd; SB.last=""; }
+  if($("svName")){ var nm=$("svName").value.trim().slice(0,60); if(!nm){ setSvMsg("Enter your name at the top of the survey."); $("svName").focus(); return; } S.name=nm; }
+  if($("svCode")){ var cd=$("svCode").value.trim().slice(0,60); if(!cd){ setSvMsg("Enter the class code from your instructor at the top of the survey."); $("svCode").focus(); return; } S.code=cd; SB.last=""; }
   var a=readSurveyForm(), miss=svMissing(a);
   S.svDraft=a; S.svDraftAnon=$("svAnon").checked;
   if(miss.length){
@@ -1725,8 +1712,52 @@ function surveyCsv(rows){
   return lines;
 }
 
+/* ----- plain data for the Svelte pages ----- */
+function tileData(){
+  var out = AREA_META.filter(function(m){ return areaOpen(m) || SB.admin; }).map(function(m){
+    var sc=areaScore(m.key), done=sc.a>=sc.t, started=sc.a>0, unit=m.unit || "ECGs";
+    return { key:m.key, href:"/practice/"+m.key, wide:!!m.gated, color:m.color, soft:m.soft, ink:m.ink, icon:"ecg", title:m.title, blurb:m.blurb,
+      note: m.gated ? areaSize(m.key)+" "+unit+" · "+(areaOpen(m) ? "New" : "closed to students · preview") : areaSize(m.key)+" strips",
+      pct: pct(sc.a,sc.t), foot: started ? sc.a+" of "+sc.t+" answered · "+pct(sc.c,sc.a)+"% correct" : "Not started", go: done ? "Review" : (started ? "Resume" : "Start") };
+  });
+  if(defibOpen() || SB.admin){ var c=defibCounts({defib:defibDoc()}), n=DEFIB_LIST.length;
+    out.push({ key:"defib", href:"/defib", wide:true, color:"linear-gradient(120deg,#3A4148,var(--band-red) 55%,var(--band-orange))", soft:"var(--red-soft)", ink:"var(--brand-red)", icon:"bolt",
+      title:"Defib lab: monitor, defibrillator and pacer", blurb:"Run a real-time monitor with sound. Select energy, charge, shock, synchronize, pace and give drugs, then get step-by-step feedback on every scenario.",
+      note: n+" scenarios · "+(defibOpen() ? "New" : "closed to students · preview"), pct: pct(c[1],n), foot: c[1] ? c[1]+" of "+n+" run · "+c[0]+" passed" : "Not started", go: c[1]>=n ? "Review" : (c[1] ? "Resume" : "Start") }); }
+  if(codeOpen() || SB.admin){ var k=codeCounts({code:codeDoc()}), cn=CODE_LIST.length;
+    out.push({ key:"codelab", href:"/codelab", wide:true, color:"linear-gradient(120deg,var(--band-navy),var(--band-red) 60%,var(--band-orange))", soft:"var(--red-soft)", ink:"var(--brand-red)", icon:"ecg",
+      title:"Code lab: run a real code", blurb:"The live defibrillator and ACLS decisions together. Practice one algorithm or a full megacode from pre-arrest to post-arrest care, with coaching when a choice isn't the best one.",
+      note: cn+" cases · "+(codeOpen() ? "New" : "closed to students · preview"), pct: pct(k[1],cn), foot: k[1] ? k[1]+" of "+cn+" run · "+k[0]+" passed" : "Not started", go: k[1] ? "Resume" : "Start" }); }
+  return out;
+}
+function stripsTileData(){
+  var sc=stripScore(), started=sc.a>0, done=sc.a>=N;
+  return { key:"strips", href:"/strips", wide:true, color:"linear-gradient(120deg,var(--band-blue),var(--band-navy))", soft:"var(--blue-soft)", ink:"var(--blue)", icon:"ecg",
+    title:"Random ECG Practice Strips", blurb:"A mixed set of "+N+" strips from every rhythm family, in random order, with a scenario for each and a full interpretation after you answer.",
+    note: N+" strips · all rhythm families", pct: pct(sc.a,N), foot: started ? sc.a+" of "+N+" answered · "+pct(sc.c,sc.a)+"% correct" : "Not started", go: done ? "Review" : (started ? "Resume at strip "+S.pi : "Start") };
+}
+function snapshot(){
+  var s=stripScore(), m=megaScore(), st=SB.state;
+  return {
+    name:S.name||"", cohort:S.cohort||"", code:S.code||"", cohorts:(SB.cohortArr||[]).slice(), requireCode:!!SB.requireCode,
+    sync:{ state:st, kind: st==="synced"?"synced":(st==="saving"?"saving":(st==="badcode"||st==="error"?"error":"local")), chip:SYNC_TXT[st], share:SHARE_TXT[st] },
+    strips:{ a:s.a, c:s.c, n:N, pi:S.pi }, mega:{ a:m.a, c:m.c, n:TOTAL_Q, cases:CASES.length },
+    admin:!!SB.admin, showDefib: defibOpen() || !!SB.admin, showCode: codeOpen() || !!SB.admin,
+    tiles: tileData(), stripsTile: stripsTileData()
+  };
+}
+function setProfile(k, v){
+  v=String(v==null?"":v).trim();
+  if(k==="name"){ S.name=v.slice(0,60); save(); if(SB.online) pushNow(); }
+  if(k==="code"){ S.code=v.slice(0,60); SB.last=""; save(); if(SB.online) pushNow(); }
+  if(k==="cohort"){ S.cohort=v.slice(0,40); save(); if(SB.online) pushNow();
+    // switches can differ by cohort: refresh what this student can see
+    fetch(API+"/config?cohort="+encodeURIComponent(S.cohort||""), {cache:"no-store"}).then(function(r){ return r.ok?r.json():null; }).then(function(cfg){ if(cfg && !SB.admin){ SB.features=cfg.features||{}; AREA_META.forEach(function(x){ if(x.gated){ delete AREAS[x.key]; AREA_LOADING[x.key]=null; } }); renderAreaTiles(); defibNav(); } }, function(){}); }
+}
+function heroSVG(){ return stripSVG(D.strips.p1 ? heroKey() : Object.keys(D.strips)[0], "monitor", "loop", 3000); }
 initShared();
-return { show: show, rerender: rerender };
+return { show: show, rerender: rerender, snapshot: snapshot, setProfile: setProfile, heroSVG: heroSVG,
+  subscribe: function(f){ LISTENERS.push(f); return function(){ LISTENERS=LISTENERS.filter(function(x){ return x!==f; }); }; } };
 }
 
 (function(){
