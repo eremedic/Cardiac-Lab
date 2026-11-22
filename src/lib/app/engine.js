@@ -404,7 +404,6 @@ function show(v, areaKey){
   document.querySelectorAll(".nStrips").forEach(function(e){e.textContent=N});
     if(v==="strips") bindStrips();
   if(v==="megacode") bindMega();
-  if(v==="scoreboard") bindBoard();
   if(v==="area") renderArea(areaKey); else { CUR_AREA=null; renderCardioPop(null); }
   if(v==="practice" || v==="home" || v==="course") renderAreaTiles();
   defibNav();
@@ -477,22 +476,12 @@ function initShared(){
 }
 
 /* ----- instructor scoreboard ----- */
-function loginHTML(msg){
-  return '<div class="card panel login"><h3>Instructor sign-in</h3><p class="empty">Enter the instructor password set in Netlify (INSTRUCTOR_PASSWORD) to see every student\'s results.</p>'+
-    '<form id="sbLogin" class="login-f"><label class="cohort" for="sbPass"><span>Instructor password</span><input id="sbPass" type="password" autocomplete="current-password" required></label><button class="btn btn-primary" type="submit">Sign in</button></form>'+
-    (msg?'<p class="login-msg" role="alert">'+esc(msg)+'</p>':'')+'</div>';
-}
 function loadSettings(){
   return fetch(API+"/settings?cohorts=1", {headers:{authorization:"Bearer "+SB.pass}, cache:"no-store"}).then(function(r){ return r.ok ? r.json() : null; })
-    .then(function(j){ if(j && j.settings){ SB.settings=j.settings; SB.cohortSet=j.cohorts||{}; SB.cohortList=j.cohortList||[]; if(j.classCode!==undefined){ SB.classCode=j.classCode; SB.codeSource=j.codeSource; } if(j.me) SB.me=j.me; if(!SB.me || SB.me.role==="owner") SB.features=j.settings; renderSettings(); renderAreaTiles(); defibNav(); } }, function(){});
+    .then(function(j){ if(j && j.settings){ SB.settings=j.settings; SB.cohortSet=j.cohorts||{}; SB.cohortList=j.cohortList||[]; if(j.classCode!==undefined){ SB.classCode=j.classCode; SB.codeSource=j.codeSource; } if(j.me) SB.me=j.me; if(!SB.me || SB.me.role==="owner") SB.features=j.settings; renderAreaTiles(); defibNav(); } }, function(){});
 }
 function can(p){ return !!SB.me && (SB.me.role==="owner" || !!(SB.me.perms||{})[p]); }
 function isOwner(){ return !!SB.me && SB.me.role==="owner"; }
-function renderWho(){
-  var el=$("sbWho"); if(!el) return;
-  if(!SB.admin || !SB.me){ el.textContent=""; return; }
-  el.innerHTML = isOwner() ? 'Signed in as the <b>owner</b> · full access' : 'Signed in as <b>'+esc(SB.me.name||"Instructor")+'</b> · '+(SB.me.cohorts||[]).map(esc).join(", ");
-}
 var SWITCHES = [
   {key:"twelveLead", eyebrow:"Practice area control", title:"12-lead ECG practice area", icon:function(){ return MINI_ECG; }, preview:"/practice/twelve",
    on:"Students see a 12-lead tile on the Home, Course and Practice pages and can work through all 150 ECGs.", off:"Students can't see or open it. Preview it yourself, then open it when the class is ready."},
@@ -504,154 +493,56 @@ var SWITCHES = [
    on:"Students see a Defib lab tab and run 20 scenarios: defibrillation (adult and pediatric), synchronized cardioversion, stable tachycardias, atropine and pacing, and non-shockable arrests.", off:"Students can't see or open it. Preview it yourself, then turn it on when the class is ready."}
 ];
 var IC_BOLT='<svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor" aria-hidden="true"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg>';
-function renderSettings(msg, which){
-  var box=$("sbSettings"); if(!box) return;
-  if(!SB.admin || !SB.settings || VIEW!=="scoreboard"){ box.innerHTML=""; return; }
-  if(SB.me && !isOwner()){ renderCohortSwitches(box, msg, which); return; }
-  box.innerHTML=SWITCHES.map(function(w){
-    var on=SB.settings[w.key]===true;
-    return '<div class="card sb-switch"><div class="sb-switch-ic">'+w.icon()+'</div><div class="sb-switch-t"><div class="eyebrow">'+w.eyebrow+'</div><h3>'+esc(w.title)+' <span class="pill '+(on?'done':'part')+'">'+(on?'Open to students':'Closed to students')+'</span></h3>'+
-      '<p>'+(on?w.on:w.off)+'</p>'+(msg && which===w.key?'<p class="login-msg" role="alert">'+esc(msg)+'</p>':'')+'</div>'+
-      '<div class="sb-switch-a"><a class="btn btn-ghost" href="'+w.preview+'">Preview</a><button class="btn '+(on?'btn-ghost':'btn-primary')+'" data-switch="'+w.key+'" id="'+(w.key==="twelveLead"?"sbTwelve":"sb_"+w.key)+'">'+(on?'Close to students':'Open to students')+'</button></div></div>';
-  }).join("")+classSetupHTML()+instructorsHTML();
-  bindClassSetup(); bindInstructors();
-  box.querySelectorAll("[data-switch]").forEach(function(btn){ btn.onclick=function(){
-    var k=btn.getAttribute("data-switch"), on=SB.settings[k]===true, body={}; body[k]=!on;
-    btn.disabled=true; btn.textContent=on?"Closing…":"Opening…";
-    fetch(API+"/settings", {method:"PUT", headers:{"content-type":"application/json", authorization:"Bearer "+SB.pass}, body:JSON.stringify(body)})
-      .then(function(r){ return r.json().then(function(j){ return {ok:r.ok, j:j}; }); })
-      .then(function(x){ if(x.ok){ SB.settings=x.j.settings; SB.features=x.j.settings; renderSettings(); renderAreaTiles(); defibNav(); } else renderSettings((x.j && x.j.detail) || "That didn't save. Try again.", k); },
-            function(){ renderSettings("That didn't save. Check your connection and try again.", k); });
-  }; });
-}
 
 /* ----- instructor (non-owner) switches: one card per switch they were given, a toggle per cohort ----- */
-function renderCohortSwitches(box, msg, which){
-  var mine=SWITCHES.filter(function(w){ return can(w.key); }), cs=SB.cohortSet||{};
-  box.innerHTML=mine.map(function(w){
-    var rows=(SB.me.cohorts||[]).map(function(c){ var on=(cs[c]||{})[w.key]===true;
-      return '<div class="sb-co"><span>'+esc(c)+'</span><span class="pill '+(on?'done':'part')+'">'+(on?'Open':'Closed')+'</span><button class="btn '+(on?'btn-ghost':'btn-primary')+'" data-cswitch="'+w.key+'" data-cohort="'+esc(c)+'">'+(on?'Close':'Open')+'</button></div>'; }).join("");
-    return '<div class="card sb-switch"><div class="sb-switch-ic">'+w.icon()+'</div><div class="sb-switch-t"><div class="eyebrow">'+w.eyebrow+' · your cohorts</div><h3>'+esc(w.title)+'</h3>'+
-      '<div class="sb-cos">'+rows+'</div>'+(msg && which===w.key?'<p class="login-msg" role="alert">'+esc(msg)+'</p>':'')+'</div><div class="sb-switch-a"><a class="btn btn-ghost" href="'+w.preview+'">Preview</a></div></div>';
-  }).join("");
-  box.querySelectorAll("[data-cswitch]").forEach(function(btn){ btn.onclick=function(){
-    var k=btn.getAttribute("data-cswitch"), c=btn.getAttribute("data-cohort"), on=((SB.cohortSet||{})[c]||{})[k]===true, body={cohort:c}; body[k]=!on;
-    btn.disabled=true; btn.textContent=on?"Closing…":"Opening…";
-    fetch(API+"/settings", {method:"PUT", headers:{"content-type":"application/json", authorization:"Bearer "+SB.pass}, body:JSON.stringify(body)})
-      .then(function(r){ return r.json().then(function(j){ return {ok:r.ok, j:j}; }); })
-      .then(function(x){ if(x.ok){ SB.cohortSet=x.j.cohorts||{}; renderSettings(); } else renderSettings((x.j && x.j.detail) || "That didn't save. Try again.", k); },
-            function(){ renderSettings("That didn't save. Check your connection and try again.", k); });
-  }; });
-}
 
 
 /* ----- owner: class code and saved cohorts ----- */
-function classSetupHTML(){
-  if(!isOwner()) return "";
-  var src = SB.codeSource==="scoreboard" ? "Set here" : (SB.codeSource==="netlify" ? "From Netlify (CLASS_CODE)" : "No code: anyone with the link can share scores");
-  return '<div class="card panel sb-class" id="sbClass"><div class="sv-board-head"><div><div class="eyebrow">Owner only</div><h3>Class setup</h3></div></div>'+
-    '<div class="sb-class-grid"><form id="codeForm"><label class="cohort"><span>Class code students enter</span><input id="codeIn" maxlength="60" autocomplete="off" value="'+esc(SB.classCode||"")+'" placeholder="Leave blank for no code"></label>'+
-      '<p class="empty" id="codeNote">'+esc(src)+'. Students type it on the Home page; capitals don\'t matter. Changing it doesn\'t sign anyone out, but new saves need the new code.</p>'+
-      '<div class="inst-act"><button class="btn btn-primary" type="submit">Save code</button>'+(SB.classCode?'<button class="btn btn-ghost" type="button" id="codeClear">Remove code</button>':'')+'</div></form>'+
-    '<div><span class="sb-class-l">Cohorts</span><div class="sb-chips">'+(SB.cohortList||[]).map(function(c){ return '<button class="sb-chip" data-co-rm="'+esc(c)+'" aria-label="Remove '+esc(c)+' from the list">'+esc(c)+' ✕</button>'; }).join("")+'</div>'+
-      '<form class="inst-addco" id="coForm"><input id="coIn" maxlength="40" placeholder="Add a cohort, e.g. PCP Spring 2027"><button class="btn btn-ghost" type="submit">Add</button></form>'+
-      '<p class="empty">Saved cohorts appear in every cohort dropdown here and as suggestions when students type their cohort. Removing one from the list doesn\'t change any student\'s results.</p></div></div>'+
-    '<p class="login-msg" id="classMsg" role="alert" hidden></p></div>';
+function putSettings(body, key){
+  SB.switchMsg=null; SB.switchBusy=key; emit();
+  return fetch(API+"/settings", {method:"PUT", headers:{"content-type":"application/json", authorization:"Bearer "+SB.pass}, body:JSON.stringify(body)})
+    .then(function(r){ return r.json().then(function(j){ return {ok:r.ok, j:j}; }); })
+    .then(function(x){ SB.switchBusy=null;
+      if(x.ok){ if(body.cohort) SB.cohortSet=x.j.cohorts||{}; else { SB.settings=x.j.settings; SB.features=x.j.settings; } renderAreaTiles(); defibNav(); }
+      else { SB.switchMsg={key:key, msg:(x.j && x.j.detail) || "That didn't save. Try again."}; emit(); } },
+      function(){ SB.switchBusy=null; SB.switchMsg={key:key, msg:"That didn't save. Check your connection and try again."}; emit(); });
 }
+function setSwitch(k){ var body={}; body[k]=!(SB.settings && SB.settings[k]===true); return putSettings(body, k); }
+function setCohortSwitch(k, c){ var on=((SB.cohortSet||{})[c]||{})[k]===true, body={cohort:c}; body[k]=!on; return putSettings(body, k); }
 function ownerPut(path, body){
   return fetch(API+path, {method:"PUT", headers:{"content-type":"application/json", authorization:"Bearer "+SB.pass}, body:JSON.stringify(body)}).then(function(r){ return r.json().then(function(j){ return {ok:r.ok, j:j}; }); });
 }
-function applyClass(x){ if(!x.ok){ var m=$("classMsg"); if(m){ m.textContent=(x.j && x.j.detail) || "That didn't save. Try again."; m.hidden=false; } return; }
-  SB.classCode=x.j.classCode; SB.codeSource=x.j.codeSource; SB.cohortList=x.j.cohortList; renderSettings(); renderBoard(); }
-function bindClassSetup(){
-  var b;
-  if((b=$("codeForm"))) b.onsubmit=function(e){ e.preventDefault(); ownerPut("/class-code", {code:$("codeIn").value}).then(applyClass, function(){ applyClass({ok:false}); }); };
-  if((b=$("codeClear"))) b.onclick=function(){ ownerPut("/class-code", {code:""}).then(applyClass, function(){ applyClass({ok:false}); }); };
-  if((b=$("coForm"))) b.onsubmit=function(e){ e.preventDefault(); var v=$("coIn").value.trim(); if(!v) return; ownerPut("/cohorts", {add:v}).then(applyClass, function(){ applyClass({ok:false}); }); };
-  if((b=$("sbClass"))) b.addEventListener("click", function(e){ var x=e.target.closest("[data-co-rm]"); if(x) ownerPut("/cohorts", {remove:x.getAttribute("data-co-rm")}).then(applyClass); });
-}
+function applyClass(x){ if(!x.ok){ SB.classMsg=(x.j && x.j.detail) || "That didn't save. Try again."; emit(); return x; }
+  SB.classMsg=""; SB.classCode=x.j.classCode; SB.codeSource=x.j.codeSource; SB.cohortList=x.j.cohortList; emit(); return x; }
+function saveClassCode(code){ return ownerPut("/class-code", {code:code||""}).then(applyClass, function(){ return applyClass({ok:false}); }); }
+function addCohort(v){ v=String(v||"").trim().slice(0,40); if(!v) return Promise.resolve({ok:false}); return ownerPut("/cohorts", {add:v}).then(applyClass, function(){ return applyClass({ok:false}); }); }
+function removeCohort(v){ return ownerPut("/cohorts", {remove:v}).then(applyClass, function(){ return applyClass({ok:false}); }); }
 /* ----- owner: instructor accounts ----- */
 var INST_PERMS = [["twelveLead","Open or close the 12-lead area"],["fieldStrips","Open or close the field strips"],["defibLab","Open or close the Defib lab"],["codeLab","Open or close the Code lab"],
   ["print","Print reports"],["csv","Download CSV"],["survey","See course survey results"],["delete","Remove students"]];
 function loadInstructors(){
   return fetch(API+"/instructors", {headers:{authorization:"Bearer "+SB.pass}, cache:"no-store"}).then(function(r){ return r.ok ? r.json() : null; })
-    .then(function(j){ if(j){ SB.inst=j.instructors||[]; renderSettings(); } }, function(){});
+    .then(function(j){ if(j){ SB.inst=j.instructors||[]; emit(); } }, function(){});
 }
-function instructorsHTML(){
-  if(!isOwner()) return "";
-  var list=SB.inst||[], ed=SB.instEdit, h='<div class="card panel sb-inst" id="sbInst"><div class="sv-board-head"><div><div class="eyebrow">Owner only</div><h3>Instructors</h3></div>'+
-    (ed?'':'<button class="btn btn-primary" id="instAdd">Add instructor</button>')+'</div>'+
-    '<p class="empty">Each instructor signs in on this page with their own password. They see only the cohorts you assign, only their students, and only the tools you tick.</p>';
-  if(SB.instPw) h+='<div class="inst-pw" role="alert"><div><b>Password for '+esc(SB.instPw.name)+':</b> <code id="instPwVal">'+esc(SB.instPw.pw)+'</code></div><p>Copy it now and give it to them: it won\'t be shown again. You can reset it later.</p><div class="inst-pw-a"><button class="btn btn-ghost" id="instCopy">Copy</button><button class="btn btn-ghost" id="instPwDone">Done</button></div></div>';
-  if(ed) h+=instEditorHTML(ed);
-  h+= list.length ? '<div class="inst-list">'+list.map(function(i){
-      var perms=INST_PERMS.filter(function(p){ return i.perms[p[0]]; }).map(function(p){ return '<span>'+esc(p[1].replace(/^Open or close the /,""))+'</span>'; }).join("") || '<span class="none">View scores only</span>';
-      return '<div class="inst-row"><div class="inst-who"><b>'+esc(i.name)+'</b><small>'+i.cohorts.map(esc).join(", ")+' · '+(i.lastSeen?'last signed in '+ago(i.lastSeen):'not signed in yet')+'</small><div class="inst-perms">'+perms+'</div></div>'+
-        '<div class="inst-act"><button class="btn btn-ghost" data-iedit="'+esc(i.id)+'">Edit</button><button class="btn btn-ghost" data-ireset="'+esc(i.id)+'">New password</button>'+
-        (SB.instDel===i.id?'<button class="btn btn-primary" data-idelyes="'+esc(i.id)+'">Remove '+esc(i.name)+'?</button><button class="btn btn-ghost" data-idelno="1">Cancel</button>':'<button class="btn btn-ghost" data-idel="'+esc(i.id)+'">Remove</button>')+'</div></div>'; }).join("")+'</div>'
-    : (ed ? '' : '<p class="empty">No instructors yet.</p>');
-  return h+'</div>';
+// Create or update an instructor. Resolves to {ok, msg}; a new password is kept in SB.instPw to show once.
+function instSave(st, id){
+  if(!String(st.name||"").trim() || !(st.cohorts||[]).length) return Promise.resolve({ok:false, msg:"Give them a name and at least one cohort."});
+  return instCall(id?"PUT":"POST", id?"/"+id:"", st).then(function(x){
+    if(!x.ok) return {ok:false, msg:(x.j && (x.j.detail||x.j.error)) || "That didn't save."};
+    if(x.j.password) SB.instPw={name:x.j.instructor.name, pw:x.j.password};
+    loadInstructors(); return {ok:true}; });
 }
-function instEditorHTML(ed){
-  var i=ed.id ? (SB.inst||[]).filter(function(x){ return x.id===ed.id; })[0] : {name:"", cohorts:[], perms:{}};
-  var known=Object.keys(cohortsOf()); (i.cohorts||[]).forEach(function(c){ if(known.indexOf(c)<0) known.push(c); }); (ed.extra||[]).forEach(function(c){ if(known.indexOf(c)<0) known.push(c); }); known.sort();
-  var sel=ed.cohorts || i.cohorts || [], perms=ed.perms || i.perms || {};
-  return '<form class="inst-ed" id="instForm"><h4>'+(ed.id?'Edit '+esc(i.name):'New instructor')+'</h4>'+
-    '<label class="cohort"><span>Name</span><input id="instName" maxlength="60" required value="'+esc(ed.name!=null?ed.name:i.name)+'" placeholder="e.g. Dana Lee"></label>'+
-    '<fieldset><legend>Cohorts they can see</legend><div class="inst-chks">'+(known.length?known.map(function(c){ return '<label><input type="checkbox" name="instCo" value="'+esc(c)+'"'+(sel.indexOf(c)>=0?' checked':'')+'><span>'+esc(c)+'</span></label>'; }).join(""):'<p class="empty">No cohorts yet: add one below.</p>')+'</div>'+
-      '<div class="inst-addco"><input id="instNewCo" maxlength="40" placeholder="Add a cohort name (as students type it)"><button class="btn btn-ghost" type="button" id="instAddCo">Add</button></div></fieldset>'+
-    '<fieldset><legend>What they can do</legend><div class="inst-chks">'+INST_PERMS.map(function(p){ return '<label><input type="checkbox" name="instPerm" value="'+p[0]+'"'+(perms[p[0]]?' checked':'')+'><span>'+esc(p[1])+'</span></label>'; }).join("")+'</div>'+
-      '<p class="empty">Everyone can view their students\' scores and charts. Switches they open or close apply only to their cohorts.</p></fieldset>'+
-    '<p class="login-msg" id="instMsg" role="alert"'+(ed.msg?'':' hidden')+'>'+esc(ed.msg||"")+'</p>'+
-    '<div class="inst-act"><button class="btn btn-primary" type="submit">'+(ed.id?'Save changes':'Create and show password')+'</button><button class="btn btn-ghost" type="button" id="instCancel">Cancel</button></div></form>';
-}
-function instFormState(){
-  var f=$("instForm"); if(!f) return {};
-  var co=[].slice.call(f.querySelectorAll("input[name=instCo]:checked")).map(function(x){ return x.value; });
-  var pm={}; [].slice.call(f.querySelectorAll("input[name=instPerm]:checked")).forEach(function(x){ pm[x.value]=true; });
-  return {name:$("instName").value, cohorts:co, perms:pm};
-}
+function instReset(id){ return instCall("PUT", "/"+id, {resetPassword:true}).then(function(x){ if(x.ok){ SB.instPw={name:x.j.instructor.name, pw:x.j.password}; loadInstructors(); } return x; }); }
+function instDelete(id){ return instCall("DELETE", "/"+id).then(function(x){ loadInstructors(); return x; }); }
+function instPwDone(){ SB.instPw=null; emit(); }
 function instCall(method, path, body){
   return fetch(API+"/instructors"+(path||""), {method:method, headers:{"content-type":"application/json", authorization:"Bearer "+SB.pass}, body:body?JSON.stringify(body):undefined})
     .then(function(r){ return r.json().then(function(j){ return {ok:r.ok, j:j}; }, function(){ return {ok:false, j:{}}; }); });
 }
-function bindInstructors(){
-  var box=$("sbInst"); if(!box) return;
-  var b;
-  if((b=$("instAdd"))) b.onclick=function(){ SB.instEdit={}; SB.instPw=null; renderSettings(); $("instName").focus(); };
-  if((b=$("instCancel"))) b.onclick=function(){ SB.instEdit=null; renderSettings(); };
-  if((b=$("instPwDone"))) b.onclick=function(){ SB.instPw=null; renderSettings(); };
-  if((b=$("instCopy"))) b.onclick=function(){ var v=$("instPwVal").textContent; try{ navigator.clipboard.writeText(v); b.textContent="Copied"; }catch(e){} };
-  if((b=$("instAddCo"))) b.onclick=function(){ var v=$("instNewCo").value.trim().slice(0,40); if(!v) return; ownerPut("/cohorts", {add:v}).then(function(x){ if(x.ok){ SB.cohortList=x.j.cohortList; renderBoard(); } }); var st=instFormState(); st.cohorts.push(v); SB.instEdit=Object.assign(SB.instEdit, st, {extra:(SB.instEdit.extra||[]).concat([v])}); renderSettings(); };
-  if((b=$("instForm"))) b.onsubmit=function(e){ e.preventDefault(); var st=instFormState(), ed=SB.instEdit;
-    if(!st.name.trim() || !st.cohorts.length){ SB.instEdit=Object.assign(ed, st, {msg:"Give them a name and at least one cohort."}); renderSettings(); return; }
-    instCall(ed.id?"PUT":"POST", ed.id?"/"+ed.id:"", st).then(function(x){
-      if(!x.ok){ SB.instEdit=Object.assign(ed, st, {msg:(x.j && (x.j.detail||x.j.error)) || "That didn't save."}); renderSettings(); return; }
-      if(x.j.password) SB.instPw={name:x.j.instructor.name, pw:x.j.password};
-      SB.instEdit=null; loadInstructors(); }); };
-  box.onclick=function(e){ var t=e.target, id;
-    if((id=t.getAttribute("data-iedit"))){ SB.instEdit={id:id}; SB.instPw=null; renderSettings(); return; }
-    if((id=t.getAttribute("data-ireset"))){ instCall("PUT", "/"+id, {resetPassword:true}).then(function(x){ if(x.ok){ SB.instPw={name:x.j.instructor.name, pw:x.j.password}; loadInstructors(); } }); return; }
-    if((id=t.getAttribute("data-idel"))){ SB.instDel=id; renderSettings(); return; }
-    if(t.getAttribute("data-idelno")){ SB.instDel=null; renderSettings(); return; }
-    if((id=t.getAttribute("data-idelyes"))){ instCall("DELETE", "/"+id).then(function(){ SB.instDel=null; loadInstructors(); }); return; }
-  };
-}
-function showLogin(msg){
-  ["sbCsv","sbRefresh","sbOut"].forEach(function(i){ $(i).hidden=true; });
-  if($("sbSettings")) $("sbSettings").innerHTML="";
-  if($("sbPick")) $("sbPick").innerHTML="";
-  $("sbBody").innerHTML=loginHTML(msg);
-  $("sbLogin").addEventListener("submit", function(e){ e.preventDefault(); SB.pass=$("sbPass").value; loadBoard(false); });
-  setTimeout(function(){ var p=$("sbPass"); if(p) p.focus(); }, 30);
-}
-function showProblem(title, detail){
-  ["sbCsv"].forEach(function(i){ $(i).hidden=true; });
-  $("sbBody").innerHTML='<div class="card panel problem"><h3>'+esc(title)+'</h3><p>'+esc(detail)+'</p>'+
-    '<div class="qnav" style="justify-content:flex-start"><button class="btn btn-primary" id="sbRetry">Retry</button><a class="btn btn-ghost" href="/api/health" target="_blank" rel="noopener">Open setup check</a></div>'+
-    '<p class="empty">The setup check (/api/health) tests the database connection and says what to change in Netlify.</p></div>';
-  $("sbRetry").onclick=function(){ $("sbBody").innerHTML='<div class="card panel"><p class="empty">Loading results…</p></div>'; loadBoard(false); };
-}
+function showLogin(msg){ SB.loginMsg=msg||""; SB.problem=null; SB.loading=false; emit(); }
+function boardLogin(pw){ SB.pass=pw; SB.loading=true; SB.loginMsg=""; emit(); loadBoard(false); }
+function showProblem(title, detail){ SB.problem={title:title, detail:detail}; SB.loading=false; emit(); }
+function boardRetry(){ SB.problem=null; SB.loading=true; emit(); loadBoard(false); }
 function loadBoard(silent){
   if(!SB.pass) return;
   fetch(API+"/scores", {headers:{authorization:"Bearer "+SB.pass}, cache:"no-store"}).then(function(r){
@@ -672,88 +563,30 @@ function loadBoard(silent){
     if(!data) return;
     SB.admin=true; SB.rows=data.rows||[]; SB.me=data.me||{role:"owner", perms:{}}; defibNav();
     if(SB.me.role==="owner" && !SB.inst) loadInstructors();
-    renderWho();
     if(!SB.settings) loadSettings();
     renderAreaTiles();
     if((VIEW==="area" && VIEW_AREA==="twelve") && !AREAS.twelve){ AREA_LOADING.twelve=null; rerender(); }
-    if(!SV.def) loadSurveyDef().then(function(){ renderBoard(); }, function(){});
+    if(!SV.def) loadSurveyDef().then(function(){ emit(); }, function(){});
     try{ sessionStorage.setItem("cl-instructor", SB.pass); }catch(e){}
-    $("sbRefresh").hidden=false; $("sbOut").hidden=false;
-    if(VIEW==="scoreboard"){ renderBoard(); startPoll(); }
+    SB.problem=null; SB.loading=false; SB.loginMsg=""; emit();
+    if(VIEW==="scoreboard") startPoll();
   }).catch(function(){
     if(VIEW==="scoreboard" && !SB.rows) showProblem("Couldn't reach the server", "Your browser couldn't connect to this site's score API. Check your internet connection and press Retry. If you opened this page from a saved file, open it from your Netlify address instead.");
   });
 }
-function openBoard(){ if(SB.admin){ renderSettings(); renderBoard(); loadBoard(true); startPoll(); } else if(SB.pass){ $("sbBody").innerHTML='<div class="card panel"><p class="empty">Loading results…</p></div>'; loadBoard(false); } else showLogin(""); }
+function openBoard(){ if(SB.admin){ emit(); loadBoard(true); startPoll(); } else if(SB.pass){ SB.loading=true; emit(); loadBoard(false); } else showLogin(""); }
+function boardSignOut(){ SB.pass=null; SB.admin=false; SB.rows=null; SB.settings=null; SB.me=null; SB.inst=null; SB.instPw=null; SB.cohortSet=null; AREA_META.forEach(function(x){ if(x.gated){ delete AREAS[x.key]; AREA_LOADING[x.key]=null; } }); renderAreaTiles(); stopPoll(); try{ sessionStorage.removeItem("cl-instructor"); }catch(e){} defibNav(); showLogin(""); }
+function deleteStudent(id){ return fetch(API+"/scores/"+id, {method:"DELETE", headers:{authorization:"Bearer "+SB.pass}}).then(function(r){ if(r.ok){ SB.rows=SB.rows.filter(function(x){return x.id!==id}); emit(); } return r.ok; }, function(){ return false; }); }
 function startPoll(){ if(SB.poll) return; SB.poll=setInterval(function(){ if(VIEW==="scoreboard" && !document.hidden) loadBoard(true); }, 30000); }
 function stopPoll(){ if(SB.poll){ clearInterval(SB.poll); SB.poll=null; } }
 function num(x){ return typeof x==="number" && isFinite(x) ? x : 0; }
-function boardRows(){
-  var rows=(SB.rows||[]).slice(), co=$("sbCohort").value, sort=$("sbSort").value;
-  if(co) rows=rows.filter(function(r){return (r.cohort||"")===co});
-  rows.forEach(function(r){ r._name=r.name||"Unnamed student"; r._prog=num(r.strips&&r.strips.a)+num(r.mega&&r.mega.a); });
-  rows.sort(function(a,b){
-    if(sort==="score") return rowOverall(b)-rowOverall(a);
-    if(sort==="name") return a._name.localeCompare(b._name);
-    if(sort==="progress") return b._prog-a._prog;
-    return num(b.updatedAt)-num(a.updatedAt);
-  });
-  return rows;
-}
 function ago(ts){ if(!ts) return "—"; var m=Math.round((Date.now()-ts)/60000); if(m<1) return "just now"; if(m<60) return m+" min ago"; var h=Math.round(m/60); if(h<24) return h+" h ago"; return Math.round(h/24)+" d ago"; }
 function rowOverall(r){ var s=r.strips||{}, m=r.mega||{}; return pct(num(s.c)+num(m.c), num(s.a)+num(m.a)); }
 function rowAnswered(r){ return num(r.strips&&r.strips.a)+num(r.mega&&r.mega.a); }
 function mini(c,t){ var p=pct(c,t); return '<div class="mini"><span class="track"><i style="width:'+p+'%"></i></span><b>'+p+'%</b></div>'; }
-function renderBoard(){
-  if(VIEW!=="scoreboard" || !SB.admin) return;
-  var all=SB.rows||[];
-  var cohorts=cohortsOf();
-  var sel=$("sbCohort"), cur=sel.value;
-  sel.innerHTML='<option value="">All</option>'+Object.keys(cohorts).sort().map(function(c){return '<option'+(c===cur?' selected':'')+'>'+esc(c)+'</option>'}).join("");
-  renderPicker();
-  var rows=selectedRows();
-  $("sbCsv").hidden = !rows.length || !can("csv");
-  if(!(SB.rows||[]).length){
-    $("sbBody").innerHTML='<div class="card panel"><h3>No results yet</h3><p class="empty">Send your students this site\'s link'+'. When they enter their name on the Home page'+', their scores appear here as they answer. The page refreshes every 30 seconds.</p></div>';
-    return;
-  }
-  if(!rows.length){
-    $("sbBody").innerHTML='<div class="card panel sb-empty-sel"><h3>No students selected</h3><p class="empty">Tick the students you want to see in the list above, or press <b>Select all</b>. The stats, charts and table below cover only the students you select. Printing a single student or a cohort works without selecting anyone.</p></div>';
-    return;
-  }
-  var n=rows.length, avgOf=function(list, f){ return list.length ? Math.round(list.reduce(function(a,r){ return a+f(r); },0)/list.length) : null; };
-  var withAny=rows.filter(function(r){ return rowAnswered(r)>0; }), withS=rows.filter(function(r){ return num(r.strips&&r.strips.a)>0; }), withM=rows.filter(function(r){ return num(r.mega&&r.mega.a)>0; });
-  var avg=avgOf(withAny, rowOverall), sAvg=avgOf(withS, function(r){ return pct(num(r.strips.c), num(r.strips.a)); }), mAvg=avgOf(withM, function(r){ return pct(num(r.mega.c), num(r.mega.a)); });
-  var done=rows.filter(function(r){ return num(r.strips&&r.strips.a)>=N && num(r.mega&&r.mega.a)>=TOTAL_Q; }).length;
-  var h='<div class="stats">'+
-    '<div class="card stat"><small>Students</small><b class="num">'+n+'</b><span>selected</span></div>'+
-    '<div class="card stat"><small>Average score</small><b class="num">'+(avg==null?'—':avg+'%')+'</b><span>correct of answered</span></div>'+
-    '<div class="card stat"><small>Strips</small><b class="num">'+(sAvg==null?'—':sAvg+'%')+'</b><span>class average, of answered</span></div>'+
-    '<div class="card stat"><small>Megacode</small><b class="num">'+(mAvg==null?'—':mAvg+'%')+'</b><span>class average, of answered</span></div>'+
-    '<div class="card stat"><small>Finished</small><b class="num">'+done+'</b><span>completed both modules</span></div></div>';
-  h+=newModulesStatsHTML(rows);
-  h+=chartsHTML(rows);
-  var body=rows.map(function(r){
-    var s=r.strips||{}, m=r.mega||{}, open=SB.open===r.id;
-    var weak="—", wv=101; GROUPS.forEach(function(g){ var x=(r.groups||{})[g[0]]; if(x && x[1]>=3){ var p=pct(x[0],x[1]); if(p<wv){wv=p; weak=g[1]+" ("+p+"%)";} } });
-    var tr='<tr class="row'+(open?' open':'')+'" data-id="'+esc(r.id)+'" tabindex="0" aria-expanded="'+open+'"><td><div class="who"><div><b>'+esc(r._name)+'</b>'+(r.cohort?'<small>'+esc(r.cohort)+'</small>':'')+'</div>'+
-      (!can("print")?'':'<button class="btn btn-ghost sb-pr1" data-print="'+esc(r.id)+'" title="Print '+esc(r._name)+'\'s report" aria-label="Print '+esc(r._name)+'\'s report">'+IC_PRINT+'<span>Print</span></button>')+'</div></td>'+
-      '<td class="mono">'+num(s.c)+' / '+num(s.a)+'<br><small style="color:var(--muted)">of '+N+' answered</small></td>'+
-      '<td class="mono">'+num(m.c)+' / '+num(m.a)+'<br><small style="color:var(--muted)">of '+TOTAL_Q+' answered</small></td>'+
-      '<td>'+(rowAnswered(r)?mini(num(s.c)+num(m.c), rowAnswered(r)):'—')+'</td><td>'+esc(weak)+'</td>'+(r.survey?'<td class="sv-cell"><span class="sv-done">✓ Done</span></td>':'<td class="sv-cell">—</td>')+'<td class="mono">'+practiceCell(r)+'</td><td class="mono">'+defibCell(r)+'</td><td class="mono">'+ago(r.updatedAt)+'</td></tr>';
-    if(open) tr+='<tr class="detail"><td colspan="9">'+detailHTML(r)+'</td></tr>';
-    return tr;
-  }).join("");
-  h+='<div class="sb-grid"><div class="card panel"><h3>Students <span class="num">'+n+'</span></h3><div class="tablewrap"><table class="sbt"><thead><tr>'+SORT_COLS.map(sortTh).join('')+'</tr></thead><tbody id="sbRows">'+body+'</tbody></table></div><p class="empty">Scores are correct out of answered, so unanswered items don\'t lower them. Select a student for detail.</p></div>'+
-     '<div class="card panel"><h3>Most-missed strips</h3><div class="hard" id="sbHard">'+hardHTML(rows)+'</div></div></div>'+areasPanelHTML(rows)+defibPanelHTML(rows)+(can("survey")?surveyPanelHTML(rows):'');
-  $("sbBody").innerHTML=h;
-}
 
 var IC_PRINT='<svg viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5.5 7.5V3h9v4.5M5.5 14.5H4a1.5 1.5 0 0 1-1.5-1.5V9A1.5 1.5 0 0 1 4 7.5h12A1.5 1.5 0 0 1 17.5 9v4a1.5 1.5 0 0 1-1.5 1.5h-1.5"/><path d="M5.5 11.5h9V17h-9z"/></svg>';
 /* ================= SCOREBOARD: choose students, charts of strong / weak areas, printable reports ================= */
-SB.sel = {};
-try{ (JSON.parse(localStorage.getItem("cl-sb-sel")||"[]")||[]).forEach(function(id){ SB.sel[id]=1; }); }catch(e){}
-function saveSel(){ try{ localStorage.setItem("cl-sb-sel", JSON.stringify(Object.keys(SB.sel))); }catch(e){} }
 /* ----- click a column heading to sort the student table (click again to reverse) ----- */
 function weakOf(r){ var wv=101, label=""; GROUPS.forEach(function(g){ var x=(r.groups||{})[g[0]]; if(x && x[1]>=3){ var p=pct(x[0],x[1]); if(p<wv){ wv=p; label=g[1]; } } }); return {p:wv<101?wv:null, label:label}; }
 var pctOr=function(c,a){ return a ? c/a : null; };
@@ -768,15 +601,10 @@ var SORT_COLS = [
   ["defib","Defib lab", function(r){ var d=defibCounts(r); return d[1] ? d[0] + d[0]/100 : null; }, -1],
   ["recent","Last active", function(r){ return num(r.updatedAt); }, -1]
 ];
-SB.tsort=null;
-function sortTh(c){
-  var on=SB.tsort && SB.tsort.key===c[0], dir=on ? SB.tsort.dir : 0;
-  return '<th aria-sort="'+(on?(dir>0?'ascending':'descending'):'none')+'"><button class="th-sort'+(on?' on':'')+'" data-tsort="'+c[0]+'">'+esc(c[1])+'<span aria-hidden="true">'+(on?(dir>0?'▲':'▼'):'↕')+'</span></button></th>';
-}
-function sortRows(list){
-  var sort=$("sbSort").value;
+function sortRows(list, sort, tsort){
+  sort=sort||"recent"; tsort=tsort||null;
   list.forEach(function(r){ r._name=r.name||"Unnamed student"; r._prog=num(r.strips&&r.strips.a)+num(r.mega&&r.mega.a); });
-  if(SB.tsort){ var col=SORT_COLS.filter(function(c){ return c[0]===SB.tsort.key; })[0], d=SB.tsort.dir;
+  if(tsort){ var col=SORT_COLS.filter(function(c){ return c[0]===tsort.key; })[0], d=tsort.dir;
     if(col) return list.sort(function(a,b){ var x=col[2](a), y=col[2](b);
       if(x==null && y==null) return a._name.localeCompare(b._name); if(x==null) return 1; if(y==null) return -1;   // blanks always last
       var c = typeof x==="string" ? x.localeCompare(y) : x-y; return c*d || a._name.localeCompare(b._name); }); }
@@ -787,77 +615,10 @@ function sortRows(list){
     return num(b.updatedAt)-num(a.updatedAt);
   });
 }
-function selectedRows(){ return sortRows((SB.rows||[]).filter(function(r){ return SB.sel[r.id]; })); }
 function byName(a,b){ return (a.name||"").localeCompare(b.name||""); }
 function cohortsOf(){ var c={}, key={}, nk=function(x){ return String(x||"").trim().toLowerCase(); };
   (SB.cohortList||[]).forEach(function(x){ if(SB.me && !isOwner() && !(SB.me.cohorts||[]).some(function(y){ return nk(y)===nk(x); })) return; key[nk(x)]=x; c[x]=0; });
   (SB.rows||[]).forEach(function(r){ if(!r.cohort) return; var name=key[nk(r.cohort)]||r.cohort; key[nk(r.cohort)]=name; c[name]=(c[name]||0)+1; }); return c; }
-function renderPicker(){
-  var box=$("sbPick"); if(!box) return;
-  if(!SB.admin || !(SB.rows||[]).length){ box.innerHTML=""; return; }
-  if(!$("sbPickCard")){
-    box.innerHTML='<div class="sb-top">'+
-      '<div class="card panel sb-pick" id="sbPickCard"><div class="sb-pick-head"><div><div class="eyebrow">Choose who to view</div><h3>Students <span class="num" id="sbSelCount"></span></h3></div>'+
-        '</div>'+
-        '<div class="sb-dd"><input type="search" id="sbSearch" placeholder="Search students by name or cohort" aria-label="Search students" autocomplete="off">'+
-          '<button class="btn btn-ghost sb-dd-btn" id="sbDrop" aria-expanded="false" aria-controls="sbDropPanel"><span id="sbDropTxt">Choose students</span><span aria-hidden="true">▾</span></button>'+
-          '<div class="sb-dd-panel" id="sbDropPanel" hidden><div class="sb-dd-tools"><button class="btn btn-ghost" id="sbSelAll">Select all</button><button class="btn btn-ghost" id="sbSelNone">Clear</button><button class="btn btn-primary" id="sbDropDone">Done</button></div>'+
-          '<p class="sb-pick-note" id="sbPickNote"></p><div class="sb-pick-list" id="sbPickList" role="group" aria-label="Students to show"></div></div></div>'+
-        '<div class="sb-chips" id="sbChips"></div></div>'+
-      '<div class="card panel sb-print" id="sbPrintCard"><div class="eyebrow">Paper copies</div><h3>Print reports</h3>'+
-        '<div class="pr-kind" role="radiogroup" aria-label="Report"><label><input type="radio" name="prKind" value="scores" checked><span>Scores report</span></label><label><input type="radio" name="prKind" value="survey"><span>Course survey report</span></label></div>'+
-        '<fieldset class="pr-modes"><legend class="sr-only">Who to include</legend>'+
-          '<label class="pr-opt"><input type="radio" name="prMode" value="one" checked><span>One student</span></label><select id="prOne" aria-label="Student to print"></select>'+
-          '<label class="pr-opt"><input type="radio" name="prMode" value="sel"><span>Selected students <b class="num" id="prSelN"></b></span></label>'+
-          '<label class="pr-opt"><input type="radio" name="prMode" value="cohort"><span>Cohort</span></label><select id="prCohort" aria-label="Cohort to print"></select>'+
-          '<label class="pr-opt"><input type="radio" name="prMode" value="all"><span>Everyone</span></label></fieldset>'+
-        '<label class="pr-chk" id="prSumWrap"><input type="checkbox" id="prSummary" checked><span>Add a class summary page with charts (for a group or cohort)</span></label>'+
-        '<p class="pr-kind-note" id="prKindNote" hidden>The survey report summarizes everyone included: ratings, Net Promoter Score, confidence, every answer breakdown, willingness to pay and all comments. Anonymous answers stay anonymous.</p>'+
-        '<p class="login-msg" id="prMsg" role="alert" hidden></p><button class="btn btn-primary" id="prGo">Print</button>'+
-        '<p class="empty">Each student prints on their own page. Use your browser\'s print dialog to choose a printer or Save as PDF.</p></div></div>';
-    $("sbPickList").addEventListener("change", function(e){ var c=e.target.closest("input[data-sel]"); if(!c) return; var id=c.getAttribute("data-sel"); if(c.checked) SB.sel[id]=1; else delete SB.sel[id]; saveSel(); renderBoard(); });
-    var openDD=function(v){ $("sbDropPanel").hidden=!v; $("sbDrop").setAttribute("aria-expanded", v?"true":"false"); };
-    $("sbSearch").addEventListener("input", function(){ openDD(true); renderPickList(); });
-    $("sbSearch").addEventListener("focus", function(){ openDD(true); });
-    $("sbDrop").onclick=function(){ openDD($("sbDropPanel").hidden); };
-    $("sbDropDone").onclick=function(){ openDD(false); $("sbDrop").focus(); };
-    document.addEventListener("click", function(e){ var dd=document.querySelector(".sb-dd"); if(dd && !dd.contains(e.target) && !e.target.closest("[data-unsel]")) openDD(false); });
-    $("sbPickCard").addEventListener("keydown", function(e){ if(e.key==="Escape" && !$("sbDropPanel").hidden){ openDD(false); $("sbDrop").focus(); } });
-    $("sbChips").addEventListener("click", function(e){ var x=e.target.closest("[data-unsel]"); if(!x) return; delete SB.sel[x.getAttribute("data-unsel")]; saveSel(); renderBoard(); });
-    $("sbSelAll").onclick=function(){ pickVisible().forEach(function(r){ SB.sel[r.id]=1; }); saveSel(); renderBoard(); };
-    $("sbSelNone").onclick=function(){ SB.sel={}; saveSel(); renderBoard(); };
-    $("prGo").onclick=printReports;
-    box.addEventListener("change", function(e){ if(e.target.name==="prKind"){ var sv=e.target.value==="survey"; $("prSumWrap").hidden=sv; $("prKindNote").hidden=!sv; } });
-    box.addEventListener("change", function(e){ if(e.target.id==="prOne") document.querySelector('input[name=prMode][value=one]').checked=true; if(e.target.id==="prCohort") document.querySelector('input[name=prMode][value=cohort]').checked=true; });
-  }
-  var evl=document.querySelector('input[name=prMode][value=all]'); if(evl) evl.nextElementSibling.textContent = isOwner() ? "Everyone" : "All my students";
-  var pc=$("sbPrintCard"); pc.hidden=!can("print"); pc.parentNode.classList.toggle("solo", !can("print"));
-  var svk=document.querySelector('input[name=prKind][value=survey]'); if(svk){ svk.parentNode.hidden=!can("survey"); if(!can("survey")) document.querySelector('input[name=prKind][value=scores]').checked=true; }
-  renderPickList();
-  var one=$("prOne"), keep=one.value, list=(SB.rows||[]).slice().sort(byName);
-  one.innerHTML=list.map(function(r){ return '<option value="'+esc(r.id)+'"'+(r.id===keep?' selected':'')+'>'+esc(r.name||"Unnamed student")+(r.cohort?' · '+esc(r.cohort):'')+'</option>'; }).join("");
-  var co=$("prCohort"), keepC=co.value, cs=cohortsOf(), names=Object.keys(cs).sort();
-  co.innerHTML=names.length ? names.map(function(c){ return '<option'+(c===keepC?' selected':'')+' value="'+esc(c)+'">'+esc(c)+' ('+cs[c]+')</option>'; }).join("") : '<option value="">No cohorts yet</option>';
-  co.disabled=!names.length;
-}
-function pickVisible(){
-  var q=($("sbSearch")||{value:""}).value.trim().toLowerCase(), co=$("sbCohort").value;
-  return (SB.rows||[]).filter(function(r){ return (!co || (r.cohort||"")===co) && (!q || ((r.name||"")+" "+(r.cohort||"")).toLowerCase().indexOf(q)>=0); }).sort(byName);
-}
-function renderPickList(){
-  var vis=pickVisible(), all=SB.rows||[], nSel=all.filter(function(r){ return SB.sel[r.id]; }).length;
-  $("sbSelCount").textContent=nSel+" of "+all.length+" selected";
-  $("sbDropTxt").textContent = nSel ? (nSel===all.length ? "All "+all.length+" students" : nSel+" selected") : "Choose students";
-  var chosen=all.filter(function(r){ return SB.sel[r.id]; }).sort(byName);
-  $("sbChips").innerHTML = chosen.length && chosen.length<all.length ? chosen.slice(0,30).map(function(r){ return '<button class="sb-chip" data-unsel="'+esc(r.id)+'" aria-label="Remove '+esc(r.name||"student")+'">'+esc(r.name||"Unnamed student")+' ✕</button>'; }).join("")+(chosen.length>30?'<span class="sb-chip more">+'+(chosen.length-30)+' more</span>':'') : '';
-  $("prSelN").textContent="("+nSel+")";
-  var co=$("sbCohort").value, q=$("sbSearch").value.trim();
-  $("sbPickNote").textContent = (co||q) ? "Showing "+vis.length+" of "+all.length+(co?" in "+co:"")+(q?' matching "'+q+'"':"")+". Select all picks just these." : "Select all picks everyone in the list. Narrow the list with the Cohort filter or the search box.";
-  $("sbPickList").innerHTML = vis.length ? vis.map(function(r){ var on=!!SB.sel[r.id], sc=rowAnswered(r)?rowOverall(r)+'%':'—';
-    return '<label class="sb-pick-item'+(on?' on':'')+'"><input type="checkbox" data-sel="'+esc(r.id)+'"'+(on?' checked':'')+'><b class="pi-n">'+esc(r.name||"Unnamed student")+'</b><span class="pi-c">'+esc(r.cohort||"—")+'</span><span class="pi-s num">'+sc+'</span></label>'; }).join("")
-    : '<p class="empty">No students match.</p>';
-  if(vis.length) $("sbPickList").insertAdjacentHTML("afterbegin", '<div class="sb-pick-hd" aria-hidden="true"><span></span><span>Student</span><span>Cohort</span><span>Score</span></div>');
-}
 
 /* ----- bar charts: one series, one color, sorted, value on every bar, counts on hover ----- */
 function hbarHTML(title, sub, items, opts){
@@ -911,18 +672,6 @@ function chartsHTML(rows){
 })();
 
 /* ----- printable reports ----- */
-function printReports(){
-  var mode=(document.querySelector("input[name=prMode]:checked")||{}).value, rows=[], title="", msg=$("prMsg");
-  if(mode==="one"){ var id=$("prOne").value; rows=(SB.rows||[]).filter(function(r){ return r.id===id; }); title=rows[0] ? (rows[0].name||"Unnamed student") : ""; }
-  else if(mode==="sel"){ rows=(SB.rows||[]).filter(function(r){ return SB.sel[r.id]; }).sort(byName); title="Selected students"; }
-  else if(mode==="all"){ rows=(SB.rows||[]).slice().sort(byName); title="All students"; }
-  else { var c=$("prCohort").value; rows=(SB.rows||[]).filter(function(r){ return c && (r.cohort||"")===c; }).sort(byName); title="Cohort: "+c; }
-  if(!rows.length){ msg.textContent = mode==="sel" ? "No students are selected yet. Tick some in the list first." : "There's no one to print for that choice."; msg.hidden=false; return; }
-  msg.hidden=true;
-  rows.forEach(function(r){ r._name=r.name||"Unnamed student"; });
-  if((document.querySelector("input[name=prKind]:checked")||{}).value==="survey"){ printSurvey(rows, title, mode==="one"); return; }
-  printScores(rows, title, rows.length>1 && $("prSummary").checked);
-}
 function printScores(rows, title, withSummary){
   rows.forEach(function(r){ r._name=r.name||"Unnamed student"; });
   var area=$("printArea"); if(!area){ area=document.createElement("div"); area.id="printArea"; document.body.appendChild(area); }
@@ -940,12 +689,14 @@ function prStat(label, val, sub){ return '<div class="pr-stat"><small>'+esc(labe
 
 /* ----- course survey report (separate from the scores report) ----- */
 function printSurvey(rows, title, single){
-  loadSurveyDef().then(function(){
+  rows.forEach(function(r){ r._name=r.name||"Unnamed student"; });
+  return loadSurveyDef().then(function(){
     var area=$("printArea"); if(!area){ area=document.createElement("div"); area.id="printArea"; document.body.appendChild(area); }
     var when=new Date().toLocaleDateString(undefined, {year:"numeric", month:"long", day:"numeric"});
     area.innerHTML = single ? surveyStudentPage(rows[0], when) : surveyGroupPage(rows, title, when);
     window.print();
-  }, function(){ var m=$("prMsg"); if(m){ m.textContent="The survey questions didn't load. Check your connection and try again."; m.hidden=false; } });
+    return true;
+  }, function(){ return false; });
 }
 function surveyGroupPage(rows, title, when){
   var resp=rows.filter(function(r){ return r.survey && r.survey.answers; });
@@ -992,58 +743,27 @@ function printStudentHTML(r, when){
       '<div><h4>Megacode cases</h4>'+(cases?'<ul class="pr-list">'+cases+'</ul>':'<p>No cases started.</p>')+'<h4>Defib lab</h4>'+(df?'<ul class="pr-list">'+df+'</ul>':'<p>No scenarios run.</p>')+'</div></div>'+
     '</section>';
 }
-function detailHTML(r){
+function detailParts(r){
+  r._name=r.name||"Unnamed student";
   var g=GROUPS.map(function(x){ var v=(r.groups||{})[x[0]]||[0,0,0]; return '<div class="barrow"><span>'+esc(x[1])+'</span><span class="track"><i style="width:'+pct(v[0],v[1])+'%"></i></span><b>'+(v[1]?v[0]+'/'+v[1]:'—')+'</b></div>'; }).join("");
   var missed=P.filter(function(q){ var x=canon((r.p||{})[q.n]); return x!=null && x!==q.cat; });
   var ml=missed.length? missed.slice(0,40).map(function(q){ return '<span>#'+q.n+' '+esc(q.name)+'</span>'; }).join("")+(missed.length>40?'<span>+'+(missed.length-40)+' more</span>':'') : '<span>None missed</span>';
   var cs=(r.cases||[]).map(function(k,ci){ return k&&k[1]? '<span>Case '+(ci+1)+': '+k[0]+'/'+k[1]+'</span>' : ''; }).join("") || '<span>No cases started</span>';
-  var del = SB.confirmDel===r.id
-    ? '<div class="confirm"><span>Remove '+esc(r._name)+'\'s results permanently?</span><button class="btn btn-primary" data-del-yes="'+esc(r.id)+'">Remove</button><button class="btn btn-ghost" data-del-no="1">Cancel</button></div>'
-    : '<button class="btn btn-ghost" data-del="'+esc(r.id)+'">Remove this student</button>';
-  if(!can("delete")) del='';
-  del = (can("print") ? '<button class="btn btn-ghost" data-print="'+esc(r.id)+'">'+IC_PRINT+' Print report</button> '+(can("survey")?'<button class="btn btn-ghost" data-print-sv="'+esc(r.id)+'">'+IC_PRINT+' Print survey answers</button> ':'') : '')+del;
   var ap=AREA_META.map(function(x){ var v=(r.areas||{})[x.key]||[0,0,x.size||AREA_SIZE]; return '<div class="barrow"><span>'+esc(x.short)+'</span><span class="track"><i style="width:'+pct(v[0],v[1])+'%;background:'+x.color+'"></i></span><b>'+(v[1]?v[0]+'/'+v[1]:'—')+'</b></div>'; }).join("");
   var vv=(r.areas||{}).vessel; if(vv && vv[1]) ap+='<div class="barrow"><span>STEMI vessel</span><span class="track"><i style="width:'+pct(vv[0],vv[1])+'%;background:'+MKC.ste+'"></i></span><b>'+vv[0]+'/'+vv[1]+'</b></div>';
-  return '<div class="inner"><div><h4>Strips by rhythm family · correct / answered</h4><div class="bars">'+g+'</div><h4 style="margin-top:14px">Practice areas · correct / answered</h4><div class="bars">'+ap+'</div><div style="margin-top:14px">'+del+'</div></div><div><h4>Missed strips ('+missed.length+')</h4><div class="tags">'+ml+'</div><h4 style="margin-top:14px">Megacode cases</h4><div class="tags">'+cs+'</div>'+defibDetailHTML(r)+codeDetailHTML(r)+(can("survey")?surveyDetailHTML(r):'')+'</div></div>';
+  return { left:'<h4>Strips by rhythm family · correct / answered</h4><div class="bars">'+g+'</div><h4 style="margin-top:14px">Practice areas · correct / answered</h4><div class="bars">'+ap+'</div>',
+    right:'<h4>Missed strips ('+missed.length+')</h4><div class="tags">'+ml+'</div><h4 style="margin-top:14px">Megacode cases</h4><div class="tags">'+cs+'</div>'+defibDetailHTML(r)+codeDetailHTML(r)+(can("survey")?surveyDetailHTML(r):'') };
 }
-function hardHTML(rows){
+function hardList(rows){
   var stat={}; rows.forEach(function(r){ var p=r.p||{}; Object.keys(p).forEach(function(n){ var q=P[n-1]; if(!q) return; p[n]=canon(p[n]); stat[n]=stat[n]||[0,0]; stat[n][1]++; if(p[n]!==q.cat) stat[n][0]++; }); });
-  var list=Object.keys(stat).filter(function(n){return stat[n][0]>0}).sort(function(a,b){ return (stat[b][0]/stat[b][1])-(stat[a][0]/stat[a][1]) || stat[b][0]-stat[a][0]; }).slice(0,12);
-  if(!list.length) return '<p class="empty">No missed strips yet.</p>';
-  return list.map(function(n){ var q=P[n-1], s=stat[n]; return '<button data-n="'+n+'"><b>#'+n+'</b><span>'+esc(q.name)+'</span><em>'+s[0]+'/'+s[1]+'</em></button>'; }).join("");
+  return Object.keys(stat).filter(function(n){return stat[n][0]>0}).sort(function(a,b){ return (stat[b][0]/stat[b][1])-(stat[a][0]/stat[a][1]) || stat[b][0]-stat[a][0]; }).slice(0,12)
+    .map(function(n){ return {n:+n, name:P[n-1].name, miss:stat[n][0], tot:stat[n][1]}; });
 }
-function bindBoard(){
-$("sbBody").addEventListener("click", function(e){
-  var t=e.target;
-  var ts=t.closest("[data-tsort]"); if(ts){ var k=ts.getAttribute("data-tsort"), def=SORT_COLS.filter(function(c){ return c[0]===k; })[0][3];
-    SB.tsort = SB.tsort && SB.tsort.key===k ? {key:k, dir:-SB.tsort.dir} : {key:k, dir:def}; renderBoard();
-    var again=document.querySelector('[data-tsort="'+k+'"]'); if(again) again.focus(); return; }
-  var pb=t.closest("[data-print]"); if(pb){ e.stopPropagation(); var pr=(SB.rows||[]).filter(function(x){ return x.id===pb.getAttribute("data-print"); }); if(pr.length) printScores(pr, pr[0].name||"Unnamed student", false); return; }
-  var ps=t.closest("[data-print-sv]"); if(ps){ var sr1=(SB.rows||[]).filter(function(x){ return x.id===ps.getAttribute("data-print-sv"); }); if(sr1.length) printSurvey(sr1, sr1[0].name||"Unnamed student", true); return; }
-  if(t.closest("#svPrint")){ var sr=selectedRows(); sr.forEach(function(r){ r._name=r.name||"Unnamed student"; }); printSurvey(sr, "Selected students", false); return; }
-  if(t.closest("#svCsv")){ downloadCsv(surveyCsv(selectedRows()), "cardiac-lab-survey-"+new Date().toISOString().slice(0,10)+".csv"); return; }
-  if(t.closest(".sv-board")) return;
-  var hb=t.closest(".hard button"); if(hb){ S.pi=+hb.getAttribute("data-n"); save(); nav("/strips"); return; }
-  var d=t.closest("[data-del]"); if(d){ SB.confirmDel=d.getAttribute("data-del"); renderBoard(); return; }
-  if(t.closest("[data-del-no]")){ SB.confirmDel=null; renderBoard(); return; }
-  var y=t.closest("[data-del-yes]"); if(y){ var id=y.getAttribute("data-del-yes");
-    fetch(API+"/scores/"+id, {method:"DELETE", headers:{authorization:"Bearer "+SB.pass}}).then(function(r){ if(r.ok){ SB.rows=SB.rows.filter(function(x){return x.id!==id}); SB.open=null; } SB.confirmDel=null; renderBoard(); });
-    return; }
-  if(t.closest(".detail")) return;
-  var tr=t.closest("tr.row"); if(tr){ var id2=tr.getAttribute("data-id"); SB.open = SB.open===id2 ? null : id2; SB.confirmDel=null; renderBoard(); }
-});
-$("sbBody").addEventListener("keydown", function(e){ if((e.key==="Enter"||e.key===" ") && e.target.matches("tr.row")){ e.preventDefault(); e.target.click(); } });
-$("sbCohort").addEventListener("change", renderBoard);
-$("sbSort").addEventListener("change", function(){ SB.tsort=null; renderBoard(); });
-$("sbRefresh").addEventListener("click", function(){ loadBoard(true); });
-$("sbOut").addEventListener("click", function(){ SB.pass=null; SB.admin=false; SB.rows=null; SB.settings=null; SB.me=null; SB.inst=null; SB.instPw=null; SB.instEdit=null; SB.cohortSet=null; renderWho(); AREA_META.forEach(function(x){ if(x.gated){ delete AREAS[x.key]; AREA_LOADING[x.key]=null; } }); renderAreaTiles(); defibNav(); stopPoll(); try{ sessionStorage.removeItem("cl-instructor"); }catch(e){} emit(); showLogin(""); });
-$("sbCsv").addEventListener("click", function(){
-  var rows=selectedRows();
+function scoresCsv(rows){
+  rows.forEach(function(r){ r._name=r.name||"Unnamed student"; });
   var head=["Student","Cohort","Strips correct","Strips answered","Strips total","Megacode correct","Megacode answered","Megacode total","Score % (correct of answered)"].concat(GROUPS.map(function(g){return g[1]+" %"})).concat(AREA_META.map(function(x){ return x.short+" practice answered"; })).concat(AREA_META.map(function(x){ return x.short+" practice %"; })).concat(["Defib scenarios passed","Defib scenarios attempted","Code lab cases passed","Code lab cases attempted"]).concat(DEFIB_LIST.map(function(x){ return "Defib: "+x[1]; })).concat(["Survey submitted","Last active"]);
-  var lines=[head].concat(rows.map(function(r){ var s=r.strips||{}, m=r.mega||{};
+  return [head].concat(rows.map(function(r){ var s=r.strips||{}, m=r.mega||{};
     return [r._name, r.cohort||"", num(s.c), num(s.a), N, num(m.c), num(m.a), TOTAL_Q, rowAnswered(r)?rowOverall(r):""].concat(GROUPS.map(function(g){ var v=(r.groups||{})[g[0]]; return v&&v[1]?pct(v[0],v[1]):""; })).concat(AREA_META.map(function(x){ var v=(r.areas||{})[x.key]; return v?v[1]:0; })).concat(AREA_META.map(function(x){ var v=(r.areas||{})[x.key]; return v&&v[1]?pct(v[0],v[1]):""; })).concat(defibCounts(r)).concat(codeCounts(r)).concat(DEFIB_LIST.map(function(x){ var v=(r.defib||{})[x[0]]; return v ? (v[2]?"Passed ":"Review ")+v[0]+"/"+v[1] : ""; })).concat([r.surveyAt? new Date(r.surveyAt).toISOString():"", r.updatedAt? new Date(r.updatedAt).toISOString():""]); }));
-  downloadCsv(lines, "cardiac-lab-scores-"+new Date().toISOString().slice(0,10)+".csv");
-});
 }
 function downloadCsv(lines, filename){
   var csv=lines.map(function(l){ return l.map(function(c){ c=String(c); if(/^[=+\-@]/.test(c)) c="'"+c; return /[",\n]/.test(c)?'"'+c.replace(/"/g,'""')+'"':c; }).join(","); }).join("\n");
@@ -1610,10 +1330,50 @@ function sendSurvey(a, anon, name, code, retried){
     return {ok:false, msg:"The survey couldn't be sent. Check your connection and try again."};
   }, function(){ return {ok:false, msg:"The survey couldn't be sent. Check your connection and try again."}; });
 }
+/* ----- instructor scoreboard: data for the Svelte page ----- */
+function boardSnap(){
+  var perms={}; ["print","csv","survey","delete","twelveLead","fieldStrips","defibLab","codeLab"].forEach(function(k){ perms[k]=can(k); });
+  return { pass:!!SB.pass, admin:!!SB.admin, loading:!!SB.loading, loginMsg:SB.loginMsg||"", problem:SB.problem||null,
+    me:SB.me||null, owner:isOwner(), perms:perms, rows:SB.rows||[], settings:SB.settings||null, cohortSet:SB.cohortSet||{}, cohortList:SB.cohortList||[],
+    classCode:SB.classCode||"", codeSource:SB.codeSource||"", classMsg:SB.classMsg||"", inst:SB.inst, instPw:SB.instPw||null,
+    switchMsg:SB.switchMsg||null, switchBusy:SB.switchBusy||null, cohorts:cohortsOf(), svReady:!!SV.def };
+}
+function rowInfo(r){
+  var s=r.strips||{}, m=r.mega||{}, w=weakOf(r), ans=rowAnswered(r);
+  return { id:r.id, name:r.name||"Unnamed student", cohort:r.cohort||"", sc:num(s.c), sa:num(s.a), mc:num(m.c), ma:num(m.a), n:N, total:TOTAL_Q,
+    answered:ans, overall: ans ? rowOverall(r) : null, weak: w.p==null ? "—" : w.label+" ("+w.p+"%)", survey:!!r.survey,
+    practice:practiceCell(r), defib:defibCell(r), ago:ago(r.updatedAt), finished: num(s.a)>=N && num(m.a)>=TOTAL_Q };
+}
+function boardStats(rows){
+  var avgOf=function(list, f){ return list.length ? Math.round(list.reduce(function(a,r){ return a+f(r); },0)/list.length) : null; };
+  var withAny=rows.filter(function(r){ return rowAnswered(r)>0; }), withS=rows.filter(function(r){ return num(r.strips&&r.strips.a)>0; }), withM=rows.filter(function(r){ return num(r.mega&&r.mega.a)>0; });
+  return { n:rows.length, avg:avgOf(withAny, rowOverall), strips:avgOf(withS, function(r){ return pct(num(r.strips.c), num(r.strips.a)); }), mega:avgOf(withM, function(r){ return pct(num(r.mega.c), num(r.mega.a)); }),
+    done: rows.filter(function(r){ return num(r.strips&&r.strips.a)>=N && num(r.mega&&r.mega.a)>=TOTAL_Q; }).length };
+}
+function boardPanelsHTML(rows){ return areasPanelHTML(rows)+defibPanelHTML(rows)+(can("survey")?surveyPanelHTML(rows):""); }
+function rowsByIds(ids){ var set={}; ids.forEach(function(i){ set[i]=1; }); return (SB.rows||[]).filter(function(r){ return set[r.id]; }); }
+var BOARD = {
+  snap: boardSnap, login: boardLogin, retry: boardRetry, refresh: function(){ loadBoard(true); }, signOut: boardSignOut,
+  setSwitch: setSwitch, setCohortSwitch: setCohortSwitch, saveClassCode: saveClassCode, addCohort: addCohort, removeCohort: removeCohort,
+  instSave: instSave, instReset: instReset, instDelete: instDelete, instPwDone: instPwDone, deleteStudent: deleteStudent,
+  rowInfo: rowInfo, sortRows: function(rows, mode, tsort){ return sortRows(rows.slice(), mode, tsort); }, stats: boardStats,
+  newModulesHTML: newModulesStatsHTML, chartsHTML: chartsHTML, panelsHTML: boardPanelsHTML, detail: detailParts, hard: hardList,
+  printScores: function(ids, title, withSummary){ printScores(rowsByIds(ids).sort(byName), title, withSummary); },
+  printOne: function(id){ var r=rowsByIds([id]); if(r.length) printScores(r, r[0].name||"Unnamed student", false); },
+  printSurvey: function(ids, title, single){ return printSurvey(rowsByIds(ids).sort(byName), title, single); },
+  csvScores: function(ids, order){ var rows=order ? order.map(function(id){ return rowsByIds([id])[0]; }).filter(Boolean) : rowsByIds(ids); downloadCsv(scoresCsv(rows), "cardiac-lab-scores-"+new Date().toISOString().slice(0,10)+".csv"); },
+  csvSurvey: function(ids){ downloadCsv(surveyCsv(rowsByIds(ids)), "cardiac-lab-survey-"+new Date().toISOString().slice(0,10)+".csv"); },
+  ago: ago,
+  sortCols: SORT_COLS.map(function(c){ return {key:c[0], label:c[1], dir:c[3]}; }),
+  switches: SWITCHES.map(function(w){ return {key:w.key, eyebrow:w.eyebrow, title:w.title, icon:w.icon(), preview:w.preview, on:w.on, off:w.off}; }),
+  instPerms: INST_PERMS.map(function(p){ return {key:p[0], label:p[1]}; }),
+  unlockPct: SURVEY_UNLOCK_PCT
+};
 function heroSVG(){ return stripSVG(D.strips.p1 ? heroKey() : Object.keys(D.strips)[0], "monitor", "loop", 3000); }
 initShared();
 return { show: show, rerender: rerender, snapshot: snapshot, setProfile: setProfile, heroSVG: heroSVG,
   results: resultsData, openStrip: openStrip, openCase: openCaseAt, resetProgress: resetProgress,
+  board: BOARD,
   surveyInfo: surveyInfo, surveyDef: loadSurveyDef, saveSurveyDraft: saveSurveyDraft, sendSurvey: sendSurvey,
   subscribe: function(f){ LISTENERS.push(f); return function(){ LISTENERS=LISTENERS.filter(function(x){ return x!==f; }); }; } };
 }
