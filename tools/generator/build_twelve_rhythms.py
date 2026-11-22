@@ -1,4 +1,4 @@
-"""Builds public/twelve-rhythms.json: 12-lead ECGs that match the rhythms the defibrillator monitor can show.
+"""Builds static/twelve-rhythms.json: 12-lead ECGs that match the rhythms the defibrillator monitor can show.
 
     python3 tools/generator/build_twelve_rhythms.py
 
@@ -15,7 +15,7 @@ import numpy as np
 import twelve as T
 
 t, g, LEADS, BASE = T.t, T.g, T.LEADS, T.BASE
-OUT = os.path.normpath(os.path.join(HERE, "..", "..", "public", "twelve-rhythms.json"))
+OUT = os.path.normpath(os.path.join(HERE, "..", "..", "static", "twelve-rhythms.json"))
 
 # wide-QRS polarity by lead: VT (RBBB-like, inferior axis) and ventricular escape/paced (LBBB-like, left axis)
 W_VT = {"I": -.55, "II": .85, "III": 1.0, "aVR": -.3, "aVL": -.8, "aVF": .95, "V1": 1.0, "V2": .85, "V3": .6, "V4": .25, "V5": -.35, "V6": -.55}

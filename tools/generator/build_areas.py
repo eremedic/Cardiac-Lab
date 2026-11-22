@@ -1,11 +1,11 @@
-"""Builds public/areas/<area>.json: 50 unique, rule-checked strips per rhythm family.
+"""Builds static/areas/<area>.json: 50 unique, rule-checked strips per rhythm family.
 
     pip install numpy matplotlib pillow
     python3 tools/generator/build_areas.py
 
 Each file holds the area's items (rhythm, interpretation, field action, answer choices)
 and the waveform data for its strips. The build stops if any strip repeats another
-strip in any area or in the main 102-strip set (public/trainer-data.js).
+strip in any area or in the main 102-strip set (static/trainer.json).
 """
 import json, os, random, sys
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -14,7 +14,7 @@ import ecg_web  # noqa: E402  (also provides the waveform encoder)
 import areas    # noqa: E402
 import area_hints  # noqa: E402
 
-PUB = os.path.normpath(os.path.join(HERE, "..", "..", "public"))
+PUB = os.path.normpath(os.path.join(HERE, "..", "..", "static"))
 OUT = os.path.join(PUB, "areas")
 os.makedirs(OUT, exist_ok=True)
 

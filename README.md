@@ -12,9 +12,16 @@ Built on the 2025 AHA ACLS algorithms. Strips are synthetic teaching tracings. A
 
 | Part | What it is |
 |---|---|
-| `public/` | The site: `index.html` (the app), `trainer-data.js` (strips and cases), `img/` (logo) |
-| `netlify/functions/api.mjs` | The score API at `/api/*`, run as a Netlify Function |
+| `src/routes/` | One SvelteKit page per screen: `/` (Home), `/course`, `/practice`, `/practice/[area]`, `/strips`, `/megacode`, `/defib`, `/codelab`, `/results`, `/survey`, `/instructor`. Each is prerendered to plain HTML at build time. |
+| `src/routes/+layout.svelte` | The header, navigation, footer and ECG grid patterns shared by every page |
+| `src/routes/api/[...path]/+server.js` | The score API at `/api/*` (the only server code), wrapping `lib/api.mjs` |
+| `src/lib/components/` | Svelte components: practice tiles and progress rings, sign-in, survey (`survey/`), the question runners (`runner/`: options, feedback, strip dots, cardiologist) and the instructor scoreboard (`board/`: sign-in, switches, class setup, instructors, student picker and print options, student table) |
+| `src/lib/app/engine.js` | The course logic behind the components: progress and scoring, saving and score sharing, the scoreboard's network calls, plus the ECG drawing and teaching tools (strip and 12-lead tracings, color markup, calipers, zoom viewer), the charts and printed reports. Components read plain data from it and call its actions; `live.svelte.js` re-renders them whenever it changes. |
+| `src/lib/sim/` | The live monitor/defibrillator (`defib.js`) and the Code lab (`codelab.js`), loaded only on the pages that use them |
+| `src/app.css` | The site's styles |
+| `static/` | Data and images served as files: `trainer.json` (strips and megacode cases), `areas/`, `twelve-rhythms.json`, `img/` |
 | `lib/` | API logic, database connection and table definitions |
+| `legacy/` | The old single-page version, kept for reference during the move |
 | Supabase | Stores scores in a table `ecglab.scores`, in its own `ecglab` schema |
 
 Students' progress is always saved in their own browser. When score sharing is set up, each answer is also sent to the API and saved in Supabase. Only someone with the instructor password can read the scores.
@@ -35,7 +42,7 @@ You can use an existing Supabase project. Cardiac Lab only creates its own `ecgl
 
 ### 2. Create the Netlify site
 1. Netlify → **Add new site** → **Import an existing project** → GitHub → choose **Cardiac-Lab**.
-2. Leave the build settings as they are; `netlify.toml` already has them (publish directory `public`, functions in `netlify/functions`).
+2. Leave the build settings as they are; `netlify.toml` already has them (build command `npm run build`, publish directory `build`). The SvelteKit Netlify adapter creates the `/api/*` function.
 3. Before deploying, add these environment variables (**Site configuration → Environment variables**):
 
 | Variable | Value | Required |
@@ -145,7 +152,7 @@ Progress is kept in the student's browser. Using a different device or browser s
 - Pressing **12-LEAD** on the device (or **12-lead ECG** in a Defib lab scenario) prints a full 12-lead that matches the rhythm on the monitor: sinus rhythm, sinus bradycardia or tachycardia by the current rate, SVT, atrial fibrillation, atrial flutter, monomorphic VT, complete heart block, 2:1 block, or a ventricular paced rhythm once the pacer has capture. In the Code lab's STEMI post-arrest steps it prints the anterior STEMI.
 - The printout has the header measurements a real cart prints (vent. rate, atrial rate, PR, QRS, QT/QTc, P-R-T axes; "---" when there's none) but **no interpretation**. Students pick the interpretation from four choices and get the explanation. The tracing can be tapped to zoom, and calipers work on it.
 - In cardiac arrest (no pulse) or during CPR the device refuses, with a reminder not to delay CPR and defibrillation for a 12-lead.
-- The tracings come from `tools/generator/build_twelve_rhythms.py`, which writes `public/twelve-rhythms.json`.
+- The tracings come from `tools/generator/build_twelve_rhythms.py`, which writes `static/twelve-rhythms.json`.
 
 **Code lab: the defibrillator and megacode together (opened by the instructor)**
 - A separate module (the existing Megacode and Defib lab are unchanged). The live monitor/defibrillator/pacer runs beside a case that unfolds step by step, written to the current AHA adult advanced life support algorithms (cardiac arrest, bradycardia, tachycardia with a pulse, post-cardiac arrest care).
@@ -190,7 +197,7 @@ npm install
 npm run dev
 ```
 
-Then open http://localhost:8888. Without `DATABASE_URL`, scores go to a temporary in-memory database, and the instructor password is `instructor`. To use your Supabase database locally:
+Then open http://localhost:8899. Without `DATABASE_URL`, scores go to a temporary in-memory database, and the instructor password is `instructor`. To use your Supabase database locally:
 
 ```bash
 DATABASE_URL="postgresql://…" INSTRUCTOR_PASSWORD="…" npm run dev
@@ -237,7 +244,7 @@ python3 tools/generator/build_twelve.py
 python3 tools/generator/build_twelve_rhythms.py
 ```
 
-The page design and app logic are in `public/index.html`. If you change `lib/schema.mjs`, run `npm run db:schema` to update `supabase/schema.sql`.
+Pages are in `src/routes/`, shared styles in `src/app.css`, and the app logic in `src/lib/app/engine.js`. If you change `lib/schema.mjs`, run `npm run db:schema` to update `supabase/schema.sql`.
 
 ## Security notes
 

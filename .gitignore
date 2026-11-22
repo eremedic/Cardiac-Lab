@@ -1,7 +1,11 @@
-node_modules/
-.netlify/
-.env
 .DS_Store
+.env
+.netlify
+.netlify/
+.svelte-kit
+build
+node_modules
+node_modules/
 tools/generator/__pycache__/
 tools/generator/strips/
 tools/generator/trainer_data.js
