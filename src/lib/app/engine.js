@@ -85,28 +85,6 @@ function updateTally(){
 function perm(n, seed){ var a=[]; for(var i=0;i<n;i++)a.push(i); var s=seed*9301+49297; for(var j=n-1;j>0;j--){ s=(s*9301+49297)%233280; var k=Math.floor(s/233280*(j+1)); var t=a[j];a[j]=a[k];a[k]=t; } return a; }
 
 /* ================= STRIPS ================= */
-function renderStrip(){
-  var q = P[S.pi-1], chosen = S.p[q.n], done = chosen != null;
-  $("sNum").textContent = q.n;
-  $("sStem").textContent = q.stem;
-  Array.prototype.slice.call(document.querySelectorAll("#v-strips .mk-legend")).forEach(function(x){ x.remove(); });
-  $("sPaper").innerHTML = stripSVG(q.strip, "paper", false);
-  var sc = stripScore();
-  $("sAns").textContent = sc.a; $("sCor").textContent = sc.c; $("sPct").textContent = sc.a? pct(sc.c,sc.a)+"%" : "–";
-  $("sBar").style.width = pct(sc.a,N)+"%";
-  var letters="ABCD";
-  $("sOpts").innerHTML = q.options.map(function(o,i){
-    var cls = "";
-    if(done){ cls = o===q.cat ? "is-right" : (o===chosen ? "is-wrong" : "is-dim"); }
-    return '<button class="opt '+cls+'" data-o="'+esc(o)+'" '+(done?"disabled":"")+'><span class="k">'+letters[i]+'</span><span>'+esc(o)+'</span></button>';
-  }).join("");
-  $("sFb").innerHTML = done ? stripFeedback(q, chosen) : "";
-  if(done && chosen!==q.cat) markStrip($("sPaper"), q.strip, q.cat);
-  $("sPrev").disabled = S.pi===1;
-  $("sNext").textContent = S.pi===N ? "See results →" : (done ? "Next strip →" : "Skip →");
-  renderDots();
-  updateTally();
-}
 var REVEALED = "Revealed by the cardiologist";
 
 /* ================= ON-STRIP TEACHING MARKS (shown after a wrong answer) =================
@@ -204,9 +182,8 @@ function markStrip(host, key, cat, item){
   if(paper){ var leg=document.createElement("div"); leg.className="mk-legend";
     leg.innerHTML='<b>Why it\'s '+esc(cat)+':</b>'+KEY.filter(function(k){ return c(k[0]); }).map(function(k){ return '<span><i style="background:'+k[1]+'"></i>'+k[2]+'</span>'; }).join("")+(note?'<span>'+esc(note)+'</span>':'');
     paper.parentNode.insertBefore(leg, paper.nextSibling); }
-  var hint=document.querySelector(".mk-hint span");
-  if(hint){ var nm=cat.replace(/\s*\(.*\)$/,"");
-    hint.textContent = "Look back at the strip: it's now marked up to show what makes this "+nm+"."+(said.length?" Labeled: "+said.join(", ")+".":"")+(note?" "+note+".":""); }
+  var nm=cat.replace(/\s*\(.*\)$/,"");
+  return "Look back at the strip: it's now marked up to show what makes this "+nm+"."+(said.length?" Labeled: "+said.join(", ")+".":"")+(note?" "+note+".":"");
 }
 
 /* ----- 12-lead teaching marks (after a wrong answer): colored by what they show ----- */
@@ -258,62 +235,12 @@ function markECG12(host, q){
   var leg=document.createElement("div"); leg.className="mk-legend";
   leg.innerHTML='<b>Why it\'s '+esc(q.cat)+':</b>'+(chips || '<span>No ST elevation or depression, normal QRS and intervals: nothing abnormal to mark.</span>');
   host.parentNode.insertBefore(leg, host.nextSibling);
-  var hint=document.querySelector(".mk-hint span");
-  if(hint){ var parts=Object.keys(sum).map(function(b){ return sum[b][0]==="II" && /QT|PR/.test(b) ? b+" (rhythm strip)" : b+" in "+sum[b].join(", "); });
-    hint.textContent="Look back at the ECG: the colored marks show why this is "+q.cat+". "+(parts.length ? parts.join(" · ")+"." : "Nothing abnormal: no ST elevation or depression, normal QRS width and intervals."); }
-}
-function stripFeedback(q, chosen){
-  var ok = chosen===q.cat, C = CATS[q.cat], X = CATS[chosen], revealed = chosen===REVEALED;
-  var h = '<div class="fb '+(ok?"ok":"no")+'"><div class="verdict">'+(ok?IC.ok+"Correct":IC.no+(revealed?"Answer revealed · counted as wrong":"Not quite"))+'</div>';
-  h += '<div class="answer-name">'+esc(q.name)+'</div>';
-  if(!ok) h += '<p class="fb-note mk-hint">'+IC.bulb+'<span>Look back at the strip: it\'s now marked up to show what makes this '+esc(q.cat.replace(/\s*\(.*\)$/,""))+'. P waves'+(' (red if not conducted)')+', PR and R–R intervals in seconds'+', wide QRS complexes and pacer spikes are labeled where they apply.</span></p>';
-  if(revealed){
-    h += '<p class="fb-note">The cardiologist talked you through this one, so it counts as wrong. Here\'s the full explanation.</p>';
-  } else if(!ok){
-    h += '<div class="why"><div><small>You chose</small><b>'+esc(chosen)+'</b>'+esc(X.key)+'</div><div><small>This strip is</small><b>'+esc(q.cat)+'</b>'+esc(C.key)+'</div></div>';
-  }
-  h += '<div class="clue">'+IC.bulb+'<p><b>The tell: </b>'+esc(C.clue)+'</p></div>';
-  h += '<div class="interp"><table class="itable"><tbody>'+q.rows.map(function(r){return '<tr><th scope="row">'+esc(r[0])+'</th><td>'+esc(r[1])+'</td></tr>'}).join("")+'</tbody></table>';
-  h += '<div class="action"><h4>Field action</h4><ul>'+q.action.map(function(a){return '<li>'+esc(a)+'</li>'}).join("")+'</ul></div></div></div>';
-  return h;
-}
-function renderDots(){
-  $("sDots").innerHTML = P.map(function(q){
-    var x=S.p[q.n], c = x==null ? "" : (x===q.cat?"r":"w");
-    return '<button class="dot '+c+(q.n===S.pi?" cur":"")+'" data-n="'+q.n+'" aria-label="Strip '+q.n+'">'+q.n+'</button>';
-  }).join("");
-}
-function bindStrips(){
-$("sOpts").addEventListener("click", function(e){
-  var b = e.target.closest(".opt"); if(!b || b.disabled) return;
-  S.p[P[S.pi-1].n] = b.getAttribute("data-o"); save(); renderStrip();
-  var fb=$("sFb"); if(fb.firstChild && fb.getBoundingClientRect().top > window.innerHeight*0.8) fb.scrollIntoView({behavior:"smooth",block:"nearest"});
-});
-$("sPrev").addEventListener("click", function(){ if(S.pi>1){S.pi--; save(); renderStrip(); scrollTop();} });
-$("sNext").addEventListener("click", function(){ if(S.pi<N){S.pi++; save(); renderStrip(); scrollTop();} else nav("/results"); });
-$("sDots").addEventListener("click", function(e){ var b=e.target.closest(".dot"); if(!b)return; S.pi=+b.getAttribute("data-n"); save(); renderStrip(); scrollTop(); });
+  var parts=Object.keys(sum).map(function(b){ return sum[b][0]==="II" && /QT|PR/.test(b) ? b+" (rhythm strip)" : b+" in "+sum[b].join(", "); });
+  return "Look back at the ECG: the colored marks show why this is "+q.cat+". "+(parts.length ? parts.join(" · ")+"." : "Nothing abnormal: no ST elevation or depression, normal QRS width and intervals.");
 }
 function scrollTop(){ window.scrollTo({top:0,behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth"}); }
-document.addEventListener("keydown", function(e){
-  if(VIEW!=="strips" || e.target.closest("input,textarea,.cal-ov")) return;
-  var k=e.key.toUpperCase(), idx="ABCD".indexOf(k);
-  if(idx>=0){ var btn=$("sOpts").children[idx]; if(btn && !btn.disabled) btn.click(); }
-  else if(e.key==="ArrowRight") $("sNext").click();
-  else if(e.key==="ArrowLeft") $("sPrev").click();
-});
 
 /* ================= MEGACODE ================= */
-function renderCases(){
-  var m=megaScore(); $("mCor").textContent=m.c; $("mTot").textContent=TOTAL_Q;
-  $("mCases").innerHTML = CASES.map(function(cs,ci){
-    var s=caseScore(ci), pill = s.a===0 ? '<span class="pill">Not started</span>' : (s.a===s.t ? '<span class="pill done">'+s.c+' / '+s.t+'</span>' : '<span class="pill part">'+s.a+' of '+s.t+' done</span>');
-    return '<button class="case" data-c="'+ci+'"><span class="no">CASE '+String(cs.n).padStart(2,"0")+'</span><h3>'+esc(cs.title)+'</h3><span class="focus">'+esc(cs.focus)+'</span><span class="st"><span>'+cs.stages.length+' decisions</span>'+pill+'</span></button>';
-  }).join("");
-}
-function bindMega(){
-$("mCases").addEventListener("click", function(e){ var b=e.target.closest(".case"); if(!b)return; openCase(+b.getAttribute("data-c")); });
-}
-function openCase(ci){ S.ci=ci; var s=caseScore(ci); S.si = s.a>=s.t ? s.t : s.a; save(); renderMega(); megaFit(true); }
 /* Bring the monitor and the question into view together: scroll to the case and shrink the monitor just enough to fit. */
 var MEGA_Z = 1;
 function megaFit(scroll){
@@ -329,7 +256,6 @@ function megaFit(scroll){
   mon.style.zoom = MEGA_Z<1 ? MEGA_Z.toFixed(3) : "";
   if(scroll) window.scrollTo({top:Math.max(0, top(start)-bar-10), behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth"});
 }
-var megaRT; window.addEventListener("resize", function(){ if(VIEW!=="megacode" || S.ci==null) return; clearTimeout(megaRT); megaRT=setTimeout(function(){ megaFit(false); }, 150); });
 function vitalsFrom(str){
   var v={hr:"--",bp:"--/--",sp:"--",co:"--"};
   var m;
@@ -338,60 +264,6 @@ function vitalsFrom(str){
   if((m=str.match(/SpO₂ (\d+)/))) v.sp=m[1];
   if((m=str.match(/ETCO₂[^\d]*(\d+)/))) v.co=m[1];
   return v;
-}
-function renderMega(){
-  if(S.ci==null){ $("mList").hidden=false; $("mRun").hidden=true; renderCases(); return; }
-  $("mList").hidden=true; $("mRun").hidden=false;
-  var ci=S.ci, cs=CASES[ci], s=caseScore(ci);
-  var steps = cs.stages.map(function(st,si){ var x=S.m[ci+"-"+si]; var c = x==null ? (si===S.si?"cur":"") : (st.options[x].ok?"r":"w"); return '<i class="'+c+'"></i>'; }).join("");
-  var head = '<div class="runner-head"><div><div class="eyebrow">Case '+cs.n+' of 20 · '+esc(cs.focus)+'</div><h2>'+esc(cs.title)+'</h2></div><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><div class="steps" aria-label="Progress">'+steps+'</div><button class="btn btn-ghost" id="mBack">All cases</button></div></div>';
-  var scen = '<div class="card scenario">'+IC.pt+'<p>'+esc(cs.scenario)+'</p></div>';
-  if(S.si >= cs.stages.length){ $("mRun").innerHTML = '<div class="runner">'+head+scen+caseSummary(ci)+'</div>'; bindRun(); return; }
-  var si=S.si, st=cs.stages[si], key=ci+"-"+si, chosen=S.m[key], done=chosen!=null, vt=vitalsFrom(st.vitals);
-  var pulseless = /Pulse: none/.test(st.vitals);
-  if(vt.hr==="--" && st.hr) vt.hr = String(st.hr);
-  if(pulseless){ vt.bp="--/--"; vt.sp="--"; }
-  var mon = '<div class="monitor"><div class="mon-top"><span class="live">Lead II · Decision '+(si+1)+' of '+cs.stages.length+'</span>'+(done?'<span class="reveal">Rhythm: '+esc(st.rhythm)+'</span>':'<span>25 mm/s</span>')+'</div>'+
-    '<div class="mon-body"><div class="mon-screen">'+stripSVG(st.strip,"monitor",!done)+'</div><div class="vitals">'+
-    '<div class="vital hr"><small>HR</small><b class="num">'+vt.hr+'</b></div><div class="vital bp"><small>NIBP</small><b class="num">'+vt.bp+'</b></div>'+
-    '<div class="vital sp"><small>SpO₂</small><b class="num">'+vt.sp+'</b></div><div class="vital co"><small>ETCO₂</small><b class="num">'+vt.co+'</b></div></div></div>'+
-    '<div class="mon-status"><em>Status</em><span>'+esc(st.vitals)+'</span></div></div>';
-  var order = perm(st.options.length, (ci+1)*31+si*7+3), letters="ABCD";
-  var opts = order.map(function(oi,k){
-    var o=st.options[oi], cls = done ? (o.ok ? "is-right" : (oi===chosen ? "is-wrong" : "is-dim")) : "";
-    return '<button class="opt '+cls+'" data-i="'+oi+'" '+(done?"disabled":"")+'><span class="k">'+letters[k]+'</span><span>'+esc(o.t)+'</span></button>';
-  }).join("");
-  var fb = "";
-  if(done){
-    var c=st.options[chosen], right=st.options.filter(function(o){return o.ok})[0];
-    fb = '<div class="fb '+(c.ok?"ok":"no")+'" aria-live="polite"><div class="verdict">'+(c.ok?IC.ok+"Correct":IC.no+"Not the best choice")+'</div>';
-    if(!c.ok) fb += '<div class="why"><div><small>Your choice</small><b>'+esc(c.t)+'</b>'+esc(c.why)+'</div><div><small>Best answer</small><b>'+esc(right.t)+'</b>'+esc(right.why)+'</div></div>';
-    else fb += '<div class="clue">'+IC.bulb+'<p>'+esc(c.why)+'</p></div>';
-    fb += '<div class="clue">'+IC.bulb+'<p><b>Rhythm on the monitor: </b>'+esc(st.rhythm)+'</p></div></div>';
-  }
-  var last = si===cs.stages.length-1;
-  var nav = '<div class="qnav"><button class="btn btn-ghost" id="mPrev" '+(si===0?"disabled":"")+'>← Previous decision</button><button class="btn btn-primary" id="mNext" '+(done?"":"disabled")+'>'+(last?"Finish case →":"Next decision →")+'</button></div>';
-  $("mRun").innerHTML = '<div class="runner">'+head+scen+mon+'<div class="card decision"><h3>'+esc(st.prompt)+'</h3><div class="opt-list" id="mOpts">'+opts+'</div>'+fb+nav+'</div></div>';
-  if(MEGA_Z<1) document.querySelector("#mRun .monitor").style.zoom=MEGA_Z.toFixed(3);
-  bindRun();
-  updateTally();
-}
-function caseSummary(ci){
-  var cs=CASES[ci], s=caseScore(ci);
-  var items = cs.stages.map(function(st,si){ var x=S.m[ci+"-"+si], o=st.options[x], right=st.options.filter(function(q){return q.ok})[0];
-    return '<li><b>'+esc(st.prompt)+'</b> '+(o&&o.ok?'<span style="color:var(--ok)">✓ '+esc(right.t)+'</span>':'<span style="color:var(--bad)">✗ You chose: '+esc(o?o.t:"—")+'</span><span>Best: '+esc(right.t)+'</span>')+'</li>'; }).join("");
-  var next = ci<19 ? '<button class="btn btn-primary" id="mNextCase">Next case →</button>' : '<a class="btn btn-primary" href="/results">See results →</a>';
-  return '<div class="card case-summary"><div class="verdict" style="color:var(--accent)">Case complete</div><h3 style="font-family:var(--f-display);font-size:42px;text-transform:uppercase;font-weight:600">'+s.c+' / '+s.t+' correct</h3><ol>'+items+'</ol><div class="qnav"><button class="btn btn-ghost" id="mRetry">Retry this case</button>'+next+'</div></div>';
-}
-function bindRun(){
-  var b;
-  if((b=$("mBack"))) b.onclick=function(){ S.ci=null; save(); renderMega(); scrollTop(); };
-  if((b=$("mOpts"))) b.onclick=function(e){ var o=e.target.closest(".opt"); if(!o||o.disabled)return; S.m[S.ci+"-"+S.si]=+o.getAttribute("data-i"); save(); renderMega();
-    var fb=document.querySelector("#mRun .decision .fb"); if(fb && fb.getBoundingClientRect().top > window.innerHeight*0.75) fb.scrollIntoView({behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth", block:"nearest"}); };
-  if((b=$("mPrev"))) b.onclick=function(){ if(S.si>0){S.si--; save(); renderMega(); megaFit(true);} };
-  if((b=$("mNext"))) b.onclick=function(){ S.si++; save(); renderMega(); megaFit(true); };
-  if((b=$("mNextCase"))) b.onclick=function(){ openCase(S.ci+1); };
-  if((b=$("mRetry"))) b.onclick=function(){ var cs=CASES[S.ci]; cs.stages.forEach(function(_,si){ delete S.m[S.ci+"-"+si]; }); S.si=0; save(); renderMega(); megaFit(true); };
 }
 
 /* ================= RESULTS ================= */
@@ -402,13 +274,9 @@ function heroKey(){ for(var i=0;i<P.length;i++) if(P[i].cat==="Normal sinus rhyt
 function show(v, areaKey){
   VIEW=v; VIEW_AREA = v==="area" ? areaKey : null;
   document.querySelectorAll(".nStrips").forEach(function(e){e.textContent=N});
-    if(v==="strips") bindStrips();
-  if(v==="megacode") bindMega();
-  if(v==="area") renderArea(areaKey); else { CUR_AREA=null; renderCardioPop(null); }
+  CUR_AREA = v==="area" ? areaKey : null;
   if(v==="practice" || v==="home" || v==="course") renderAreaTiles();
   defibNav();
-  if(v==="strips") renderStrip();
-  if(v==="megacode"){ renderMega(); if(S.ci!=null) setTimeout(function(){ megaFit(true); }, 0); }
   if(v==="codelab") renderCodeLab(); else if(window.CodeLab) CodeLab.stop();
   if(v==="defib") renderDefib(); else if(window.DefibLab && v!=="codelab") DefibLab.stop();
   updateTally(); setSync(SB.state);
@@ -565,7 +433,7 @@ function loadBoard(silent){
     if(SB.me.role==="owner" && !SB.inst) loadInstructors();
     if(!SB.settings) loadSettings();
     renderAreaTiles();
-    if((VIEW==="area" && VIEW_AREA==="twelve") && !AREAS.twelve){ AREA_LOADING.twelve=null; rerender(); }
+    if((VIEW==="area" && VIEW_AREA==="twelve") && !AREAS.twelve){ AREA_LOADING.twelve=null; AREA_ERR.twelve=null; rerender(); }
     if(!SV.def) loadSurveyDef().then(function(){ emit(); }, function(){});
     try{ sessionStorage.setItem("cl-instructor", SB.pass); }catch(e){}
     SB.problem=null; SB.loading=false; SB.loginMsg=""; emit();
@@ -575,7 +443,7 @@ function loadBoard(silent){
   });
 }
 function openBoard(){ if(SB.admin){ emit(); loadBoard(true); startPoll(); } else if(SB.pass){ SB.loading=true; emit(); loadBoard(false); } else showLogin(""); }
-function boardSignOut(){ SB.pass=null; SB.admin=false; SB.rows=null; SB.settings=null; SB.me=null; SB.inst=null; SB.instPw=null; SB.cohortSet=null; AREA_META.forEach(function(x){ if(x.gated){ delete AREAS[x.key]; AREA_LOADING[x.key]=null; } }); renderAreaTiles(); stopPoll(); try{ sessionStorage.removeItem("cl-instructor"); }catch(e){} defibNav(); showLogin(""); }
+function boardSignOut(){ SB.pass=null; SB.admin=false; SB.rows=null; SB.settings=null; SB.me=null; SB.inst=null; SB.instPw=null; SB.cohortSet=null; AREA_META.forEach(function(x){ if(x.gated){ delete AREAS[x.key]; AREA_LOADING[x.key]=null; AREA_ERR[x.key]=null; } }); renderAreaTiles(); stopPoll(); try{ sessionStorage.removeItem("cl-instructor"); }catch(e){} defibNav(); showLogin(""); }
 function deleteStudent(id){ return fetch(API+"/scores/"+id, {method:"DELETE", headers:{authorization:"Bearer "+SB.pass}}).then(function(r){ if(r.ok){ SB.rows=SB.rows.filter(function(x){return x.id!==id}); emit(); } return r.ok; }, function(){ return false; }); }
 function startPoll(){ if(SB.poll) return; SB.poll=setInterval(function(){ if(VIEW==="scoreboard" && !document.hidden) loadBoard(true); }, 30000); }
 function stopPoll(){ if(SB.poll){ clearInterval(SB.poll); SB.poll=null; } }
@@ -939,57 +807,6 @@ function renderAreaTiles(){
   var p=$("practiceAreas"); if(p) p.innerHTML=areaTilesHTML()+stripsTileHTML();
 }
 var CUR_AREA=null;
-function renderArea(key){
-  CUR_AREA=key;
-  var m=areaMeta(key), body=$("arBody");
-  $("v-area").style.setProperty("--accent", m.ink); $("v-area").style.setProperty("--accent-soft", m.soft);
-  var lockedHTML='<div class="card panel area-locked" style="--ac:'+m.color+'"><span class="sv-ic">'+IC_LOCK+'</span><h3>'+esc(m.lockName||m.title)+' aren\'t open yet</h3><p class="empty">Your instructor will open this practice area when the class is ready for it. In the meantime, keep working in the other areas.</p><a class="btn btn-primary" href="/practice">Back to practice areas</a></div>';
-  if(!AREAS[key] && !areaOpen(m) && !SB.admin && SB.configDone){ body.innerHTML=lockedHTML; return; }
-  if(!AREAS[key]){
-    body.innerHTML='<div class="card panel"><p class="empty">Loading '+esc(m.title.toLowerCase())+'…</p></div>';
-    loadArea(key).then(function(){ if(CUR_AREA===key && (VIEW==="area" && VIEW_AREA===key)) renderArea(key); }, function(err){
-      if(err && err.locked){ body.innerHTML=lockedHTML; return; }
-      body.innerHTML='<div class="card panel"><h3>This practice area couldn\'t load</h3><p class="empty">Check your connection and try again.</p><button class="btn btn-primary" id="arRetry">Try again</button></div>';
-      $("arRetry").onclick=function(){ renderArea(key); };
-    });
-    return;
-  }
-  var data=AREAS[key], st=areaState(key), total=data.items.length, unit=(data.items[0] && data.items[0].leads) ? "ECG" : "Strip";
-  if(st.pi>total+1) st.pi=1;
-  var sc=areaScore(key);
-  var head='<div class="qhead"><div><div class="eyebrow">Practice area · '+esc(m.title)+'</div><h2>'+(st.pi>total?'Results':unit+' <span class="num">'+st.pi+'</span><span> / '+total+'</span>')+'</h2></div>'+
-    '<div class="qstats"><span>Answered <b class="num">'+sc.a+'</b></span><span>Correct <b class="num">'+sc.c+'</b></span><span>Score <b class="num">'+(sc.a?pct(sc.c,sc.a)+'%':'–')+'</b></span>'+(key==="twelve" && vesselScore().a ? '<span>Vessel <b class="num">'+vesselScore().c+'/'+vesselScore().a+'</b></span>' : '')+'<a class="btn btn-ghost" href="/practice">All areas</a></div></div>'+
-    '<div class="progress" style="margin-bottom:16px"><i style="width:'+pct(sc.a,total)+'%"></i></div>';
-  if(st.pi>total){ body.innerHTML=head+areaSummaryHTML(key); bindAreaSummary(key); return; }
-  var q=data.items[st.pi-1], chosen=st.p[q.n], done=chosen!=null, letters="ABCD";
-  var opts=q.options.map(function(o,i){
-    var cls = done ? (o===q.cat ? "is-right" : (o===chosen ? "is-wrong" : "is-dim")) : "";
-    return '<button class="opt '+cls+'" data-o="'+esc(o)+'" '+(done?"disabled":"")+'><span class="k">'+letters[i]+'</span><span>'+esc(o)+'</span></button>';
-  }).join("");
-  var dots=data.items.map(function(it){ var x=st.p[it.n], c = x==null ? "" : (x===it.cat?"r":"w"); return '<button class="dot '+c+(it.n===st.pi?" cur":"")+'" data-n="'+it.n+'" aria-label="Strip '+it.n+'">'+it.n+'</button>'; }).join("");
-  body.innerHTML=head+'<div class="card qcard"><div class="strip-top"><div class="stem"><span class="tag">'+esc(m.short)+'</span><p>'+(q.leads?'Interpret this 12-lead ECG.':'Identify this rhythm.')+'</p></div>'+(q.hints?cardioBtnHTML(q, st, done):'')+'</div>'+
-    ('<p class="ecg-tip">'+IC_EXPAND+'<span><b>Tip:</b> click the '+(q.leads?'ECG':'strip')+' to open it full screen. Zoom with + / −, the mouse wheel or a pinch, double-click to zoom in on a spot, and drag to move around.</span></p>')+
-    '<div><div class="paper">'+(q.leads?ecg12SVG(q):stripSVG(q.strip,"paper",false))+'</div><div class="paper-meta"><span>'+(q.leads?'12-lead · 25 mm/s · 10 mm/mV · bottom row: lead II rhythm strip'+(q.field?' · recorded on scene, real patient':'')+'</span><span><button class="btn btn-ghost ecg-expand" id="ecgExpand" data-expand="1" type="button">'+IC_EXPAND+'Expand and zoom</button>':'Lead II · 25 mm/s · 6-second strip'+(key==="field"?' · recorded in a moving ambulance':''))+'</span><span class="scroll-hint"></span></div></div>'+
-    (vesselHTML(q, st) && q.leads
-      ? '<div class="answered-line '+(chosen===q.cat?'ok':'no')+'"><span class="eyebrow">Your interpretation</span><b>'+esc(chosen===REVEALED?'Revealed by the cardiologist':chosen)+'</b><span>'+(chosen===q.cat?'✓ Correct':'✗ It\'s '+esc(q.cat))+'</span><div class="opts" id="arOpts" hidden>'+opts+'</div></div>'+vesselHTML(q, st)
-      : '<div><div class="eyebrow" style="margin-bottom:10px">'+(q.leads?'What does it show?':'Identify the rhythm')+'</div><div class="opts" id="arOpts" role="group" aria-label="Answer choices">'+opts+'</div></div>')+
-    '<div aria-live="polite">'+(done?stripFeedback(q, chosen):'')+'</div>'+
-    '<div class="qnav"><button class="btn btn-ghost" id="arPrev" '+(st.pi===1?'disabled':'')+'>← Previous</button><button class="btn btn-primary" id="arNext">'+(st.pi===total?'See area results →':(done?'Next '+unit.toLowerCase()+' →':'Skip →'))+'</button></div></div>'+
-    '<details class="card grid-nav"><summary>All '+total+' '+unit.toLowerCase()+'s in this area</summary><div class="dots" id="arDots">'+dots+'</div><div class="legend"><span><i style="background:var(--ok)"></i>Correct</span><span><i style="background:var(--bad)"></i>Incorrect</span><span><i style="background:var(--line-2)"></i>Not answered</span></div></details>';
-  if($("arCardioBtn")) $("arCardioBtn").onclick=function(){ callCardiologist(key, q, st); };
-  if($("arCardioShow")) $("arCardioShow").onclick=function(){ S.cmin=false; save(); renderCardioPop(q, st, done); };
-  renderCardioPop(q.hints ? q : null, st, done);
-  $("arOpts").onclick=function(e){ var b=e.target.closest(".opt"); if(!b||b.disabled) return; st.p[q.n]=b.getAttribute("data-o"); st.ok=st.ok||{}; st.ok[q.n]=st.p[q.n]===q.cat; st.lastAnswered=q.n; save(); renderArea(key); };
-  if(done && $("arVessel") && !(st.v||{}).hasOwnProperty(q.n) && st.lastAnswered===q.n){ st.lastAnswered=null; setTimeout(function(){ var vq=document.querySelector("#v-area .vessel-q"); if(vq) vq.scrollIntoView({block:"nearest"}); }, 60); }
-  if($("arVessel")) $("arVessel").onclick=function(e){ var b=e.target.closest(".opt"); if(!b||b.disabled) return; st.v=st.v||{}; st.v[q.n]=+b.getAttribute("data-v"); st.vok=st.vok||{}; st.vok[q.n]=st.v[q.n]===VESSEL_OF[q.cat][0]; save(); renderArea(key);
-    var vq=document.querySelector("#v-area .vessel-q .fb"); if(vq) vq.scrollIntoView({block:"nearest", behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth"}); };
-  $("arPrev").onclick=function(){ if(st.pi>1){ st.pi--; save(); renderArea(key); scrollTop(); } };
-  $("arNext").onclick=function(){ st.pi++; save(); renderArea(key); scrollTop(); };
-  $("arDots").onclick=function(e){ var b=e.target.closest(".dot"); if(!b) return; st.pi=+b.getAttribute("data-n"); save(); renderArea(key); scrollTop(); };
-  updateTally();
-  if(q && done && chosen!==q.cat){ if(q.leads) markECG12(document.querySelector("#v-area .paper"), q); else markStrip(document.querySelector("#v-area .paper"), q.strip, q.cat, q); }
-  if(q){ var fk=key+":"+q.n, fresh=FIT12_LAST!==fk; FIT12_LAST=fk; fit12(false); setTimeout(function(){ fit12(fresh); }, 0); } else FIT12_LAST=null;
-}
 /* Practice areas (rhythm strips and 12-leads): scale the whole ECG to the screen and line it up at the top, so no scrolling is needed to see it */
 var FIT12_LAST=null;
 function fit12(scroll){
@@ -1008,34 +825,6 @@ function fit12(scroll){
 }
 window.addEventListener("resize", function(){ if(VIEW==="area") fit12(false); });
 window.fit12 = fit12;  // the calipers call this when they open or close the band above the ECG
-function areaSummaryHTML(key){
-  var data=AREAS[key], st=areaState(key), sc=areaScore(key), byCat={};
-  data.categories.forEach(function(c){ byCat[c]=[0,0,0]; });
-  data.items.forEach(function(q){ var b=byCat[q.cat]; b[2]++; var x=st.p[q.n]; if(x!=null){ b[1]++; if(x===q.cat) b[0]++; } });
-  var rows=data.categories.map(function(c){ var b=byCat[c]; return '<div class="barrow"><span>'+esc(c)+'</span><span class="track"><i style="width:'+pct(b[0],b[1])+'%"></i></span><b>'+(b[1]?b[0]+'/'+b[1]:'—')+'</b></div>'; }).join("");
-  var missed=data.items.filter(function(q){ var x=st.p[q.n]; return x!=null && x!==q.cat; });
-  var skipped=data.items.filter(function(q){ return st.p[q.n]==null; }).length;
-  return '<div class="card panel area-sum"><div class="area-sum-top"><div><div class="eyebrow">Area score</div><h3 class="num">'+sc.c+' of '+sc.a+' answered correct</h3><p class="empty">'+(skipped?skipped+' strip'+(skipped===1?' was':'s were')+' skipped. They don\'t count against your score, but you can go back to them.':'Every strip answered.')+'</p></div>'+
-    '<div class="area-big num">'+(sc.a?pct(sc.c,sc.a)+'%':'–')+'</div></div><h4>By rhythm type</h4><div class="bars">'+rows+'</div>'+
-    (missed.length?'<h4>Missed strips</h4><div class="missed" id="arMissed">'+missed.map(function(q){ return '<button data-n="'+q.n+'"><b>#'+q.n+'</b><span style="color:var(--ink)">'+esc(q.name)+'</span></button>'; }).join("")+'</div>':'')+
-    '<div class="qnav" style="justify-content:flex-start"><a class="btn btn-primary" href="/practice">Choose another area</a><button class="btn btn-ghost" id="arReview">Review from strip 1</button><span id="arReset"><button class="btn btn-ghost" id="arAsk">Start this area over</button></span></div></div>';
-}
-function bindAreaSummary(key){
-  var st=areaState(key);
-  if($("arMissed")) $("arMissed").onclick=function(e){ var b=e.target.closest("button"); if(!b) return; st.pi=+b.getAttribute("data-n"); save(); renderArea(key); scrollTop(); };
-  $("arReview").onclick=function(){ st.pi=1; save(); renderArea(key); scrollTop(); };
-  $("arAsk").onclick=function(){ $("arReset").innerHTML='<span class="confirm"><span>Clear your answers in this area?</span><button class="btn btn-primary" id="arYes">Clear</button><button class="btn btn-ghost" id="arNo">Cancel</button></span>';
-    $("arYes").onclick=function(){ S.ar[key]={pi:1, p:{}}; save(); renderArea(key); renderAreaTiles(); scrollTop(); };
-    $("arNo").onclick=function(){ renderArea(key); }; };
-}
-document.addEventListener("keydown", function(e){
-  if(VIEW!=="area" || e.target.closest("input,textarea,.cal-ov") || !$("arOpts")) return;
-  var idx="ABCD".indexOf(e.key.toUpperCase());
-  if(e.key.toUpperCase()==="H" && $("arCardioBtn")){ $("arCardioBtn").click(); return; }
-  if(idx>=0){ var btn=$("arOpts").children[idx]; if(btn && !btn.disabled) btn.click(); }
-  else if(e.key==="ArrowRight") $("arNext").click();
-  else if(e.key==="ArrowLeft" && !$("arPrev").disabled) $("arPrev").click();
-});
 /* ----- 12-lead printout: four columns of three leads + a lead II rhythm strip ----- */
 function decodeStr(d){ var v=[], cur=0, i=0; while(i<d.length){ var ch=d[i]; if(ch==="|"){ var j=d.indexOf("|",i+1); cur=parseInt(d.slice(i+1,j),10); v.push(cur); i=j+1; } else { cur+=d.charCodeAt(i)-80; v.push(cur); i++; } } return v; }
 var LEAD_COLS=[["I","II","III"],["aVR","aVL","aVF"],["V1","V2","V3"],["V4","V5","V6"]];
@@ -1055,47 +844,6 @@ function ecg12SVG(q){
     '<g class="ldl" fill="var(--trace)">'+labels+'</g></svg>';
 }
 /* ----- "Call the cardiologist" (12-lead): three hints, then the answer ----- */
-var IC_PHONE='<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5.2 2.8h2.4l1.2 3.4-1.7 1.1a9.6 9.6 0 0 0 5.6 5.6l1.1-1.7 3.4 1.2v2.4a1.6 1.6 0 0 1-1.7 1.6A14.2 14.2 0 0 1 3.6 4.5a1.6 1.6 0 0 1 1.6-1.7z"/></svg>';
-function cardioBtnHTML(q, st, done){
-  st.h = st.h || {};
-  var used = Math.min(st.h[q.n]||0, 3);
-  if(done) return used ? '<button class="btn cardio-btn ghost" id="arCardioShow">'+IC_PHONE+'<span>Cardiologist</span><small>'+(st.p[q.n]===REVEALED?'answer revealed':used+' hint'+(used===1?'':'s')+' used')+'</small></button>' : '';
-  var tip = 'Each call gives you a hint. The 4th call reveals the answer and counts it as wrong.';
-  return used < 3
-    ? '<button class="btn cardio-btn" id="arCardioBtn" title="'+tip+'">'+IC_PHONE+'<span>Call the cardiologist</span><small>hint '+(used+1)+' of 3</small></button>'
-    : '<button class="btn cardio-btn reveal" id="arCardioBtn" title="'+tip+'">'+IC_PHONE+'<span>Call again for the answer</span><small>counts as wrong</small></button>';
-}
-var POP_Q = null;
-function renderCardioPop(q, st, done, fresh){
-  var pop = $("cardioPop");
-  if(!q || VIEW!=="area"){ pop.hidden = true; POP_Q = null; return; }
-  st.h = st.h || {};
-  var used = Math.min(st.h[q.n]||0, 3), revealed = st.p[q.n]===REVEALED;
-  if(!used){ pop.hidden = true; POP_Q = null; return; }
-  var min = !!S.cmin;
-  var sub = revealed ? 'Answer revealed after 3 hints' : (done ? used+' hint'+(used===1?'':'s')+' used' : used+' of 3 hints'+(used===3?' · next call reveals the answer':''));
-  var list = q.hints.slice(0, used).map(function(h, i){ return '<li class="'+(fresh && i===used-1 ? 'new' : '')+'"><b>Hint '+(i+1)+'</b><p>'+esc(h)+'</p></li>'; }).join("");
-  pop.className = 'cardio-pop'+(min?' min':'');
-  pop.innerHTML = '<button class="cardio-pop-head" id="cardioToggle" aria-expanded="'+(!min)+'" aria-controls="cardioPopBody" title="'+(min?'Show hints':'Minimize')+'">'+
-      '<span class="cardio-av">'+IC_PHONE+'</span><span class="cardio-pop-t"><b>Cardiologist on the line</b><small>'+sub+'</small></span>'+
-      '<span class="cardio-min" aria-hidden="true">'+(min?'<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12l5-5 5 5"/></svg>':'<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 10h10"/></svg>')+'</span></button>'+
-    '<div class="cardio-pop-body" id="cardioPopBody" role="status" aria-live="polite"'+(min?' hidden':'')+'><ol class="cardio-hints">'+list+'</ol>'+
-      (!done && used < 3 ? '<p class="cardio-pop-note">Still stuck? Call again for hint '+(used+1)+' of 3.</p>' : '')+
-      (!done && used === 3 ? '<p class="cardio-pop-note">One more call reveals the answer and counts it as wrong.</p>' : '')+'</div>';
-  pop.hidden = false; POP_Q = q;
-  $("cardioToggle").onclick = function(){ S.cmin = !S.cmin; try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} renderCardioPop(q, st, done); };
-}
-function callCardiologist(key, q, st){
-  st.h = st.h || {};
-  var used = st.h[q.n]||0;
-  if(st.p[q.n]!=null) return;
-  if(used < 3){ st.h[q.n] = used+1; }
-  else { st.h[q.n] = 4; st.p[q.n] = REVEALED; st.ok = st.ok || {}; st.ok[q.n] = false; }
-  S.cmin = false;  // a new hint always opens the panel
-  save(); renderArea(key);
-  if(used < 3) renderCardioPop(q, st, false, true);
-  else { var el = document.querySelector("#v-area .fb"); if(el) el.scrollIntoView({behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "center"}); }
-}
 
 /* ----- 12-lead follow-up: which coronary artery? (STEMI and STEMI equivalents) ----- */
 var VESSELS = ["Right coronary artery (RCA)", "Left anterior descending (LAD), mid or distal", "Proximal LAD", "Left circumflex (LCx)", "Left main or multivessel disease"];
@@ -1109,14 +857,6 @@ var VESSEL_OF = {
   "De Winter T waves": [2, "De Winter T waves are a STEMI equivalent from an acute proximal LAD occlusion: activate the cath lab."],
   "ST elevation in aVR with diffuse ST depression": [4, "ST elevation in aVR with widespread depression suggests left main or severe multivessel (often three-vessel) ischemia, or global subendocardial ischemia from another cause."]
 };
-function vesselHTML(q, st){
-  var v=VESSEL_OF[q.cat]; if(!v || st.p[q.n]==null) return "";
-  st.v=st.v||{}; var picked=st.v[q.n], done=picked!=null, letters="ABCDE";
-  var opts=VESSELS.map(function(o,i){ var cls = done ? (i===v[0] ? "is-right" : (i===picked ? "is-wrong" : "is-dim")) : "";
-    return '<button class="opt '+cls+'" data-v="'+i+'" '+(done?"disabled":"")+'><span class="k">'+letters[i]+'</span><span>'+esc(o)+'</span></button>'; }).join("");
-  var fb = done ? '<div class="fb '+(picked===v[0]?'ok':'no')+'"><div class="verdict">'+(picked===v[0]?IC.ok+'Correct':IC.no+'Not quite: it\'s the '+esc(VESSELS[v[0]].replace(/ \(.*\)/,"").replace(/, mid or distal/,""))+'')+'</div><p class="fb-note">'+esc(v[1])+'</p></div>' : '';
-  return '<div class="card panel vessel-q"><div class="eyebrow">Follow-up question</div><h4>Which coronary artery is most likely involved?</h4><div class="opts" id="arVessel" role="group" aria-label="Culprit artery">'+opts+'</div><div aria-live="polite">'+fb+'</div></div>';
-}
 function vesselScore(){ var st=(S.ar||{}).twelve, data=AREAS.twelve, c=0, a=0; if(!st || !st.v) return {c:0, a:0};
   Object.keys(st.v).forEach(function(n){ a++; var q=data && data.items[n-1], v=q && VESSEL_OF[q.cat]; if(v ? v[0]===st.v[n] : (st.vok||{})[n]) c++; }); return {c:c, a:a}; }
 function areasDoc(){ var out={}; AREA_META.forEach(function(m){ var sc=areaScore(m.key); out[m.key]=[sc.c, sc.a, sc.t]; }); var vs=vesselScore(); if(vs.a) out.vessel=[vs.c, vs.a, vs.a]; return out; }
@@ -1290,7 +1030,7 @@ function setProfile(k, v){
   if(k==="code"){ S.code=v.slice(0,60); SB.last=""; save(); if(SB.online) pushNow(); }
   if(k==="cohort"){ S.cohort=v.slice(0,40); save(); if(SB.online) pushNow();
     // switches can differ by cohort: refresh what this student can see
-    fetch(API+"/config?cohort="+encodeURIComponent(S.cohort||""), {cache:"no-store"}).then(function(r){ return r.ok?r.json():null; }).then(function(cfg){ if(cfg && !SB.admin){ SB.features=cfg.features||{}; AREA_META.forEach(function(x){ if(x.gated){ delete AREAS[x.key]; AREA_LOADING[x.key]=null; } }); renderAreaTiles(); defibNav(); } }, function(){}); }
+    fetch(API+"/config?cohort="+encodeURIComponent(S.cohort||""), {cache:"no-store"}).then(function(r){ return r.ok?r.json():null; }).then(function(cfg){ if(cfg && !SB.admin){ SB.features=cfg.features||{}; AREA_META.forEach(function(x){ if(x.gated){ delete AREAS[x.key]; AREA_LOADING[x.key]=null; AREA_ERR[x.key]=null; } }); renderAreaTiles(); defibNav(); } }, function(){}); }
 }
 /* ----- Results page data and actions ----- */
 function resultsData(){
@@ -1369,11 +1109,121 @@ var BOARD = {
   instPerms: INST_PERMS.map(function(p){ return {key:p[0], label:p[1]}; }),
   unlockPct: SURVEY_UNLOCK_PCT
 };
+/* ----- question runners: plain data and actions for the Svelte pages ----- */
+function fbData(q, chosen){
+  if(chosen==null) return null;
+  var C=CATS[q.cat]||{}, X=CATS[chosen]||{};
+  return { ok: chosen===q.cat, revealed: chosen===REVEALED, name:q.name, cat:q.cat, chosen:chosen, catKey:C.key||"", chosenKey:X.key||"", clue:C.clue||"",
+    rows:q.rows||[], action:q.action||[], catShort:q.cat.replace(/\s*\(.*\)$/,"") };
+}
+function dotsOf(items, p, cur){ return items.map(function(it){ var x=p[it.n]; return {n:it.n, c: x==null ? "" : (x===it.cat?"r":"w"), cur: it.n===cur}; }); }
+// Random strips
+function stripView(){
+  var q=P[S.pi-1], chosen=S.p[q.n], sc=stripScore();
+  return { pi:S.pi, n:N, score:sc, q:{ n:q.n, stem:q.stem, strip:q.strip, cat:q.cat, options:q.options }, chosen:chosen, done:chosen!=null,
+    fb: fbData(q, chosen), dots: dotsOf(P, S.p, S.pi) };
+}
+function stripAnswer(o){ var q=P[S.pi-1]; if(S.p[q.n]!=null) return; S.p[q.n]=o; save(); }
+function stripGo(n){ n=+n; if(n<1 || n>N) return; S.pi=n; save(); }
+function stripNext(){ if(S.pi<N){ S.pi++; save(); } else nav("/results"); }
+// The strip paper: engine-owned markup inside `el` (the calipers and markup attach to it). Returns the markup hint, if marked.
+function drawStripPaper(el, key, cat, mark){
+  Array.prototype.slice.call(el.parentNode ? el.parentNode.querySelectorAll(":scope > .mk-legend") : []).forEach(function(x){ x.remove(); });
+  el.innerHTML = stripSVG(key, "paper", false);
+  return mark ? markStrip(el, key, cat) : null;
+}
+// Practice areas
+var AREA_ERR = {};
+function areaView(key){
+  var m=areaMeta(key); if(!m) return { status:"missing" };
+  var meta={ key:key, title:m.title, short:m.short, color:m.color, soft:m.soft, ink:m.ink, lockName:m.lockName||m.title };
+  if(!AREAS[key]){
+    if(!areaOpen(m) && !SB.admin && SB.configDone) return { status:"locked", meta:meta };
+    if(AREA_ERR[key]) return { status: AREA_ERR[key]==="locked" ? "locked" : "error", meta:meta };
+    if(!AREA_LOADING[key]) loadArea(key).then(function(){ emit(); }, function(err){ AREA_ERR[key] = err && err.locked ? "locked" : "error"; emit(); });
+    return { status:"loading", meta:meta };
+  }
+  var data=AREAS[key], st=areaState(key), total=data.items.length, unit=(data.items[0] && data.items[0].leads) ? "ECG" : "Strip";
+  if(st.pi>total+1) st.pi=1;
+  var sc=areaScore(key), vs=key==="twelve" ? vesselScore() : {c:0,a:0};
+  var out={ status:"ready", meta:meta, total:total, unit:unit, pi:st.pi, score:sc, vessel:vs, dots:dotsOf(data.items, st.p, st.pi) };
+  if(st.pi>total){
+    var byCat={}; data.categories.forEach(function(c){ byCat[c]=[0,0]; });
+    data.items.forEach(function(q){ var b=byCat[q.cat]; if(!b) return; var x=st.p[q.n]; if(x!=null){ b[1]++; if(x===q.cat) b[0]++; } });
+    out.summary={ cats: data.categories.map(function(c){ return {cat:c, c:byCat[c][0], a:byCat[c][1]}; }),
+      missed: data.items.filter(function(q){ var x=st.p[q.n]; return x!=null && x!==q.cat; }).map(function(q){ return {n:q.n, name:q.name}; }),
+      skipped: data.items.filter(function(q){ return st.p[q.n]==null; }).length };
+    return out;
+  }
+  var q=data.items[st.pi-1], chosen=st.p[q.n];
+  st.h=st.h||{}; var used=Math.min(st.h[q.n]||0, 3);
+  var v=VESSEL_OF[q.cat], vessel=null;
+  if(v && chosen!=null && q.leads){ st.v=st.v||{}; var pk=st.v[q.n]; vessel={ options:VESSELS, right:v[0], picked: pk==null?null:pk, why:v[1], rightShort:VESSELS[v[0]].replace(/ \(.*\)/,"").replace(/, mid or distal/,"") }; }
+  out.q={ n:q.n, cat:q.cat, options:q.options, twelve:!!q.leads, field:!!q.field, hints:q.hints||null, strip:q.strip||null };
+  out.chosen=chosen; out.done=chosen!=null; out.fb=fbData(q, chosen); out.vq=vessel;
+  out.cardio = q.hints ? { used:used, revealed: chosen===REVEALED, hints:q.hints.slice(0, used), min:!!S.cmin } : null;
+  out.fresh = st.lastAnswered===q.n; 
+  return out;
+}
+function areaItem(key){ var st=areaState(key); return AREAS[key] && AREAS[key].items[st.pi-1]; }
+function areaAnswer(key, o){ var q=areaItem(key), st=areaState(key); if(!q || st.p[q.n]!=null) return; st.p[q.n]=o; st.ok=st.ok||{}; st.ok[q.n]=o===q.cat; st.lastAnswered=q.n; save(); }
+function areaGo(key, n){ var st=areaState(key); st.pi=+n; save(); }
+function areaVessel(key, i){ var q=areaItem(key), st=areaState(key); if(!q) return; st.v=st.v||{}; if(st.v[q.n]!=null) return; st.v[q.n]=+i; st.vok=st.vok||{}; st.vok[q.n]=st.v[q.n]===VESSEL_OF[q.cat][0]; st.lastAnswered=null; save(); }
+function areaCardio(key){
+  var q=areaItem(key), st=areaState(key); if(!q || st.p[q.n]!=null) return null;
+  st.h=st.h||{}; var used=st.h[q.n]||0;
+  if(used<3) st.h[q.n]=used+1; else { st.h[q.n]=4; st.p[q.n]=REVEALED; st.ok=st.ok||{}; st.ok[q.n]=false; }
+  S.cmin=false; save(); return used<3 ? "hint" : "reveal";
+}
+function setCardioMin(on){ S.cmin=!!on; save(); }
+function areaReset(key){ S.ar[key]={pi:1, p:{}}; save(); }
+function areaRetry(key){ AREA_ERR[key]=null; AREA_LOADING[key]=null; emit(); }
+// The practice-area ECG block (paper + meta line), engine-owned. Returns the markup hint when marked.
+function drawAreaPaper(el, key, mark){
+  var q=areaItem(key); if(!q){ el.innerHTML=""; return null; }
+  el.innerHTML='<div class="paper">'+(q.leads?ecg12SVG(q):stripSVG(q.strip,"paper",false))+'</div><div class="paper-meta"><span>'+(q.leads?'12-lead · 25 mm/s · 10 mm/mV · bottom row: lead II rhythm strip'+(q.field?' · recorded on scene, real patient':'')+'</span><span><button class="btn btn-ghost ecg-expand" id="ecgExpand" data-expand="1" type="button">'+IC_EXPAND+'Expand and zoom</button>':'Lead II · 25 mm/s · 6-second strip'+(key==="field"?' · recorded in a moving ambulance':''))+'</span><span class="scroll-hint"></span></div>';
+  var paper=el.querySelector(".paper"), hint=null;
+  if(mark) hint = q.leads ? markECG12(paper, q) : markStrip(paper, q.strip, q.cat, q);
+  var fk=key+":"+q.n, fresh=FIT12_LAST!==fk; FIT12_LAST=fk; fit12(false); setTimeout(function(){ fit12(fresh); }, 0);
+  return hint;
+}
+// Megacode
+function megaView(){
+  var m=megaScore();
+  if(S.ci==null) return { list:true, score:m, total:TOTAL_Q, cases: CASES.map(function(cs,ci){ var s=caseScore(ci); return {ci:ci, n:cs.n, title:cs.title, focus:cs.focus, stages:cs.stages.length, a:s.a, c:s.c, t:s.t}; }) };
+  var ci=S.ci, cs=CASES[ci];
+  var out={ list:false, ci:ci, si:S.si, n:cs.n, title:cs.title, focus:cs.focus, scenario:cs.scenario, count:cs.stages.length, isLast: ci>=CASES.length-1,
+    steps: cs.stages.map(function(st,si){ var x=S.m[ci+"-"+si]; return x==null ? (si===S.si?"cur":"") : (st.options[x].ok?"r":"w"); }) };
+  if(S.si>=cs.stages.length){
+    var s=caseScore(ci);
+    out.summary={ c:s.c, t:s.t, items: cs.stages.map(function(st,si){ var x=S.m[ci+"-"+si], o=st.options[x], right=st.options.filter(function(q){return q.ok})[0]; return {prompt:st.prompt, ok:!!(o&&o.ok), chose:o?o.t:"—", best:right.t}; }) };
+    return out;
+  }
+  var si=S.si, st=cs.stages[si], chosen=S.m[ci+"-"+si], done=chosen!=null, vt=vitalsFrom(st.vitals);
+  if(vt.hr==="--" && st.hr) vt.hr=String(st.hr);
+  if(/Pulse: none/.test(st.vitals)){ vt.bp="--/--"; vt.sp="--"; }
+  var order=perm(st.options.length, (ci+1)*31+si*7+3);
+  out.stage={ rhythm:st.rhythm, prompt:st.prompt, status:st.vitals, strip:st.strip, vitals:vt, done:done, chosen:chosen,
+    options: order.map(function(oi){ var o=st.options[oi]; return {oi:oi, t:o.t, ok:o.ok}; }), last: si===cs.stages.length-1 };
+  if(done){ var c=st.options[chosen], right=st.options.filter(function(o){return o.ok})[0]; out.stage.fb={ ok:c.ok, t:c.t, why:c.why, rightT:right.t, rightWhy:right.why }; }
+  return out;
+}
+function megaOpen(ci){ S.ci=+ci; var s=caseScore(S.ci); S.si = s.a>=s.t ? s.t : s.a; save(); }
+function megaBack(){ S.ci=null; save(); }
+function megaAnswer(oi){ var k=S.ci+"-"+S.si; if(S.m[k]!=null) return; S.m[k]=+oi; save(); }
+function megaStep(d){ var cs=CASES[S.ci]; S.si=Math.max(0, Math.min(cs.stages.length, S.si+d)); save(); }
+function megaRetry(){ var cs=CASES[S.ci]; cs.stages.forEach(function(_,si){ delete S.m[S.ci+"-"+si]; }); S.si=0; save(); }
+function drawMonitor(el, key, anim){ el.innerHTML = stripSVG(key, "monitor", anim); }
 function heroSVG(){ return stripSVG(D.strips.p1 ? heroKey() : Object.keys(D.strips)[0], "monitor", "loop", 3000); }
 initShared();
 return { show: show, rerender: rerender, snapshot: snapshot, setProfile: setProfile, heroSVG: heroSVG,
   results: resultsData, openStrip: openStrip, openCase: openCaseAt, resetProgress: resetProgress,
   board: BOARD,
+  stripView: stripView, stripAnswer: stripAnswer, stripGo: stripGo, stripNext: stripNext, drawStripPaper: drawStripPaper,
+  areaView: areaView, areaAnswer: areaAnswer, areaGo: areaGo, areaVessel: areaVessel, areaCardio: areaCardio, setCardioMin: setCardioMin,
+  areaReset: areaReset, areaRetry: areaRetry, drawAreaPaper: drawAreaPaper, fit12: function(scroll){ fit12(scroll); },
+  megaView: megaView, megaOpen: megaOpen, megaBack: megaBack, megaAnswer: megaAnswer, megaStep: megaStep, megaRetry: megaRetry,
+  drawMonitor: drawMonitor, megaFit: function(scroll){ megaFit(scroll); },
   surveyInfo: surveyInfo, surveyDef: loadSurveyDef, saveSurveyDraft: saveSurveyDraft, sendSurvey: sendSurvey,
   subscribe: function(f){ LISTENERS.push(f); return function(){ LISTENERS=LISTENERS.filter(function(x){ return x!==f; }); }; } };
 }

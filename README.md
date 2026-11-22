@@ -15,7 +15,8 @@ Built on the 2025 AHA ACLS algorithms. Strips are synthetic teaching tracings. A
 | `src/routes/` | One SvelteKit page per screen: `/` (Home), `/course`, `/practice`, `/practice/[area]`, `/strips`, `/megacode`, `/defib`, `/codelab`, `/results`, `/survey`, `/instructor`. Each is prerendered to plain HTML at build time. |
 | `src/routes/+layout.svelte` | The header, navigation, footer and ECG grid patterns shared by every page |
 | `src/routes/api/[...path]/+server.js` | The score API at `/api/*` (the only server code), wrapping `lib/api.mjs` |
-| `src/lib/app/engine.js` | The course engine: strips, practice areas, megacode, results, survey, scoreboard, ECG drawing, color markup, calipers and the zoom viewer. Each page calls `show("<view>")`. |
+| `src/lib/components/` | Svelte components: practice tiles and progress rings, sign-in, survey (`survey/`), the question runners (`runner/`: options, feedback, strip dots, cardiologist) and the instructor scoreboard (`board/`: sign-in, switches, class setup, instructors, student picker and print options, student table) |
+| `src/lib/app/engine.js` | The course logic behind the components: progress and scoring, saving and score sharing, the scoreboard's network calls, plus the ECG drawing and teaching tools (strip and 12-lead tracings, color markup, calipers, zoom viewer), the charts and printed reports. Components read plain data from it and call its actions; `live.svelte.js` re-renders them whenever it changes. |
 | `src/lib/sim/` | The live monitor/defibrillator (`defib.js`) and the Code lab (`codelab.js`), loaded only on the pages that use them |
 | `src/app.css` | The site's styles |
 | `static/` | Data and images served as files: `trainer.json` (strips and megacode cases), `areas/`, `twelve-rhythms.json`, `img/` |

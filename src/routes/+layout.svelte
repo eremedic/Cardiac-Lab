@@ -68,4 +68,3 @@
     <p class="note">Strips are synthetic lead II teaching tracings at 25 mm/s: 1 small box = 0.04 s, 1 large box = 0.20 s. Treatment content follows the adult ACLS algorithms. Always follow your local protocols and medical direction.</p>
   </div>
 </footer>
-<aside class="cardio-pop" id="cardioPop" hidden aria-label="Cardiologist hints"></aside>
